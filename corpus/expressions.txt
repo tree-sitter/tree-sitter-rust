@@ -594,13 +594,28 @@ Generic functions
 ============================================
 
 std::sizeof::<u32>();
+std::sizeof<u32>();
+a.b().collect<Vec<_>>();
 
 ---
 
 (source_file
   (call_expression
     (generic_function (scoped_identifier (identifier) (identifier)) (type_arguments (primitive_type)))
-    (arguments)))
+    (arguments))
+  (call_expression
+    (generic_function (scoped_identifier (identifier) (identifier)) (type_arguments (primitive_type)))
+    (arguments))
+  (call_expression
+    (generic_function
+      (field_expression
+        (call_expression
+          (field_expression (identifier) (field_identifier))
+          (arguments))
+        (field_identifier))
+      (type_arguments
+        (generic_type (type_identifier) (type_arguments (type_identifier)))))
+      (arguments)))
 
 ===========================================
 Closures
