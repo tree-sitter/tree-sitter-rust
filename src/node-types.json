@@ -960,6 +960,10 @@
     "named": false
   },
   {
+    "type": "..=",
+    "named": false
+  },
+  {
     "type": "as",
     "named": false
   },
@@ -1078,10 +1082,6 @@
   {
     "type": "mutable_specifier",
     "named": true
-  },
-  {
-    "type": "..=",
-    "named": false
   },
   {
     "type": "else",
