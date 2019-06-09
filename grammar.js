@@ -1279,7 +1279,10 @@ module.exports = grammar({
     captured_pattern: $ => seq(
       $.identifier,
       '@',
-      $._pattern
+      choice(
+        $._pattern,
+        $.range_pattern,
+      ),
     ),
 
     reference_pattern: $ => seq(

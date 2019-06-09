@@ -6854,8 +6854,17 @@
           "value": "@"
         },
         {
-          "type": "SYMBOL",
-          "name": "_pattern"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_pattern"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "range_pattern"
+            }
+          ]
         }
       ]
     },
