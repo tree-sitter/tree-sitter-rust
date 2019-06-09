@@ -575,6 +575,8 @@ struct Foo;
 #[cfg(target_os = "macos")]
 mod macos_only {}
 
+#![allow(clippy::useless_transmute)]
+
 ---
 
 (source_file
@@ -588,7 +590,9 @@ mod macos_only {}
   (struct_item (type_identifier))
 
   (attribute_item (meta_item (identifier) (meta_item (identifier) (string_literal))))
-  (mod_item (identifier) (declaration_list)))
+  (mod_item (identifier) (declaration_list))
+
+  (inner_attribute_item (meta_item (identifier) (meta_item (scoped_identifier (identifier) (identifier))))))
 
 ============================================
 Inner attributes

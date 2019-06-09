@@ -201,12 +201,15 @@ module.exports = grammar({
       ']'
     ),
 
-    meta_item: $ => seq(
-      $.identifier,
-      optional(choice(
-        seq('=', $._literal),
-        seq('(', sepBy(',', $.meta_item), optional(','), ')')
-      ))
+    meta_item: $ => choice(
+      $._path,
+      seq(
+        $.identifier,
+        optional(choice(
+          seq('=', $._literal),
+          seq('(', sepBy(',', $.meta_item), optional(','), ')')
+        ))
+      )
     ),
 
     mod_item: $ => seq(
