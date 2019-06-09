@@ -62,7 +62,7 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
     }
   }
 
-  if (valid_symbols[FLOAT_LITERAL] && iswdigit(lexer->lookahead)) {
+  if (valid_symbols[FLOAT_LITERAL] && (iswdigit(lexer->lookahead) || lexer->lookahead == '-')) {
     lexer->result_symbol = FLOAT_LITERAL;
 
     advance(lexer);
