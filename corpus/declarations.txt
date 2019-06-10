@@ -577,6 +577,8 @@ mod macos_only {}
 
 #![allow(clippy::useless_transmute)]
 
+#[clippy::cyclomatic_complexity = "100"]
+
 ---
 
 (source_file
@@ -592,7 +594,9 @@ mod macos_only {}
   (attribute_item (meta_item (identifier) (meta_item (identifier) (string_literal))))
   (mod_item (identifier) (declaration_list))
 
-  (inner_attribute_item (meta_item (identifier) (meta_item (scoped_identifier (identifier) (identifier))))))
+  (inner_attribute_item (meta_item (identifier) (meta_item (scoped_identifier (identifier) (identifier)))))
+
+  (attribute_item (meta_item (scoped_identifier (identifier) (identifier)) (string_literal))))
 
 ============================================
 Inner attributes
