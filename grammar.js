@@ -969,7 +969,7 @@ module.exports = grammar({
     ),
 
     return_expression: $ => choice(
-      prec.left(0, seq('return', $._expression)),
+      prec.left(seq('return', $._expression)),
       prec(-1, 'return'),
     ),
 
