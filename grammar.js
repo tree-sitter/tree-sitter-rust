@@ -66,7 +66,6 @@ module.exports = grammar({
     [$.scoped_identifier, $.scoped_type_identifier],
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
-    [$.await_expression, $.field_expression],
   ],
 
   word: $ => $.identifier,

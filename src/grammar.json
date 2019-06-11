@@ -7191,14 +7191,6 @@
     [
       "parameters",
       "tuple_struct_pattern"
-    ],
-    [
-      "await_expression",
-      "field_expression"
-    ],
-    [
-      "field_expression",
-      "await_expression"
     ]
   ],
   "externals": [
