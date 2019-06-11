@@ -5955,7 +5955,7 @@
     },
     "await_expression": {
       "type": "PREC",
-      "value": 15,
+      "value": 13,
       "content": {
         "type": "SEQ",
         "members": [

@@ -1,5 +1,4 @@
 const PREC = {
-  await:15,
   call: 14,
   field: 13,
   unary: 11,
@@ -1096,7 +1095,7 @@ module.exports = grammar({
 
     index_expression: $ => prec(PREC.call, seq($._expression, '[', $._expression, ']')),
 
-    await_expression: $ => prec(PREC.await, seq(
+    await_expression: $ => prec(PREC.field, seq(
       $._expression,
       '.',
       'await'
