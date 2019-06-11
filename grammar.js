@@ -179,9 +179,11 @@ module.exports = grammar({
       $._literal, $.identifier, $.metavariable, $.mutable_specifier, $.self, $.super, $.crate,
       alias(choice(...primitive_types), $.primitive_type),
       /[/_\-=->,;:::!=?.@*=/='&=#%=^=+<>|~]+/,
-      'as', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'if', 'impl',
-      'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait', 'type',
-      'union', 'unsafe', 'use', 'where', 'while'
+      'abstract', 'as', 'become', 'box', 'break', 'const', 'continue', 'default',
+      'do', 'enum', 'final', 'fn', 'for', 'if', 'impl', 'let', 'loop', 'macro',
+      'match', 'mod', 'override', 'priv', 'pub', 'return', 'static', 'struct',
+      'trait', 'try', 'type', 'typeof', 'union', 'unsafe', 'unsized', 'use',
+      'virtual', 'where', 'while', 'yield'
     ),
 
     // Section - Declarations
