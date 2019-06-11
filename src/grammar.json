@@ -719,7 +719,19 @@
         },
         {
           "type": "STRING",
+          "value": "abstract"
+        },
+        {
+          "type": "STRING",
           "value": "as"
+        },
+        {
+          "type": "STRING",
+          "value": "become"
+        },
+        {
+          "type": "STRING",
+          "value": "box"
         },
         {
           "type": "STRING",
@@ -739,7 +751,15 @@
         },
         {
           "type": "STRING",
+          "value": "do"
+        },
+        {
+          "type": "STRING",
           "value": "enum"
+        },
+        {
+          "type": "STRING",
+          "value": "final"
         },
         {
           "type": "STRING",
@@ -767,11 +787,23 @@
         },
         {
           "type": "STRING",
+          "value": "macro"
+        },
+        {
+          "type": "STRING",
           "value": "match"
         },
         {
           "type": "STRING",
           "value": "mod"
+        },
+        {
+          "type": "STRING",
+          "value": "override"
+        },
+        {
+          "type": "STRING",
+          "value": "priv"
         },
         {
           "type": "STRING",
@@ -795,7 +827,15 @@
         },
         {
           "type": "STRING",
+          "value": "try"
+        },
+        {
+          "type": "STRING",
           "value": "type"
+        },
+        {
+          "type": "STRING",
+          "value": "typeof"
         },
         {
           "type": "STRING",
@@ -807,7 +847,15 @@
         },
         {
           "type": "STRING",
+          "value": "unsized"
+        },
+        {
+          "type": "STRING",
           "value": "use"
+        },
+        {
+          "type": "STRING",
+          "value": "virtual"
         },
         {
           "type": "STRING",
@@ -816,6 +864,10 @@
         {
           "type": "STRING",
           "value": "while"
+        },
+        {
+          "type": "STRING",
+          "value": "yield"
         }
       ]
     },
@@ -7070,11 +7122,63 @@
         "members": [
           {
             "type": "STRING",
+            "value": "abstract"
+          },
+          {
+            "type": "STRING",
+            "value": "async"
+          },
+          {
+            "type": "STRING",
+            "value": "become"
+          },
+          {
+            "type": "STRING",
+            "value": "box"
+          },
+          {
+            "type": "STRING",
             "value": "default"
           },
           {
             "type": "STRING",
-            "value": "union"
+            "value": "do"
+          },
+          {
+            "type": "STRING",
+            "value": "final"
+          },
+          {
+            "type": "STRING",
+            "value": "macro"
+          },
+          {
+            "type": "STRING",
+            "value": "override"
+          },
+          {
+            "type": "STRING",
+            "value": "priv"
+          },
+          {
+            "type": "STRING",
+            "value": "try"
+          },
+          {
+            "type": "STRING",
+            "value": "typeof"
+          },
+          {
+            "type": "STRING",
+            "value": "unsized"
+          },
+          {
+            "type": "STRING",
+            "value": "virtual"
+          },
+          {
+            "type": "STRING",
+            "value": "yield"
           }
         ]
       },

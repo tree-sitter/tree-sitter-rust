@@ -800,7 +800,19 @@
     "named": false
   },
   {
+    "type": "abstract",
+    "named": false
+  },
+  {
     "type": "as",
+    "named": false
+  },
+  {
+    "type": "become",
+    "named": false
+  },
+  {
+    "type": "box",
     "named": false
   },
   {
@@ -820,7 +832,15 @@
     "named": false
   },
   {
+    "type": "do",
+    "named": false
+  },
+  {
     "type": "enum",
+    "named": false
+  },
+  {
+    "type": "final",
     "named": false
   },
   {
@@ -848,11 +868,23 @@
     "named": false
   },
   {
+    "type": "macro",
+    "named": false
+  },
+  {
     "type": "match",
     "named": false
   },
   {
     "type": "mod",
+    "named": false
+  },
+  {
+    "type": "override",
+    "named": false
+  },
+  {
+    "type": "priv",
     "named": false
   },
   {
@@ -876,7 +908,15 @@
     "named": false
   },
   {
+    "type": "try",
+    "named": false
+  },
+  {
     "type": "type",
+    "named": false
+  },
+  {
+    "type": "typeof",
     "named": false
   },
   {
@@ -888,7 +928,15 @@
     "named": false
   },
   {
+    "type": "unsized",
+    "named": false
+  },
+  {
     "type": "use",
+    "named": false
+  },
+  {
+    "type": "virtual",
     "named": false
   },
   {
@@ -897,6 +945,10 @@
   },
   {
     "type": "while",
+    "named": false
+  },
+  {
+    "type": "yield",
     "named": false
   },
   {
@@ -1118,6 +1170,10 @@
   {
     "type": "identifier",
     "named": true
+  },
+  {
+    "type": "async",
+    "named": false
   },
   {
     "type": "self",
