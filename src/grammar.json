@@ -723,6 +723,14 @@
         },
         {
           "type": "STRING",
+          "value": "async"
+        },
+        {
+          "type": "STRING",
+          "value": "await"
+        },
+        {
+          "type": "STRING",
           "value": "break"
         },
         {
@@ -2084,6 +2092,10 @@
       "content": {
         "type": "CHOICE",
         "members": [
+          {
+            "type": "STRING",
+            "value": "async"
+          },
           {
             "type": "STRING",
             "value": "default"
@@ -4072,6 +4084,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "await_expression"
+        },
+        {
+          "type": "SYMBOL",
           "name": "field_expression"
         },
         {
@@ -5937,6 +5953,27 @@
         ]
       }
     },
+    "await_expression": {
+      "type": "PREC",
+      "value": 15,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "_expression"
+          },
+          {
+            "type": "STRING",
+            "value": "."
+          },
+          {
+            "type": "STRING",
+            "value": "await"
+          }
+        ]
+      }
+    },
     "field_expression": {
       "type": "PREC",
       "value": 13,
@@ -7150,6 +7187,10 @@
     [
       "parameters",
       "tuple_struct_pattern"
+    ],
+    [
+      "await_expression",
+      "field_expression"
     ]
   ],
   "externals": [
