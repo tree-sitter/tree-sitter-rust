@@ -1219,7 +1219,7 @@ module.exports = grammar({
       $.integer_literal,
       $.float_literal,
     ),
-    
+
     _literal_pattern: $ => choice(
       $.string_literal,
       $.raw_string_literal,
@@ -1296,8 +1296,21 @@ module.exports = grammar({
     identifier: $ => /[a-zA-Zα-ωΑ-Ωµ_][a-zA-Zα-ωΑ-Ωµ\d_]*/,
 
     _reserved_identifier: $ => alias(choice(
-      'default',
-      'union'
+      "abstract",
+      "async",
+      "become",
+      "box",
+      "default",
+      "do",
+      "final",
+      "macro",
+      "override",
+      "priv",
+      "try",
+      "typeof",
+      "unsized",
+      "virtual",
+      "yield",
     ), $.identifier),
 
     _type_identifier: $ => alias($.identifier, $.type_identifier),
