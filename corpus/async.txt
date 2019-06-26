@@ -55,6 +55,7 @@ Async Block
 
 async {}
 async { let x = 10; }
+async move {}
 
 ---
 
@@ -65,4 +66,6 @@ async { let x = 10; }
     (block
       (let_declaration
         (identifier)
-        (integer_literal)))))
+        (integer_literal))))
+  (async_block
+    (block)))

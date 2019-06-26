@@ -1191,6 +1191,7 @@ module.exports = grammar({
 
     async_block: $ => seq(
       'async',
+      optional("move"),
       $.block
     ),
 
