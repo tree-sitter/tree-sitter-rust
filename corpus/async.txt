@@ -48,3 +48,21 @@ futures.await?.function().await?;
             (await_expression (identifier)))
           (field_identifier))
         (arguments)))))
+
+============================================
+Async Block
+============================================
+
+async {}
+async { let x = 10; }
+
+---
+
+(source_file
+  (async_block
+    (block))
+  (async_block
+    (block
+      (let_declaration
+        (identifier)
+        (integer_literal)))))
