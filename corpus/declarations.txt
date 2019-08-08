@@ -930,6 +930,10 @@ pub trait A<B> where B: C,
 {
 }
 
+fn foo<A>() where A: B + As<f64>, f64: As<A>
+{
+}
+
 ---
 
 (source_file
@@ -1005,7 +1009,18 @@ pub trait A<B> where B: C,
     (type_identifier)
     (type_parameters (type_identifier))
     (where_clause (where_predicate (type_identifier) (trait_bounds (type_identifier))))
-    (declaration_list)))
+    (declaration_list))
+  (function_item
+    (identifier)
+    (type_parameters (type_identifier))
+    (parameters)
+    (where_clause
+      (where_predicate
+        (type_identifier)
+        (trait_bounds (type_identifier) (generic_type (type_identifier) (type_arguments (primitive_type)))))
+      (where_predicate
+        (primitive_type) (trait_bounds (generic_type (type_identifier) (type_arguments (type_identifier))))))
+    (block)))
 
 ===================================
 External Modules
