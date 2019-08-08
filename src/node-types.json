@@ -10785,6 +10785,10 @@
           "named": true
         },
         {
+          "type": "pointer_type",
+          "named": true
+        },
+        {
           "type": "reference_type",
           "named": true
         },

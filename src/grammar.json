@@ -2189,6 +2189,10 @@
             },
             {
               "type": "SYMBOL",
+              "name": "pointer_type"
+            },
+            {
+              "type": "SYMBOL",
               "name": "tuple_type"
             },
             {

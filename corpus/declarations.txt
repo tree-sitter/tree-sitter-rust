@@ -930,6 +930,10 @@ pub trait A<B> where B: C,
 {
 }
 
+impl<A> Default for B<A> where *mut A: C + D
+{
+}
+
 ---
 
 (source_file
@@ -1005,6 +1009,16 @@ pub trait A<B> where B: C,
     (type_identifier)
     (type_parameters (type_identifier))
     (where_clause (where_predicate (type_identifier) (trait_bounds (type_identifier))))
+    (declaration_list))
+  (impl_item
+    (type_parameters (type_identifier))
+    (type_identifier)
+    (impl_for_clause
+      (generic_type (type_identifier) (type_arguments (type_identifier))))
+    (where_clause
+      (where_predicate
+        (pointer_type (mutable_specifier) (type_identifier))
+        (trait_bounds (type_identifier) (type_identifier))))
     (declaration_list)))
 
 ===================================
