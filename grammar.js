@@ -66,6 +66,7 @@ module.exports = grammar({
     [$.scoped_identifier, $.scoped_type_identifier],
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
+    [$.type_parameters, $.for_lifetimes],
   ],
 
   word: $ => $.identifier,
@@ -663,7 +664,16 @@ module.exports = grammar({
       ']'
     ),
 
+    for_lifetimes: $ => seq(
+      'for',
+      '<',
+      sepBy1(',', $.lifetime,),
+      optional(','),
+      '>'
+    ),
+
     function_type: $ => seq(
+      optional($.for_lifetimes),
       optional($.function_modifiers),
       prec(PREC.call, seq(
         choice(

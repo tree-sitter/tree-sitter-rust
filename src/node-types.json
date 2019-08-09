@@ -4097,6 +4097,21 @@
     }
   },
   {
+    "type": "for_lifetimes",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "lifetime",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "foreign_mod_item",
     "named": true,
     "fields": {},
@@ -4367,6 +4382,10 @@
         },
         {
           "type": "empty_type",
+          "named": true
+        },
+        {
+          "type": "for_lifetimes",
           "named": true
         },
         {
