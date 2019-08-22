@@ -153,7 +153,7 @@ module.exports = grammar({
     )),
 
     token_repetition_pattern: $ => seq(
-      '$', '(', repeat($._token_pattern), ')', optional(/[^+*]+/), choice('+', '*')
+      '$', '(', repeat($._token_pattern), ')', optional(/[^+*]+/), choice('+', '*', '?')
     ),
 
     fragment_specifier: $ => choice(

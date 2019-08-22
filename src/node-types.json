@@ -11242,6 +11242,10 @@
     "named": false
   },
   {
+    "type": "?",
+    "named": false
+  },
+  {
     "type": "ident",
     "named": false
   },
@@ -11483,10 +11487,6 @@
   },
   {
     "type": "->",
-    "named": false
-  },
-  {
-    "type": "?",
     "named": false
   },
   {
