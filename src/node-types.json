@@ -3784,7 +3784,7 @@
           "named": true
         },
         {
-          "type": "shorthand_field_identifier",
+          "type": "shorthand_field_initializer",
           "named": true
         }
       ]
@@ -8143,7 +8143,7 @@
     }
   },
   {
-    "type": "shorthand_field_identifier",
+    "type": "shorthand_field_initializer",
     "named": true,
     "fields": {},
     "children": {
