@@ -76,36 +76,6 @@
 
 (lifetime (identifier) @label)
 
-; macro_definition > identifier,
-; generic_function > identifier,
-; generic_function > field_expression > field_identifier,
-; generic_function > scoped_identifier > identifier,
-; function_signature_item > identifier {
-;   highlight: 'function';
-; }
-;
-
-; use_wildcard > identifier:nth-child(0),
-; use_wildcard > scoped_identifier > identifier:nth-child(2),
-; scoped_type_identifier > identifier:nth-child(0),
-; scoped_type_identifier > scoped_identifier:nth-child(0) > identifier,
-; scoped_identifier > identifier:nth-child(0),
-; scoped_identifier > scoped_identifier:nth-child(0) > identifier,
-; use_declaration > identifier,
-; use_declaration > scoped_identifier > identifier,
-; use_list > identifier,
-; use_list > scoped_identifier > identifier,
-; meta_item > identifier {
-;   &[text="^[A-Z]"] {
-;     highlight: 'type';
-;   }
-; }
-;
-; lifetime > identifier {
-;   highlight: 'label';
-; }
-;
-
 "break" @keyword
 "const" @keyword
 "continue" @keyword
