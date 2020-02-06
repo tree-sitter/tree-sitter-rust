@@ -743,7 +743,7 @@
         },
         {
           "type": "PATTERN",
-          "value": "[\\/_\\-=->,;:::!=?.@*=\\/='&=#%=^=+<>|~]+"
+          "value": "[/_\\-=->,;:::!=?.@*=/='&=#%=^=+<>|~]+"
         },
         {
           "type": "STRING",
@@ -2866,6 +2866,10 @@
                   {
                     "type": "SYMBOL",
                     "name": "optional_type_parameter"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "const_generics"
                   }
                 ]
               },
@@ -2900,6 +2904,10 @@
                         {
                           "type": "SYMBOL",
                           "name": "optional_type_parameter"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "const_generics"
                         }
                       ]
                     }
@@ -2926,6 +2934,35 @@
           }
         ]
       }
+    },
+    "const_generics": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "const"
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ":"
+        },
+        {
+          "type": "FIELD",
+          "name": "type",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_type_identifier"
+          }
+        }
+      ]
     },
     "constrained_type_parameter": {
       "type": "SEQ",
@@ -8170,6 +8207,10 @@
     [
       "type_parameters",
       "for_lifetimes"
+    ],
+    [
+      "function_modifiers",
+      "const_generics"
     ]
   ],
   "externals": [

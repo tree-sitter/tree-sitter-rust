@@ -76,6 +76,7 @@ module.exports = grammar({
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
     [$.type_parameters, $.for_lifetimes],
+    [$.function_modifiers, $.const_generics],
   ],
 
   word: $ => $.identifier,
@@ -511,11 +512,19 @@ module.exports = grammar({
         $.metavariable,
         $._type_identifier,
         $.constrained_type_parameter,
-        $.optional_type_parameter
+        $.optional_type_parameter,
+        $.const_generics,
       )),
       optional(','),
       '>'
     )),
+
+    const_generics: $ => seq(
+      'const',
+      field('name', $.identifier),
+      ':',
+      field('type', $._type_identifier),
+    ),
 
     constrained_type_parameter: $ => seq(
       field('left', choice($.lifetime, $._type_identifier)),
