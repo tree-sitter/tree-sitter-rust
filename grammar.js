@@ -512,13 +512,13 @@ module.exports = grammar({
         $._type_identifier,
         $.constrained_type_parameter,
         $.optional_type_parameter,
-        $.const_generics,
+        $.const_parameter,
       )),
       optional(','),
       '>'
     )),
 
-    const_generics: $ => seq(
+    const_parameter: $ => seq(
       'const',
       field('name', $.identifier),
       ':',

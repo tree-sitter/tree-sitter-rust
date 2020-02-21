@@ -1012,32 +1012,6 @@
     }
   },
   {
-    "type": "const_generics",
-    "named": true,
-    "fields": {
-      "name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      },
-      "type": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "type_identifier",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "const_item",
     "named": true,
     "fields": {
@@ -1081,6 +1055,32 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "const_parameter",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type_identifier",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -3945,7 +3945,7 @@
       "required": true,
       "types": [
         {
-          "type": "const_generics",
+          "type": "const_parameter",
           "named": true
         },
         {

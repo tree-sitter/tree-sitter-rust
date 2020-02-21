@@ -2869,7 +2869,7 @@
                   },
                   {
                     "type": "SYMBOL",
-                    "name": "const_generics"
+                    "name": "const_parameter"
                   }
                 ]
               },
@@ -2907,7 +2907,7 @@
                         },
                         {
                           "type": "SYMBOL",
-                          "name": "const_generics"
+                          "name": "const_parameter"
                         }
                       ]
                     }
@@ -2935,7 +2935,7 @@
         ]
       }
     },
-    "const_generics": {
+    "const_parameter": {
       "type": "SEQ",
       "members": [
         {
