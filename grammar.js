@@ -76,7 +76,6 @@ module.exports = grammar({
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
     [$.type_parameters, $.for_lifetimes],
-    [$.function_modifiers, $.const_generics],
   ],
 
   word: $ => $.identifier,
@@ -709,13 +708,17 @@ module.exports = grammar({
 
     function_type: $ => seq(
       optional($.for_lifetimes),
-      optional($.function_modifiers),
       prec(PREC.call, seq(
-        field('trait', choice(
-          $._type_identifier,
-          $.scoped_type_identifier,
-          'fn'
-        )),
+        choice(
+          field('trait', choice(
+            $._type_identifier,
+            $.scoped_type_identifier
+          )),
+          seq(
+            optional($.function_modifiers),
+            'fn'
+          )
+        ),
         field('parameters', $.parameters)
       )),
       optional(seq('->', field('return_type', $._type)))

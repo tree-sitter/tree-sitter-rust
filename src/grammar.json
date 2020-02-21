@@ -743,7 +743,7 @@
         },
         {
           "type": "PATTERN",
-          "value": "[/_\\-=->,;:::!=?.@*=/='&=#%=^=+<>|~]+"
+          "value": "[\\/_\\-=->,;:::!=?.@*=\\/='&=#%=^=+<>|~]+"
         },
         {
           "type": "STRING",
@@ -3962,43 +3962,53 @@
           ]
         },
         {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "function_modifiers"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
           "type": "PREC",
           "value": 14,
           "content": {
             "type": "SEQ",
             "members": [
               {
-                "type": "FIELD",
-                "name": "trait",
-                "content": {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "_type_identifier"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "scoped_type_identifier"
-                    },
-                    {
-                      "type": "STRING",
-                      "value": "fn"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "FIELD",
+                    "name": "trait",
+                    "content": {
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "SYMBOL",
+                          "name": "_type_identifier"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "scoped_type_identifier"
+                        }
+                      ]
                     }
-                  ]
-                }
+                  },
+                  {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "CHOICE",
+                        "members": [
+                          {
+                            "type": "SYMBOL",
+                            "name": "function_modifiers"
+                          },
+                          {
+                            "type": "BLANK"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "fn"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "type": "FIELD",
@@ -8207,10 +8217,6 @@
     [
       "type_parameters",
       "for_lifetimes"
-    ],
-    [
-      "function_modifiers",
-      "const_generics"
     ]
   ],
   "externals": [

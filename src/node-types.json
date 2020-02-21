@@ -777,46 +777,6 @@
         {
           "type": "_expression",
           "named": true
-        },
-        {
-          "type": "async_block",
-          "named": true
-        },
-        {
-          "type": "block",
-          "named": true
-        },
-        {
-          "type": "for_expression",
-          "named": true
-        },
-        {
-          "type": "if_expression",
-          "named": true
-        },
-        {
-          "type": "if_let_expression",
-          "named": true
-        },
-        {
-          "type": "loop_expression",
-          "named": true
-        },
-        {
-          "type": "match_expression",
-          "named": true
-        },
-        {
-          "type": "unsafe_block",
-          "named": true
-        },
-        {
-          "type": "while_expression",
-          "named": true
-        },
-        {
-          "type": "while_let_expression",
-          "named": true
         }
       ]
     }
@@ -920,10 +880,6 @@
         {
           "type": "_pattern",
           "named": true
-        },
-        {
-          "type": "identifier",
-          "named": true
         }
       ]
     }
@@ -938,10 +894,6 @@
         "types": [
           {
             "type": "_expression",
-            "named": true
-          },
-          {
-            "type": "block",
             "named": true
           }
         ]
@@ -1870,12 +1822,8 @@
       },
       "trait": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
-          {
-            "type": "fn",
-            "named": false
-          },
           {
             "type": "scoped_type_identifier",
             "named": true
@@ -2423,46 +2371,6 @@
           {
             "type": "_expression",
             "named": true
-          },
-          {
-            "type": "async_block",
-            "named": true
-          },
-          {
-            "type": "block",
-            "named": true
-          },
-          {
-            "type": "for_expression",
-            "named": true
-          },
-          {
-            "type": "if_expression",
-            "named": true
-          },
-          {
-            "type": "if_let_expression",
-            "named": true
-          },
-          {
-            "type": "loop_expression",
-            "named": true
-          },
-          {
-            "type": "match_expression",
-            "named": true
-          },
-          {
-            "type": "unsafe_block",
-            "named": true
-          },
-          {
-            "type": "while_expression",
-            "named": true
-          },
-          {
-            "type": "while_let_expression",
-            "named": true
           }
         ]
       }
@@ -2764,10 +2672,6 @@
         "types": [
           {
             "type": "_pattern",
-            "named": true
-          },
-          {
-            "type": "identifier",
             "named": true
           },
           {
@@ -3300,46 +3204,6 @@
         },
         {
           "type": "_expression",
-          "named": true
-        },
-        {
-          "type": "async_block",
-          "named": true
-        },
-        {
-          "type": "block",
-          "named": true
-        },
-        {
-          "type": "for_expression",
-          "named": true
-        },
-        {
-          "type": "if_expression",
-          "named": true
-        },
-        {
-          "type": "if_let_expression",
-          "named": true
-        },
-        {
-          "type": "loop_expression",
-          "named": true
-        },
-        {
-          "type": "match_expression",
-          "named": true
-        },
-        {
-          "type": "unsafe_block",
-          "named": true
-        },
-        {
-          "type": "while_expression",
-          "named": true
-        },
-        {
-          "type": "while_let_expression",
           "named": true
         }
       ]
@@ -4795,6 +4659,10 @@
     "named": false
   },
   {
+    "type": "block_comment",
+    "named": true
+  },
+  {
     "type": "break",
     "named": false
   },
@@ -4848,6 +4716,10 @@
   },
   {
     "type": "field_identifier",
+    "named": true
+  },
+  {
+    "type": "float_literal",
     "named": true
   },
   {
@@ -4941,6 +4813,10 @@
   {
     "type": "pub",
     "named": false
+  },
+  {
+    "type": "raw_string_literal",
+    "named": true
   },
   {
     "type": "ref",
