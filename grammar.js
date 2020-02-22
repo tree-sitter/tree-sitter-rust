@@ -771,7 +771,8 @@ module.exports = grammar({
       sepBy1(',', choice(
         $._type,
         $.type_binding,
-        $.lifetime
+        $.lifetime,
+        $._literal,
       )),
       optional(','),
       '>'
