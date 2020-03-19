@@ -191,7 +191,7 @@ module.exports = grammar({
       $._literal, $.identifier, $.metavariable, $.mutable_specifier, $.self, $.super, $.crate,
       alias(choice(...primitive_types), $.primitive_type),
       /[/_\-=->,;:::!=?.@*=/='&=#%=^=+<>|~]+/,
-      'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'if', 'impl',
+      'as', 'async', 'await', 'break', 'const', 'continue', 'enum', 'fn', 'for', 'if', 'impl',
       'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait', 'type',
       'union', 'unsafe', 'use', 'where', 'while'
     ),
@@ -422,7 +422,6 @@ module.exports = grammar({
 
     function_modifiers: $ => repeat1(choice(
       'async',
-      'default',
       'const',
       'unsafe',
       $.extern_modifier
@@ -1420,7 +1419,6 @@ module.exports = grammar({
     identifier: $ => /[a-zA-Zα-ωΑ-Ωµ_][a-zA-Zα-ωΑ-Ωµ\d_]*/,
 
     _reserved_identifier: $ => alias(choice(
-      'default',
       'union',
     ), $.identifier),
 

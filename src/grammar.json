@@ -783,10 +783,6 @@
         },
         {
           "type": "STRING",
-          "value": "default"
-        },
-        {
-          "type": "STRING",
           "value": "enum"
         },
         {
@@ -2306,10 +2302,6 @@
           {
             "type": "STRING",
             "value": "async"
-          },
-          {
-            "type": "STRING",
-            "value": "default"
           },
           {
             "type": "STRING",
@@ -8180,10 +8172,6 @@
       "content": {
         "type": "CHOICE",
         "members": [
-          {
-            "type": "STRING",
-            "value": "default"
-          },
           {
             "type": "STRING",
             "value": "union"

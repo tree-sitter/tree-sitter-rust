@@ -4691,10 +4691,6 @@
     "named": true
   },
   {
-    "type": "default",
-    "named": false
-  },
-  {
     "type": "dyn",
     "named": false
   },
