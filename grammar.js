@@ -129,7 +129,10 @@ module.exports = grammar({
 
       return seq(
         'macro_rules!',
-        field('name', $.identifier),
+        field('name', choice(
+          $.identifier,
+          $._reserved_identifier,
+        )),
         choice(
           seq('(', rules, ')', ';'),
           seq('{', rules, '}')
@@ -877,7 +880,8 @@ module.exports = grammar({
     macro_invocation: $ => seq(
       field('macro', choice(
         $.scoped_identifier,
-        $.identifier
+        $.identifier,
+        $._reserved_identifier,
       )),
       '!',
       $.token_tree
