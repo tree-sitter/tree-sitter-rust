@@ -1429,7 +1429,8 @@ module.exports = grammar({
       $.super,
       $.crate,
       $.identifier,
-      $.scoped_identifier
+      $.scoped_identifier,
+      $._reserved_identifier,
     ),
 
     identifier: $ => /(r#)?[_\p{XID_Start}][_\p{XID_Continue}]*/,
@@ -1445,7 +1446,7 @@ module.exports = grammar({
     self: $ => 'self',
     super: $ => 'super',
     crate: $ => 'crate',
-
+    
     metavariable: $ => /\$[a-zA-Z_]\w*/
   }
 })

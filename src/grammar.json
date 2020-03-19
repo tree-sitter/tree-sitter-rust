@@ -8213,6 +8213,10 @@
         {
           "type": "SYMBOL",
           "name": "scoped_identifier"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_reserved_identifier"
         }
       ]
     },
