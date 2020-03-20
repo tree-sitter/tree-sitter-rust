@@ -191,6 +191,7 @@ module.exports = grammar({
       $._literal, $.identifier, $.metavariable, $.mutable_specifier, $.self, $.super, $.crate,
       alias(choice(...primitive_types), $.primitive_type),
       /[/_\-=->,;:::!=?.@*=/=&=#%=^=+<>|~]+/,
+      '\'',
       'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'if', 'impl',
       'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait', 'type',
       'union', 'unsafe', 'use', 'where', 'while'
