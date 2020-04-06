@@ -778,6 +778,7 @@ module.exports = grammar({
         $.type_binding,
         $.lifetime,
         $._literal,
+        $.block,
       )),
       optional(','),
       '>'
