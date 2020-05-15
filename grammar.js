@@ -1240,6 +1240,7 @@ module.exports = grammar({
       $.remaining_field_pattern,
       $.mut_pattern,
       $.range_pattern,
+      $.or_pattern,
       '_'
     ),
 
@@ -1327,6 +1328,12 @@ module.exports = grammar({
       optional($.mutable_specifier),
       $._pattern
     ),
+
+    or_pattern: $ => prec.left(-2, seq(
+      $._pattern,
+      '|',
+      $._pattern,
+    )),
 
     // Section - Literals
 
