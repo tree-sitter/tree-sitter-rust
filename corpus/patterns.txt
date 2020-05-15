@@ -135,3 +135,39 @@ match x {
     (match_arm
       (match_pattern (captured_pattern (identifier) (range_pattern (identifier) (identifier))))
       (identifier)))))
+
+=================================
+Box patterns
+=================================
+
+match x {
+    box a @ 10 => a,
+    box a @ 11 => a,
+    box a => a,
+}
+
+---
+
+(source_file
+  (match_expression
+    value: (identifier)
+    body: (match_block
+      (match_arm
+        pattern: (match_pattern
+          (box_pattern
+            (captured_pattern
+              (identifier)
+              (integer_literal))))
+        value: (identifier))
+      (match_arm
+        pattern: (match_pattern
+          (box_pattern
+            (captured_pattern
+              (identifier)
+              (integer_literal))))
+        value: (identifier))
+      (match_arm
+        pattern: (match_pattern
+          (box_pattern
+            (identifier)))
+        value: (identifier)))))

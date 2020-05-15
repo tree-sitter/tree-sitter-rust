@@ -324,6 +324,10 @@
         "named": true
       },
       {
+        "type": "box_pattern",
+        "named": true
+      },
+      {
         "type": "captured_pattern",
         "named": true
       },
@@ -800,6 +804,21 @@
         },
         {
           "type": "lifetime",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "box_pattern",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "_pattern",
           "named": true
         }
       ]
@@ -4673,6 +4692,10 @@
   {
     "type": "block_comment",
     "named": true
+  },
+  {
+    "type": "box",
+    "named": false
   },
   {
     "type": "break",

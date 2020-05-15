@@ -1240,6 +1240,7 @@ module.exports = grammar({
       $.remaining_field_pattern,
       $.mut_pattern,
       $.range_pattern,
+      $.box_pattern,
       '_'
     ),
 
@@ -1296,7 +1297,7 @@ module.exports = grammar({
 
     mut_pattern: $ => prec(-1, seq(
       $.mutable_specifier,
-      $._pattern
+      $._pattern,
     )),
 
     range_pattern: $ => seq(
@@ -1313,7 +1314,7 @@ module.exports = grammar({
 
     ref_pattern: $ => seq(
       'ref',
-      $._pattern
+      $._pattern,
     ),
 
     captured_pattern: $ => seq(
@@ -1325,7 +1326,12 @@ module.exports = grammar({
     reference_pattern: $ => seq(
       '&',
       optional($.mutable_specifier),
-      $._pattern
+      $._pattern,
+    ),
+
+    box_pattern: $ => seq(
+      'box',
+      $._pattern,
     ),
 
     // Section - Literals

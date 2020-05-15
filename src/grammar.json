@@ -755,7 +755,7 @@
         },
         {
           "type": "PATTERN",
-          "value": "[\\/_\\-=->,;:::!=?.@*=\\/=&=#%=^=+<>|~]+"
+          "value": "[/_\\-=->,;:::!=?.@*=/=&=#%=^=+<>|~]+"
         },
         {
           "type": "STRING",
@@ -7217,6 +7217,10 @@
           "name": "range_pattern"
         },
         {
+          "type": "SYMBOL",
+          "name": "box_pattern"
+        },
+        {
           "type": "STRING",
           "value": "_"
         }
@@ -7691,6 +7695,19 @@
               "type": "BLANK"
             }
           ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_pattern"
+        }
+      ]
+    },
+    "box_pattern": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "box"
         },
         {
           "type": "SYMBOL",
