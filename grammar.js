@@ -1125,7 +1125,6 @@ module.exports = grammar({
 
     match_pattern: $ => seq(
       $._pattern,
-      repeat(seq('|', $._pattern)),
       optional(seq('if', field('condition', $._expression)))
     ),
 

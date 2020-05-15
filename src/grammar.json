@@ -6464,22 +6464,6 @@
           "name": "_pattern"
         },
         {
-          "type": "REPEAT",
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "STRING",
-                "value": "|"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "_pattern"
-              }
-            ]
-          }
-        },
-        {
           "type": "CHOICE",
           "members": [
             {
