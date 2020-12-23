@@ -332,60 +332,60 @@ fn foo(x: i32) {
 
 ---
 
-(source_file [0, 0] - [13, 1]
-  (function_item [0, 0] - [6, 1]
-    name: (identifier [0, 3] - [0, 6])
-    parameters: (parameters [0, 6] - [0, 14]
-      (parameter [0, 7] - [0, 13]
-        pattern: (identifier [0, 7] - [0, 8])
-        type: (primitive_type [0, 10] - [0, 13])))
-    body: (block [0, 15] - [6, 1]
-      (const_item [1, 4] - [1, 31]
-        name: (identifier [1, 10] - [1, 14])
-        type: (primitive_type [1, 16] - [1, 19])
-        value: (call_expression [1, 22] - [1, 30]
-          function: (field_expression [1, 22] - [1, 27]
-            value: (integer_literal [1, 22] - [1, 23])
-            field: (field_identifier [1, 24] - [1, 27]))
-          arguments: (arguments [1, 27] - [1, 30]
-            (integer_literal [1, 28] - [1, 29]))))
-      (match_expression [2, 4] - [5, 5]
-        value: (identifier [2, 10] - [2, 11])
-        body: (match_block [2, 12] - [5, 5]
-          (match_arm [3, 8] - [3, 40]
-            pattern: (match_pattern [3, 8] - [3, 12]
-              (identifier [3, 8] - [3, 12]))
-            value: (macro_invocation [3, 16] - [3, 39]
-              macro: (identifier [3, 16] - [3, 23])
-              (token_tree [3, 24] - [3, 39]
-                (string_literal [3, 25] - [3, 38]))))
-          (match_arm [4, 8] - [4, 15]
-            pattern: (match_pattern [4, 8] - [4, 9])
-            value: (block [4, 13] - [4, 15]))))))
-  (function_item [8, 0] - [13, 1]
-    name: (identifier [8, 3] - [8, 6])
-    parameters: (parameters [8, 6] - [8, 14]
-      (parameter [8, 7] - [8, 13]
-        pattern: (identifier [8, 7] - [8, 8])
-        type: (primitive_type [8, 10] - [8, 13])))
-    body: (block [8, 15] - [13, 1]
-      (match_expression [9, 4] - [12, 5]
-        value: (identifier [9, 10] - [9, 11])
-        body: (match_block [9, 12] - [12, 5]
-          (match_arm [10, 8] - [10, 54]
-            pattern: (match_pattern [10, 8] - [10, 26]
-              (const_block [10, 8] - [10, 26]
-                body: (block [10, 14] - [10, 26]
-                  (call_expression [10, 16] - [10, 24]
-                    function: (field_expression [10, 16] - [10, 21]
-                      value: (integer_literal [10, 16] - [10, 17])
-                      field: (field_identifier [10, 18] - [10, 21]))
-                    arguments: (arguments [10, 21] - [10, 24]
-                      (integer_literal [10, 22] - [10, 23]))))))
-            value: (macro_invocation [10, 30] - [10, 53]
-              macro: (identifier [10, 30] - [10, 37])
-              (token_tree [10, 38] - [10, 53]
-                (string_literal [10, 39] - [10, 52]))))
-          (match_arm [11, 8] - [11, 15]
-            pattern: (match_pattern [11, 8] - [11, 9])
-            value: (block [11, 13] - [11, 15])))))))
+(source_file
+  (function_item
+    name: (identifier)
+    parameters: (parameters
+      (parameter
+        pattern: (identifier)
+        type: (primitive_type)))
+    body: (block
+      (const_item
+        name: (identifier)
+        type: (primitive_type)
+        value: (call_expression
+          function: (field_expression
+            value: (integer_literal)
+            field: (field_identifier))
+          arguments: (arguments
+            (integer_literal))))
+      (match_expression
+        value: (identifier)
+        body: (match_block
+          (match_arm
+            pattern: (match_pattern
+              (identifier))
+            value: (macro_invocation
+              macro: (identifier)
+              (token_tree
+                (string_literal))))
+          (match_arm
+            pattern: (match_pattern)
+            value: (block))))))
+  (function_item
+    name: (identifier)
+    parameters: (parameters
+      (parameter
+        pattern: (identifier)
+        type: (primitive_type)))
+    body: (block
+      (match_expression
+        value: (identifier)
+        body: (match_block
+          (match_arm
+            pattern: (match_pattern
+              (const_block
+                body: (block
+                  (call_expression
+                    function: (field_expression
+                      value: (integer_literal)
+                      field: (field_identifier))
+                    arguments: (arguments
+                      (integer_literal))))))
+            value: (macro_invocation
+              macro: (identifier)
+              (token_tree
+                (string_literal))))
+          (match_arm
+            pattern: (match_pattern)
+            value: (block)))))))
