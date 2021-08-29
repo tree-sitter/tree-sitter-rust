@@ -980,21 +980,20 @@ impl<K: Debug + Ord> Display for OccupiedError<K>;
 ---
 
 (source_file
-  (ERROR
+  (impl_item
+    (type_parameters
+      (constrained_type_parameter
+        (type_identifier)
+          (trait_bounds (type_identifier) (type_identifier))))
+    (type_identifier)
+    (generic_type (type_identifier) (type_arguments (type_identifier))))
+  (impl_item
     (type_parameters
       (constrained_type_parameter
         (type_identifier)
         (trait_bounds (type_identifier) (type_identifier))))
-    (identifier)
-    (ERROR (generic_type (type_identifier) (type_arguments (type_identifier))))
-    (abstract_type
-      (ERROR
-        (bracketed_type
-          (ERROR (type_identifier))
-          (bounded_type (type_identifier) (type_identifier)))
-        (identifier))
-      (generic_type (type_identifier) (type_arguments (type_identifier)))))
-  (empty_statement))
+    (type_identifier)
+    (generic_type (type_identifier) (type_arguments (type_identifier)))))
 
 ===========================================
 Impls with default functions
