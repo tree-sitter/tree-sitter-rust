@@ -1140,6 +1140,13 @@ impl Database for Foo {
     type F<'a, D> = DatabaseFuture<'a, D>;
 }
 
+fn use_database1<D: Database<F<'a, TD> = F>>() {}
+
+fn use_database2<D>()
+where
+    D: Database<F<'a, TD> = F>,
+{}
+
 ---
 
 (source_file
@@ -1166,6 +1173,43 @@ impl Database for Foo {
         (generic_type
           (type_identifier)
           (type_arguments (lifetime (identifier)) (type_identifier))))))
+
+  (function_item
+    (identifier)
+    (type_parameters
+      (constrained_type_parameter
+        (type_identifier)
+        (trait_bounds
+          (generic_type
+            (type_identifier)
+            (type_arguments
+              (type_binding
+                (type_identifier)
+                (type_arguments
+                  (lifetime (identifier))
+                  (type_identifier))
+                (type_identifier)))))))
+    (parameters)
+    (block))
+
+  (function_item
+    (identifier)
+      (type_parameters (type_identifier))
+      (parameters)
+      (where_clause
+        (where_predicate
+          (type_identifier)
+          (trait_bounds
+            (generic_type
+              (type_identifier)
+              (type_arguments
+                (type_binding
+                  (type_identifier)
+                  (type_arguments
+                    (lifetime (identifier))
+                    (type_identifier))
+                  (type_identifier)))))))
+       (block)))
 
 =====================
 Higher-ranked types
