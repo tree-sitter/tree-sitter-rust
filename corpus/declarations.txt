@@ -1133,11 +1133,11 @@ Generic Associated Types
 ============================================
 
 pub trait Database {
-    type F<'a>: Future + 'a;
+    type F<'a, D>: Future<Output = D> + 'a;
 }
 
 impl Database for Foo {
-    type F<'a> = DatabaseFuture<'a>;
+    type F<'a, D> = DatabaseFuture<'a, D>;
 }
 
 ---
@@ -1149,18 +1149,23 @@ impl Database for Foo {
     (declaration_list
       (associated_type
         (type_identifier)
-        (type_parameters (lifetime (identifier)))
-        (trait_bounds (type_identifier) (lifetime (identifier))))))
+        (type_parameters (lifetime (identifier)) (type_identifier))
+        (trait_bounds
+          (generic_type
+            (type_identifier)
+            (type_arguments (type_binding (type_identifier) (type_identifier))))
+          (lifetime (identifier))))))
 
-    (impl_item
-      (type_identifier)
-      (type_identifier)
-      (declaration_list
-        (type_item
+  (impl_item
+    (type_identifier)
+    (type_identifier)
+    (declaration_list
+      (type_item
+        (type_identifier)
+        (type_parameters (lifetime (identifier)) (type_identifier))
+        (generic_type
           (type_identifier)
-          (type_parameters (lifetime (identifier)))
-          (generic_type (type_identifier) (type_arguments (lifetime (identifier)))))))
-)
+          (type_arguments (lifetime (identifier)) (type_identifier))))))
 
 =====================
 Higher-ranked types
