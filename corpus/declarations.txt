@@ -1128,6 +1128,40 @@ pub trait Graph {
       (associated_type (type_identifier) (trait_bounds (scoped_type_identifier (identifier) (type_identifier))))
       (associated_type (type_identifier)))))
 
+============================================
+Generic Associated Types
+============================================
+
+pub trait Database {
+    type F<'a>: Future + 'a;
+}
+
+impl Database for Foo {
+    type F<'a> = DatabaseFuture<'a>;
+}
+
+---
+
+(source_file
+  (trait_item
+    (visibility_modifier)
+    (type_identifier)
+    (declaration_list
+      (associated_type
+        (type_identifier)
+        (type_parameters (lifetime (identifier)))
+        (trait_bounds (type_identifier) (lifetime (identifier))))))
+
+    (impl_item
+      (type_identifier)
+      (type_identifier)
+      (declaration_list
+        (type_item
+          (type_identifier)
+          (type_parameters (lifetime (identifier)))
+          (generic_type (type_identifier) (type_arguments (lifetime (identifier)))))))
+)
+
 =====================
 Higher-ranked types
 =====================
