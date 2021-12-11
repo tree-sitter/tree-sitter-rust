@@ -1452,7 +1452,7 @@ module.exports = grammar({
     self: $ => 'self',
     super: $ => 'super',
     crate: $ => 'crate',
-    
+
     metavariable: $ => /\$[a-zA-Z_]\w*/
   }
 })

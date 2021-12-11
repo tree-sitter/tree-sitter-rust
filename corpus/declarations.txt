@@ -1203,13 +1203,13 @@ where
             (generic_type
               (type_identifier)
               (type_arguments
-                (type_binding
-                  (type_identifier)
-                  (type_arguments
-                    (lifetime (identifier))
-                    (type_identifier))
-                  (type_identifier)))))))
-       (block)))
+                 (type_binding
+                   (type_identifier)
+                   (type_arguments
+                     (lifetime (identifier))
+                     (type_identifier))
+                   (type_identifier)))))))
+    (block)))
 
 =====================
 Higher-ranked types
