@@ -6,6 +6,8 @@ enum TokenType {
   RAW_STRING_LITERAL,
   FLOAT_LITERAL,
   BLOCK_COMMENT,
+  LINE_COMMENT,
+  DOC_COMMENT,
 };
 
 void *tree_sitter_rust_external_scanner_create() { return NULL; }
@@ -143,7 +145,100 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
 
   if (lexer->lookahead == '/') {
     advance(lexer);
+
+    if ((valid_symbols[LINE_COMMENT] || valid_symbols[DOC_COMMENT]) && lexer->lookahead == '/') {
+      advance(lexer);
+
+      bool started_with_slash = lexer->lookahead == '/';
+      switch (lexer->lookahead) {
+        case '!':
+        case '/': {
+          advance(lexer);
+
+          // If three consecutive slashes were seen and this is the fourth one,
+          // the line turns back to a normal comment.
+          // The above rule does not apply for "//!" which is also a doc
+          // comment, hence why it is relevant to track started_with_slash.
+          if (started_with_slash == false || lexer->lookahead != '/') {
+            lexer->result_symbol = DOC_COMMENT;
+
+            while (true) {
+              while (true) {
+                switch (lexer->lookahead) {
+                  case '\n': {
+                    lexer->mark_end(lexer);
+                    advance(lexer);
+                    goto finished_doc_comment_line;
+                  }
+                  case 0: {
+                    goto doc_comment_exit;
+                  }
+                  default: {
+                    advance(lexer);
+                  }
+                }
+              }
+
+finished_doc_comment_line:
+
+              // Go forward until a newline or non-whitespace character is found.
+              // That will be either the start of another node or the
+              // continuation of this comment.
+              while (lexer->lookahead != '\n' && iswspace(lexer->lookahead)) {
+                lexer->advance(lexer, false);
+              };
+
+              if (lexer->lookahead == '\n') {
+                // Even if there's another comment ahead, it'll be part of a
+                // separate node. Break here.
+                break;
+              }
+
+              if (lexer->lookahead == '/') {
+                advance(lexer);
+                if (lexer->lookahead == '/') {
+                  advance(lexer);
+                  if (started_with_slash) {
+                    if (lexer->lookahead == '/') {
+                      advance(lexer);
+                      // If a fourth slash is found, the line turns back to a normal comment
+                      if (lexer->lookahead == '/') {
+                        break;
+                      }
+                    } else {
+                      break;
+                    }
+                  } else if (lexer->lookahead != '!') {
+                    break;
+                  }
+                } else {
+                  break;
+                }
+              } else {
+                break;
+              }
+            }
+          }
+
+          break;
+        }
+      }
+
+doc_comment_exit:
+
+      // Might have already processed a doc comment in the loop above
+      if (lexer->result_symbol != DOC_COMMENT) {
+        lexer->result_symbol = LINE_COMMENT;
+        while (lexer->lookahead != '\n' && lexer->lookahead != 0) {
+          advance(lexer);
+        }
+      }
+
+      return true;
+    }
+
     if (lexer->lookahead != '*') return false;
+
     advance(lexer);
 
     bool after_star = false;

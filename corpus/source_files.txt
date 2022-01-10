@@ -55,6 +55,86 @@ Line comments
 (source_file
   (line_comment))
 
+============================================
+Doc comments
+============================================
+
+/// Doc
+/// Comment
+// / Now a line comment (note the space separating the third slash)
+
+/// Doc
+/// Comment
+//// Four slashes makes the line a normal comment
+/// Doc comment got interrupted by the line above
+
+//! Inner doc comment line 1
+//! Inner doc comment line 2
+/// This is different doc comment since the line starts differently
+//! Back to inner doc comment
+
+  /// Same doc comment
+    /// But with arbitrary indentation
+
+/// Different doc comments
+
+/// Are separated by newlines
+
+----
+
+(source_file
+  (doc_comment)
+  (line_comment)
+  (doc_comment)
+  (line_comment)
+  (doc_comment)
+  (doc_comment)
+  (doc_comment)
+  (doc_comment)
+  (doc_comment)
+  (doc_comment)
+  (doc_comment))
+
+=================================================
+Doc comments recursion guard 1 (should not hang)
+=================================================
+
+//! 
+
+---
+
+(source_file (doc_comment))
+
+=================================================
+Doc comments recursion guard 2 (should not hang)
+=================================================
+
+///
+
+---
+
+(source_file (doc_comment))
+
+=================================================
+Comments recursion guard 1 (should not hang)
+=================================================
+
+//
+
+---
+
+(source_file (line_comment))
+
+=================================================
+Block comments recursion guard 1 (should not hang)
+=================================================
+
+/*
+
+---
+
+(source_file (ERROR))
+
 =====================================
 Greek letters in identifiers
 =====================================
