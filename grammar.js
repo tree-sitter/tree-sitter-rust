@@ -128,6 +128,21 @@ module.exports = grammar({
 
   word: $ => $.identifier,
 
+  reserved: $ => [
+    "enum",
+    "fn",
+    "for",
+    "if",
+    "let",
+    "loop",
+    "match",
+    "mod",
+    "struct",
+    "type",
+    "use",
+    "while",
+  ],
+
   rules: {
     source_file: $ => repeat($._statement),
 
