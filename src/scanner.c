@@ -1,6 +1,11 @@
 #include <tree_sitter/parser.h>
 #include <wctype.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
 enum TokenType {
   STRING_CONTENT,
   RAW_STRING_LITERAL,
