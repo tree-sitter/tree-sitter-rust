@@ -19,27 +19,43 @@ attribute symbol_reference = symbol     => type = "push_symbol", symbol = symbol
 attribute node_definition = node        => type = "pop_symbol", node_symbol = node, is_definition
 attribute node_symbol = node            => symbol = (source-text node), source_node = node
 
-(identifier)@identifier {
-  attr (@identifier.scope) symbol_reference = (source-text @identifier), source_node = @identifier;
+(source_file)@root {
+  node @root.scope
 }
 
-[
-  (source_file)
-  (function_item)
-  (parameters)
-  (parameter)
-  (expression_statement)
-  (if_expression)
-  (binary_expression)
-  (block)
-  (else_clause)
-  (call_expression)
-  (arguments)
-  (identifier)
-  (integer_literal)
-  (line_comment)
-]@node {
+(_
+  [
+    (function_item)
+    (parameters)
+    (parameter)
+    (block)
+  ]@node
+)@parent {
   node @node.scope
+  edge @node.scope -> @parent.scope
+}
+
+(_
+  [
+    (const_item)
+    (expression_statement)
+    (if_expression)
+    (binary_expression)
+    (else_clause)
+    (call_expression)
+    (arguments)
+    (identifier)
+    (integer_literal)
+    (line_comment)
+  ]@node
+)@parent {
+  let @node.scope = @parent.scope
+}
+
+(identifier)@identifier {
+  node @identifier.use
+  attr (@identifier.use) symbol_reference = (source-text @identifier), source_node = @identifier;
+  edge @identifier.use -> @identifier.scope
 }
 
 [
@@ -57,13 +73,6 @@ attribute node_symbol = node            => symbol = (source-text node), source_n
   ]@item
 )@parent {
   edge @parent.scope -> @item.definition
-  edge @item.scope -> @parent.scope
-}
-
-(parameter pattern:(identifier)@pattern) {
-  node @pattern.definition
-  edge @pattern.definitions -> @pattern.definition
-  attr (@pattern.definition) node_definition = @pattern
 }
 
 (parameters (parameter pattern:(_)@pattern) )@parameters {
@@ -72,45 +81,12 @@ attribute node_symbol = node            => symbol = (source-text node), source_n
   edge @parameters.definitions -> @pattern.definitions
 }
 
+(parameter pattern:(identifier)@pattern) {
+  node @pattern.definition
+  attr (@pattern.definition) node_definition = @pattern
+  edge @pattern.definitions -> @pattern.definition
+}
+
 (function_item parameters:(_)@parameters body:(_)@body)@function {
   edge @function.scope -> @parameters.definitions
-  edge @body.scope -> @function.scope
-}
-
-(expression_statement (_)@child)@parent {
-  edge @child.scope -> @parent.scope
-}
-
-;; Scope propagation in expressions that do not introduce new scopes
-
-(binary_expression left: (_)@left right: (_)@right)@parent {
-  edge @left.scope -> @parent.scope
-  edge @right.scope -> @parent.scope
-}
-
-(if_expression
-   condition: (_)@condition
-   consequence: (_)@consequence
-   alternative: (_)@alternative
-)@parent {
-  edge @condition.scope -> @parent.scope
-  edge @consequence.scope -> @parent.scope
-  edge @alternative.scope -> @parent.scope
-}
-
-(else_clause (_)@child)@parent {
-  edge @child.scope -> @parent.scope
-}
-
-(block (_)@child)@parent {
-  edge @child.scope -> @parent.scope
-}
-
-(call_expression function:(_)@function arguments:(_)@arguments)@parent {
-  edge @function.scope -> @parent.scope
-  edge @arguments.scope -> @parent.scope
-}
-
-(arguments (_)@child)@parent {
-  edge @child.scope -> @parent.scope
 }
