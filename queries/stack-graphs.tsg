@@ -1,0 +1,116 @@
+; ####
+; Rust
+; ####
+;
+; All nodes that can contain uses or appear in expression context must have:
+;
+;     .scope - The current lexical scope, used for looking up functions, local
+;         variables, arguments, consts, and statics.
+;
+; Rust also has a separate type scope, used for looking up modules and types,
+; including `super`, `self`, and `Self`, but they're closely related and I'm
+; going to worry about it later.
+;
+; Items have a node:
+;
+;     .definition - The node that pops the item's name.
+
+attribute symbol_reference = symbol     => type = "push_symbol", symbol = symbol, is_reference
+attribute node_definition = node        => type = "pop_symbol", node_symbol = node, is_definition
+attribute node_symbol = node            => symbol = (source-text node), source_node = node
+
+(identifier)@identifier {
+  attr (@identifier.scope) symbol_reference = (source-text @identifier), source_node = @identifier;
+}
+
+[
+  (source_file)
+  (function_item)
+  (parameters)
+  (parameter)
+  (expression_statement)
+  (if_expression)
+  (binary_expression)
+  (block)
+  (else_clause)
+  (call_expression)
+  (arguments)
+  (identifier)
+  (integer_literal)
+  (line_comment)
+]@node {
+  node @node.scope
+}
+
+[
+  (const_item name:(_)@name)@item
+  (function_item name: (_)@name)@item
+] {
+  node @item.definition
+  attr (@item.definition) node_definition = @name
+}
+
+(source_file
+  [
+    (const_item)
+    (function_item)
+  ]@item
+)@parent {
+  edge @parent.scope -> @item.definition
+  edge @item.scope -> @parent.scope
+}
+
+(parameter pattern:(identifier)@pattern) {
+  node @pattern.definition
+  edge @pattern.definitions -> @pattern.definition
+  attr (@pattern.definition) node_definition = @pattern
+}
+
+(parameters (parameter pattern:(_)@pattern) )@parameters {
+  node @parameters.definitions
+  node @pattern.definitions
+  edge @parameters.definitions -> @pattern.definitions
+}
+
+(function_item parameters:(_)@parameters body:(_)@body)@function {
+  edge @function.scope -> @parameters.definitions
+  edge @body.scope -> @function.scope
+}
+
+(expression_statement (_)@child)@parent {
+  edge @child.scope -> @parent.scope
+}
+
+;; Scope propagation in expressions that do not introduce new scopes
+
+(binary_expression left: (_)@left right: (_)@right)@parent {
+  edge @left.scope -> @parent.scope
+  edge @right.scope -> @parent.scope
+}
+
+(if_expression
+   condition: (_)@condition
+   consequence: (_)@consequence
+   alternative: (_)@alternative
+)@parent {
+  edge @condition.scope -> @parent.scope
+  edge @consequence.scope -> @parent.scope
+  edge @alternative.scope -> @parent.scope
+}
+
+(else_clause (_)@child)@parent {
+  edge @child.scope -> @parent.scope
+}
+
+(block (_)@child)@parent {
+  edge @child.scope -> @parent.scope
+}
+
+(call_expression function:(_)@function arguments:(_)@arguments)@parent {
+  edge @function.scope -> @parent.scope
+  edge @arguments.scope -> @parent.scope
+}
+
+(arguments (_)@child)@parent {
+  edge @child.scope -> @parent.scope
+}
