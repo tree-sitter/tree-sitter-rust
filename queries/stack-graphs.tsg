@@ -2,91 +2,437 @@
 ; Rust
 ; ####
 ;
-; All nodes that can contain uses or appear in expression context must have:
+; All nodes that can contain uses must have:
 ;
-;     .scope - The current lexical scope, used for looking up functions, local
-;         variables, arguments, consts, and statics.
+;     .scope - The value namespace of the lexical scope in which the
+;         syntax-node appears--that is, the *enclosing* lexical scope. This
+;         namespace is used for looking up functions, local variables,
+;         arguments, consts, statics, and constructors.
 ;
-; Rust also has a separate type scope, used for looking up modules and types,
-; including `super`, `self`, and `Self`, but they're closely related and I'm
-; going to worry about it later.
+;     .types - The type namespace of the current lexical scope, used for
+;         looking up types, modules, and crates.
+;
+; Rust has separate value and type namespaces. That is, every lexical scope
+; can contain both value bindings and type bindings, and they're distinct,
+; as though the things in the type namespace (types, modules, crates) always
+; had names that started with a special invisible sigil.
+;
+; For now we represent the type namespace as a separate node.
+;
+; TODO: see if a function defined in a block can access other *items* in that
+; block scope but not locals, arguments, or generic parameters. if so we need
+; more scopes or more namespaces
 ;
 ; Items have a node:
 ;
 ;     .definition - The node that pops the item's name.
 
-attribute symbol_reference = symbol     => type = "push_symbol", symbol = symbol, is_reference
-attribute node_definition = node        => type = "pop_symbol", node_symbol = node, is_definition
+attribute node_reference = node         => type = "push_symbol", symbol = (source-text node), is_reference, source_node = node
 attribute node_symbol = node            => symbol = (source-text node), source_node = node
+attribute node_definition = node        => type = "pop_symbol", node_symbol = node, is_definition
+attribute push_symbol = symbol          => type = "push_symbol", symbol = symbol
+attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
-(source_file)@root {
+;; Root scopes.
+[
+  (source_file) @root
+  (mod_item body: (declaration_list) @root)
+] {
   node @root.scope
+  node @root.types
 }
 
-(_
-  [
-    (function_item)
-    (parameters)
-    (parameter)
-    (block)
-  ]@node
-)@parent {
-  node @node.scope
-  edge @node.scope -> @parent.scope
+;; Create the inner scope for expressions that introduce local bindings
+;; using patterns.
+[
+  (for_expression pattern: (_) @pat) @parent
+  (if_let_expression pattern: (_) @pat) @parent
+  (match_arm pattern: (_) @pat) @parent
+  (while_let_expression pattern: (_) @pat) @parent
+] {
+  node @parent.inner_scope
+  edge @parent.inner_scope -> @pat.defs
+  edge @parent.inner_scope -> @parent.scope
 }
 
-(_
-  [
-    (const_item)
-    (expression_statement)
-    (if_expression)
-    (binary_expression)
-    (else_clause)
-    (call_expression)
-    (arguments)
-    (identifier)
-    (integer_literal)
-    (line_comment)
-  ]@node
-)@parent {
-  let @node.scope = @parent.scope
+;; Link children to parents.
+[
+  (for_expression body: (_) @child) @parent
+  (if_let_expression alternative: (_) @child) @parent
+  (if_let_expression consequence: (_) @child) @parent
+  (match_arm pattern: (match_pattern condition: (_) @child)) @parent
+  (match_arm value: (_) @child) @parent
+  (while_let_expression body: (_) @child) @parent
+] {
+  let @child.scope = @parent.inner_scope
+  let @child.types = @parent.types
 }
 
-(identifier)@identifier {
-  node @identifier.use
-  attr (@identifier.use) symbol_reference = (source-text @identifier), source_node = @identifier;
-  edge @identifier.use -> @identifier.scope
+;; Create the "definitions" node for each pattern. This query matches only the
+;; outermost node of each pattern.
+[
+  (for_expression pattern: (_) @pat)
+  (if_let_expression pattern: (_) @pat)
+  (match_arm pattern: (_) @pat)
+  (while_let_expression pattern: (_) @pat)
+  (let_declaration pattern: (_) @pat)
+  (parameter pattern: (_) @pat)
+  (closure_parameters (_) @pat)
+] {
+  node @pat.defs
+}
+
+;; Subpatterns inherit the parent's defs node.
+[
+  (match_pattern (_) @pat (_)*) @parent
+  (tuple_pattern (_) @pat) @parent
+  (slice_pattern (_) @pat) @parent
+  (field_pattern name: (shorthand_field_identifier) @pat) @parent
+  (field_pattern pattern: (_) @pat) @parent
+  (mut_pattern (mutable_specifier) (_) @pat) @parent
+  (ref_pattern (_) @pat) @parent
+  (captured_pattern (_) "@" (_) @pat) @parent
+  (reference_pattern "&" (mutable_specifier)? (_) @pat) @parent
+  (or_pattern (_) @pat) @parent
+] {
+  let @pat.defs = @parent.defs
+}
+
+;; Tuple-struct subpatterns inherit the parent's defs node.
+[
+  (tuple_struct_pattern type: (_) (_)* @pats) @parent
+] {
+  for pat in @pats {
+    let pat.defs = @parent.defs
+  }
+}
+
+;; Identifier-patterns are definitions.
+[
+  (for_expression pattern: (identifier) @ident)
+  (if_let_expression pattern: (identifier) @ident)
+  (while_let_expression pattern: (identifier) @ident)
+  (let_declaration pattern: (identifier) @ident)
+  (parameter pattern: (identifier) @ident)
+  (closure_parameters (identifier) @ident)
+  (match_pattern (identifier) @ident (_)*)
+  (tuple_pattern (identifier) @ident)
+  (slice_pattern (identifier) @ident)
+  (field_pattern name: (shorthand_field_identifier) @pat)
+  (field_pattern pattern: (identifier) @ident)
+  (mut_pattern (mutable_specifier) (identifier) @ident)
+  (ref_pattern (identifier) @ident)
+  (captured_pattern (_) "@" (identifier) @ident)
+  (reference_pattern "&" (mutable_specifier)? (identifier) @ident)
+  (or_pattern (identifier) @ident)
+] {
+  node @ident.def
+  attr (@ident.def) node_definition = @ident
+  edge @ident.defs -> @ident.def
+}
+
+;; Identifier sub-patterns of tuple-struct patterns are definitions.
+;; But I don't see how to make this pattern work. The subpatterns
+;; need to be a named field.
+;; [
+;;   (tuple_struct_pattern type: (_) (_)* (identifier) @ident (_)*) @parent
+;; ] {
+;;   node @ident.def
+;;   attr (@ident.def) node_definition = @ident
+;;   edge @ident.defs -> @ident.def
+;; }
+
+;; Items that have a `type_parameters` child have an `.inner_types` node
+;; that is the type namespace presented to their children.
+(_ (type_parameters) @params) @parent {
+  node @parent.inner_types
+  node @params.type_param_defs
+  edge @parent.inner_types -> @params.type_param_defs
+  edge @parent.inner_types -> @parent.types
+
+  node @parent.inner_values
+  node @params.const_param_defs
+  edge @parent.inner_values -> @params.const_param_defs
+  edge @parent.inner_values -> @parent.scope
+}
+
+;; Items that could have type parameters, but in fact don't, also need a
+;; `.inner_types` node, but it's just the same node as the enclosing type
+;; namespace.
+[
+  (associated_type !type_parameters)
+  (enum_item !type_parameters)
+  (function_item !type_parameters)
+  (function_signature_item !type_parameters)
+  (impl_item !type_parameters)
+  (struct_item !type_parameters)
+  (trait_item !type_parameters)
+  (type_item !type_parameters)
+  (union_item !type_parameters)
+] @item {
+  let @item.inner_types = @item.types
+  let @item.inner_values = @item.scope
+}
+
+;; all contexts in most items, except the name.
+;; all contexts within a function except the name and the body.
+[
+  (associated_type type_parameters: (_) @child) @parent
+  (associated_type bounds: (_) @child) @parent
+  (enum_item type_parameters: (_) @child) @parent
+  (enum_item (where_clause) @child) @parent
+  (enum_item body: (_) @child) @parent
+  (function_item type_parameters: (_) @child) @parent
+  (function_item parameters: (_) @child) @parent
+  (function_item return_type: (_) @child) @parent
+  (function_item (where_clause) @child) @parent
+  (function_signature_item (_) @child) @parent
+  (impl_item type_parameters: (_) @child) @parent
+  (impl_item trait: (_) @child) @parent
+  (impl_item type: (_) @child) @parent
+  (impl_item (where_clause) @child) @parent
+  (struct_item type_parameters: (_) @child) @parent
+  (struct_item (where_clause) @child) @parent
+  (struct_item body: (_) @child) @parent
+  (trait_item type_parameters: (_) @child) @parent
+  (trait_item bounds: (_) @child) @parent
+  (trait_item (where_clause) @child) @parent
+  (trait_item body: (_) @child) @parent
+  (type_item type_parameters: (_) @child) @parent
+  (type_item type: (_) @child) @parent
+  (union_item type_parameters: (_) @child) @parent
+  (union_item body: (_) @child) @parent
+] {
+  let @child.scope = @parent.inner_values
+  let @child.types = @parent.inner_types
 }
 
 [
-  (const_item name:(_)@name)@item
-  (function_item name: (_)@name)@item
+  (function_item parameters: (_) @parameters body: (_) @body) @parent
+  (closure_expression parameters: (_) @parameters body: (_) @body) @parent
 ] {
-  node @item.definition
-  attr (@item.definition) node_definition = @name
+  node @body.scope
+  edge @body.scope -> @parameters.defs
+  edge @body.scope -> @parent.inner_values
+  let @body.types = @parent.inner_types
 }
 
-(source_file
-  [
-    (const_item)
-    (function_item)
-  ]@item
-)@parent {
-  edge @parent.scope -> @item.definition
+(let_declaration pattern: (_) @pat) @stmt {
+  node @stmt.out_scope
+  edge @stmt.out_scope -> @pat.defs
+  edge @stmt.out_scope -> @stmt.scope
 }
 
-(parameters (parameter pattern:(_)@pattern) )@parameters {
-  node @parameters.definitions
-  node @pattern.definitions
-  edge @parameters.definitions -> @pattern.definitions
+[
+  (expression_statement) @stmt
+  (line_comment) @stmt
+] {
+  let @stmt.out_scope = @stmt.scope
 }
 
-(parameter pattern:(identifier)@pattern) {
-  node @pattern.definition
-  attr (@pattern.definition) node_definition = @pattern
-  edge @pattern.definitions -> @pattern.definition
+(block (_) @child) @parent {
+  let @child.types = @parent.types
 }
 
-(function_item parameters:(_)@parameters body:(_)@body)@function {
-  edge @function.scope -> @parameters.definitions
+(block (_)* @children) @parent {
+  var current_scope = @parent.scope
+  for child in @children {
+    let child.scope = current_scope
+    set current_scope = child.out_scope
+  }
+}
+
+;; Other contexts that affect the scope of children:
+;;   (block (_) @child) @parent
+;;   (field_initializer name: (_) @child) @parent
+;;   (scoped_identifier name: (_) @child) @parent
+;;   (scoped_type_identifier name: (_) @child) @parent
+
+;; Propagate scope for all syntax that does not introduce bindings.
+[
+  ;; Items in the file-level module scope
+  (source_file (_) @child) @parent
+
+  ;; === Types
+  (abstract_type trait: (_) @child) @parent
+  (array_type element: (_) @child) @parent
+  (array_type length: (_) @child) @parent
+  (bounded_type (_) @child) @parent
+  (dynamic_type trait: (_) @child) @parent
+  (function_type trait: (_) @child) @parent  ;; only for Fn, FnMut, FnOnce
+  (function_type parameters: (_) @child) @parent
+  (function_type return_type: (_) @child) @parent
+  (generic_type type: (_) @child) @parent
+  (generic_type type_arguments: (_) @child) @parent
+  (pointer_type type: (_) @child) @parent
+  (reference_type type: (_) @child) @parent
+  (scoped_type_identifier path: (_) @child) @parent
+  (tuple_type (_) @child) @parent
+
+  ;; === Expressions
+  (arguments (_) @child) @parent
+  (array_expression (_) @child) @parent
+  (array_expression length: (_) @child) @parent
+  (assignment_expression left: (_) @child) @parent
+  (assignment_expression right: (_) @child) @parent
+  (async_block (_) @child) @parent
+  (await_expression (_) @child) @parent
+  (base_field_initializer (_) @child) @parent
+  (binary_expression left: (_) @child) @parent
+  (binary_expression right: (_) @child) @parent
+  (break_expression (_) @child) @parent
+  (call_expression function: (_) @child) @parent
+  (call_expression arguments: (_) @child) @parent
+  (closure_expression parameters: (_) @child) @parent
+  (closure_expression return_type: (_) @child) @parent
+  (compound_assignment_expr left: (_) @child) @parent
+  (compound_assignment_expr right: (_) @child) @parent
+  (const_block body: (_) @child) @parent
+  (continue_expression (_) @child) @parent
+  (else_clause (_) @child) @parent
+  (field_expression value: (_) @child) @parent
+  (field_initializer_list (_) @child) @parent
+  (field_initializer value: (_) @child) @parent
+  (for_expression pattern: (_) @child) @parent
+  (for_expression value: (_) @child) @parent
+  (generic_function function: (_) @child) @parent
+  (generic_function type_arguments: (_) @child) @parent
+  (if_expression condition: (_) @child) @parent
+  (if_expression alternative: (_) @child) @parent
+  (if_expression consequence: (_) @child) @parent
+  (if_let_expression pattern: (_) @child) @parent
+  (if_let_expression value: (_) @child) @parent
+  (index_expression (_) @child) @parent
+  (loop_expression body: (_) @child) @parent
+  (macro_invocation macro: (_) @child) @parent
+  (match_arm pattern: (_) @child) @parent
+  (match_block (_) @child) @parent
+  (match_expression value: (_) @child) @parent
+  (match_pattern (_) @child (_)*) @parent
+  (parenthesized_expression (_) @child) @parent
+  (range_expression (_) @child) @parent
+  (reference_expression value: (_) @child) @parent
+  (return_expression (_) @child) @parent
+  (scoped_identifier path: (_) @child) @parent
+  (shorthand_field_initializer (_) @child) @parent
+  (struct_expression name: (_) @child) @parent
+  (struct_expression body: (_) @child) @parent
+  (try_expression (_) @child) @parent
+  (tuple_expression (_) @child) @parent
+  (type_cast_expression value: (_) @child) @parent
+  (type_cast_expression type: (_) @child) @parent
+  (unary_expression (_) @child) @parent
+  (unsafe_block (_) @child) @parent
+  (while_expression condition: (_) @child) @parent
+  (while_expression body: (_) @child) @parent
+  (while_let_expression pattern: (_) @child) @parent
+  (while_let_expression value: (_) @child) @parent
+  (yield_expression (_) @child) @parent
+
+  ;; === Statements
+  (let_declaration pattern: (_) @child) @parent
+  (let_declaration type: (_) @child) @parent
+  (let_declaration value: (_) @child) @parent
+  (expression_statement (_) @child) @parent
+
+  ;; === Patterns
+  (captured_pattern (_) "@" (_) @child) @parent
+  (field_pattern (_) @child) @parent
+  (mut_pattern (mutable_specifier) (_) @child) @parent
+  (or_pattern (_) @child) @parent
+  (range_pattern (_) @child) @parent
+  (ref_pattern (_) @child) @parent
+  (reference_pattern (_) @child) @parent
+  (scoped_identifier path: (_) @child) @parent
+  (slice_pattern (_) @child) @parent
+  (struct_pattern (_) @child) @parent
+  (tuple_pattern (_) @child) @parent
+  (tuple_struct_pattern (_) @child) @parent
+
+  ;; === Items
+  ;; Of course all items are declarations and introduce bindings into the
+  ;; enclosing scope. But the real reason fn/impl/struct/enum/union/type/trait
+  ;; are not here is that they can have type parameters, which affect the scope
+  ;; of everything in them. (Functions, of course, can even have regular old
+  ;; function parameters. Worse and worse!)
+  ;;
+  ;; The names of all these items, though, are in the enclosing scope (so that
+  ;; you can look them up and they'll find themselves).
+  ;;
+  ;; Modules are not present because they reset the scope. `foreign_mod_item`
+  ;; is what the Rust reference calls an `ExternBlock` or "external block".
+  ;; It's not a module and it does propagate scope.
+  (const_item name: (_) @child) @parent
+  (const_item type: (_) @child) @parent
+  (const_item value: (_) @child) @parent
+  (enum_item name: (_) @child) @parent
+  (function_item name: (_) @child) @parent
+  (foreign_mod_item body: (_) @child) @parent
+  (parameter pattern: (_) @child) @parent
+  (parameter type: (_) @child) @parent
+  (parameters (_) @child) @parent
+  (static_item type: (_) @child) @parent
+  (static_item value: (_) @child) @parent
+  (struct_item name: (_) @child) @parent
+  (trait_item name: (_) @child) @parent
+  (type_item name: (_) @child) @parent
+  (union_item name: (_) @child) @parent
+
+  ;; === Oddments
+  ;; These contain identifiers, so I guess we have to do something...
+  (attribute_item (_) @child) @parent
+  (inner_attribute_item (_) @child) @parent
+  (meta_item (_) @child) @parent
+  (meta_arguments (_) @child) @parent
+] {
+  let @child.scope = @parent.scope
+  let @child.types = @parent.types
+}
+
+
+(identifier) @identifier {
+  node @identifier.use
+  attr (@identifier.use) node_reference = @identifier
+  edge @identifier.use -> @identifier.scope
+}
+
+(type_identifier) @identifier {
+  node @identifier.use
+  attr (@identifier.use) node_reference = @identifier
+  edge @identifier.use -> @identifier.types
+}
+
+[
+  (const_item name: (_) @name) @item
+  (enum_item name: (_) @name) @item
+  (function_item name: (_) @name) @item
+  (struct_item name: (_) @name) @item
+  (union_item name: (_) @name) @item
+] {
+  node @item.def
+  attr (@item.def) node_definition = @name
+}
+
+[
+  (const_item name: (_) @name) @item
+  (struct_item name: (_) @name) @item
+  (function_item name: (_) @name) @item
+] {
+  edge @item.scope -> @item.def
+}
+
+[
+  (enum_item name: (_) @name) @item
+  (struct_item name: (_) @name) @item
+  (union_item name: (_) @name) @item
+] {
+  edge @item.types -> @item.def
+}
+
+(parameters)@parameters {
+  node @parameters.defs
+}
+
+(parameters (parameter pattern: (_) @pattern)) @parameters {
+  edge @parameters.defs -> @pattern.defs
 }
