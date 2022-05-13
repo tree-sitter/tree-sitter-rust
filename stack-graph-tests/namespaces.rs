@@ -5,7 +5,6 @@ pub struct Point {
 
 #[allow(non_snake_case)]
 pub fn Point(x: u32, y: u32) -> Point {
-    // ^ defined: 7
     //                          ^ defined: 1
     let p = Point { x, y };
     //      ^ defined: 1

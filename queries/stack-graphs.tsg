@@ -91,7 +91,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (field_pattern pattern: (_) @pat) @parent
   (mut_pattern (mutable_specifier) (_) @pat) @parent
   (ref_pattern (_) @pat) @parent
-  (captured_pattern (_) "@" (_) @pat) @parent
+  (captured_pattern (_) @pat) @parent
   (reference_pattern "&" (mutable_specifier)? (_) @pat) @parent
   (or_pattern (_) @pat) @parent
 ] {
@@ -243,7 +243,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 ;; Other contexts that affect the scope of children:
-;;   (block (_) @child) @parent
 ;;   (field_initializer name: (_) @child) @parent
 ;;   (scoped_identifier name: (_) @child) @parent
 ;;   (scoped_type_identifier name: (_) @child) @parent
@@ -268,6 +267,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (reference_type type: (_) @child) @parent
   (scoped_type_identifier path: (_) @child) @parent
   (tuple_type (_) @child) @parent
+  (type_arguments (_) @child) @parent
 
   ;; === Expressions
   (arguments (_) @child) @parent
@@ -366,8 +366,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (const_item type: (_) @child) @parent
   (const_item value: (_) @child) @parent
   (enum_item name: (_) @child) @parent
-  (function_item name: (_) @child) @parent
+  (field_declaration type: (_) @child) @parent
+  (field_declaration_list (_) @child) @parent
+  (ordered_field_declaration_list (_) @child) @parent
   (foreign_mod_item body: (_) @child) @parent
+  (function_item name: (_) @child) @parent
   (parameter pattern: (_) @child) @parent
   (parameter type: (_) @child) @parent
   (parameters (_) @child) @parent
@@ -380,6 +383,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
   ;; === Oddments
   ;; These contain identifiers, so I guess we have to do something...
+  ;; TODO - rip all this out
   (attribute_item (_) @child) @parent
   (inner_attribute_item (_) @child) @parent
   (meta_item (_) @child) @parent
@@ -389,11 +393,68 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @child.types = @parent.types
 }
 
+;; List all contexts where an identifier is a reference to a binding in the
+;; "values" namespace.
+;;
+;; In many contexts, it is not:
+;; -   after `:`, or before `::`, or inside `<...>`,
+;;     it refers to something in the type namespace
+;; -   in `#[...]` it refers to an attribute, or something
+;; -   before `!` it refers to a macro
+;; -   between `.` and `(` it refers to a method
+;; -   otherwise after `.` it refers to a field
+;; -   and of course, if it's the name of an item or binding,
+;;     it isn't a reference at all.
+[
+  ;; === Expressions
+  (arguments (identifier) @ident)
+  (array_expression (identifier) @ident)
+  (assignment_expression left: (identifier) @ident)
+  (assignment_expression right: (identifier) @ident)
+  (await_expression (identifier) @ident)
+  (base_field_initializer (identifier) @ident)
+  (binary_expression left: (identifier) @ident)
+  (binary_expression right: (identifier) @ident)
+  (break_expression (identifier) @ident)
+  (call_expression function: (identifier) @ident)
+  (compound_assignment_expr left: (identifier) @ident)
+  (compound_assignment_expr right: (identifier) @ident)
+  (field_expression value: (identifier) @ident)
+  (field_initializer value: (identifier) @ident)
+  (for_expression value: (identifier) @ident)
+  (generic_function function: (identifier) @ident)
+  (if_expression condition: (identifier) @ident)
+  (if_let_expression value: (identifier) @ident)
+  (index_expression (identifier) @ident)
+  (match_expression value: (identifier) @ident)
+  (match_pattern (_) "if" (identifier) @ident)
+  (parenthesized_expression (identifier) @ident)
+  (range_expression (identifier) @ident)
+  (reference_expression value: (identifier) @ident)
+  (return_expression (identifier) @ident)
+  (shorthand_field_initializer (identifier) @ident)
+  (try_expression (identifier) @ident)
+  (tuple_expression (identifier) @ident)
+  (type_cast_expression value: (identifier) @ident)
+  (unary_expression (identifier) @ident)
+  (while_expression condition: (identifier) @ident)
+  (while_let_expression value: (identifier) @ident)
+  (yield_expression (identifier) @ident)
 
-(identifier) @identifier {
-  node @identifier.use
-  attr (@identifier.use) node_reference = @identifier
-  edge @identifier.use -> @identifier.scope
+  ;; === Types
+  (array_type length: (identifier) @ident)
+
+  ;; === Statements
+  (let_declaration value: (identifier) @ident)
+  (expression_statement (identifier) @ident)
+
+  ;; === Items
+  (const_item value: (identifier) @ident)
+  (static_item value: (identifier) @ident)
+] {
+  node @ident.use
+  attr (@ident.use) node_reference = @ident
+  edge @ident.use -> @ident.scope
 }
 
 (type_identifier) @identifier {

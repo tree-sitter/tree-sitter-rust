@@ -2,14 +2,14 @@ pub struct Frob;
 
 pub struct Point(u32, u32);
 
-// pub struct A {
-//     x: u32,
-//     y: Point,
-//     // ^ defined: 3
-//     next: Option<Box<A>>,
-//     //               ^ defined: 5
-// }
-//
+pub struct A {
+    x: u32,
+    y: Point,
+    // ^ defined: 3
+    next: Option<Box<A>>,
+    //               ^ defined: 5
+}
+
 // pub struct Parser<'a> {
 //     source: &'a str,
 //     //       ^ defined: 13
