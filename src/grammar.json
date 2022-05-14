@@ -9083,6 +9083,56 @@
     "_literal_pattern",
     "_declaration_statement",
     "_pattern"
+  ],
+  "reserved": [
+    {
+      "type": "STRING",
+      "value": "enum"
+    },
+    {
+      "type": "STRING",
+      "value": "fn"
+    },
+    {
+      "type": "STRING",
+      "value": "for"
+    },
+    {
+      "type": "STRING",
+      "value": "if"
+    },
+    {
+      "type": "STRING",
+      "value": "let"
+    },
+    {
+      "type": "STRING",
+      "value": "loop"
+    },
+    {
+      "type": "STRING",
+      "value": "match"
+    },
+    {
+      "type": "STRING",
+      "value": "mod"
+    },
+    {
+      "type": "STRING",
+      "value": "struct"
+    },
+    {
+      "type": "STRING",
+      "value": "type"
+    },
+    {
+      "type": "STRING",
+      "value": "use"
+    },
+    {
+      "type": "STRING",
+      "value": "while"
+    }
   ]
 }
 
