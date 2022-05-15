@@ -15,19 +15,19 @@ pub struct A {
 //     //       ^ defined: 13
 //     point: usize,
 // }
-//
-// pub enum MyResult<T, E> {
-//     Ok(T),
-//     // ^ defined: 19
-//     Err {
-//         err: E,
-//         //   ^ defined: 19
-//         blame: String,
-//         more_issues: Vec<E>,
-//         //               ^ defined: 19
-//     },
-//     Unsure,
-// }
+
+pub enum MyResult<T, E> {
+    Ok(T),
+    // ^ defined: 19
+    Err {
+        err: E,
+        //   ^ defined: 19
+        blame: String,
+        more_issues: Vec<E>,
+        //               ^ defined: 19
+    },
+    Unsure,
+}
 
 pub const FROB: Frob = Frob;
 //              ^ defined: 1

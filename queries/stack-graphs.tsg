@@ -156,6 +156,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @parent.inner_values -> @parent.scope
 }
 
+;;(type_parameters (lifetime) @lifetime) @params { ... }
+(type_parameters (type_identifier) @ident) @params {
+  node @ident.def
+  attr (@ident.def) node_definition = @ident
+  edge @params.type_param_defs -> @ident.def
+}
+
 ;; Items that could have type parameters, but in fact don't, also need a
 ;; `.inner_types` node, but it's just the same node as the enclosing type
 ;; namespace.
@@ -366,6 +373,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (const_item type: (_) @child) @parent
   (const_item value: (_) @child) @parent
   (enum_item name: (_) @child) @parent
+  (enum_variant_list (_) @child) @parent
+  (enum_variant body: (_) @child) @parent
+  (enum_variant value: (_) @child) @parent
   (field_declaration type: (_) @child) @parent
   (field_declaration_list (_) @child) @parent
   (ordered_field_declaration_list (_) @child) @parent
@@ -445,8 +455,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (array_type length: (identifier) @ident)
 
   ;; === Statements
-  (let_declaration value: (identifier) @ident)
+  (block (_)* (identifier) @ident)
   (expression_statement (identifier) @ident)
+  (let_declaration value: (identifier) @ident)
 
   ;; === Items
   (const_item value: (identifier) @ident)
@@ -457,10 +468,50 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @ident.use -> @ident.scope
 }
 
-(type_identifier) @identifier {
-  node @identifier.use
-  attr (@identifier.use) node_reference = @identifier
-  edge @identifier.use -> @identifier.types
+;; List all contexts where an identifier is a reference to a binding in the
+;; "types" namespace.
+[
+  ;; === Types
+  (abstract_type trait: (type_identifier) @ident)
+  (array_type element: (type_identifier) @ident)
+  (bounded_type (type_identifier) @ident)
+  (dynamic_type trait: (type_identifier) @ident)
+  (function_type trait: (type_identifier) @ident)  ;; only for Fn, FnMut, FnOnce
+  (function_type return_type: (type_identifier) @ident)
+  (generic_type type: (type_identifier) @ident)
+  (generic_type_with_turbofish type: (type_identifier) @ident)
+  (pointer_type type: (type_identifier) @ident)
+  (reference_type type: (type_identifier) @ident)
+  ;; Dunno about the second child of scoped_identifier
+  ;; definitely lexical scopes have a types/values split; what about other namespaces,
+  ;; like the one under a trait, a struct, a module...?
+  (scoped_identifier path: (identifier) @ident)
+  (tuple_type (type_identifier) @ident)
+  (type_arguments (type_identifier) @ident) ;; questionable
+
+  ;; === Expressions
+  (type_cast_expression type: (type_identifier) @ident)
+  (bracketed_type (type_identifier) @ident)
+  (struct_expression name: (type_identifier) @ident)
+
+  ;; === Patterns
+  (struct_pattern type: (type_identifier) @ident)
+
+  ;; === Items
+  (const_item type: (type_identifier) @ident)
+  (constrained_type_parameter left: (type_identifier) @ident)
+  (field_declaration type: (type_identifier) @ident)
+  (function_item return_type: (type_identifier) @ident)
+  (impl_item trait: (type_identifier) @ident)
+  (ordered_field_declaration_list type: (type_identifier) @ident)
+  (parameter type: (type_identifier) @ident)
+  (static_item type: (type_identifier) @ident)
+  (trait_bounds (type_identifier) @ident)
+  (where_predicate left: (type_identifier) @ident)
+] {
+  node @ident.use
+  attr (@ident.use) node_reference = @ident
+  edge @ident.use -> @ident.types
 }
 
 [

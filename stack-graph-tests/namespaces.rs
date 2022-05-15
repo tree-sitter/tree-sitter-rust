@@ -11,5 +11,5 @@ pub fn Point(x: u32, y: u32) -> Point {
     //              ^ defined: 2, 7
     //                 ^ defined: 3, 7
     p
-//  ^ defined: 10
+//  ^ defined: 9
 }
