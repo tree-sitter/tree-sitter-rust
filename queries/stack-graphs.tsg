@@ -52,6 +52,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   node @parent.inner_scope
   edge @parent.inner_scope -> @pat.defs
+  attr (@parent.inner_scope -> @pat.defs) precedence = 1
   edge @parent.inner_scope -> @parent.scope
 }
 
@@ -148,11 +149,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @parent.inner_types
   node @params.type_param_defs
   edge @parent.inner_types -> @params.type_param_defs
+  attr (@parent.inner_types -> @params.type_param_defs) precedence = 1
   edge @parent.inner_types -> @parent.types
 
   node @parent.inner_values
   node @params.const_param_defs
   edge @parent.inner_values -> @params.const_param_defs
+  attr (@parent.inner_values -> @params.const_param_defs) precedence = 1
   edge @parent.inner_values -> @parent.scope
 }
 
@@ -220,6 +223,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   node @body.scope
   edge @body.scope -> @parameters.defs
+  attr (@body.scope -> @parameters.defs) precedence = 1
   edge @body.scope -> @parent.inner_values
   let @body.types = @parent.inner_types
 }
@@ -227,6 +231,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 (let_declaration pattern: (_) @pat) @stmt {
   node @stmt.out_scope
   edge @stmt.out_scope -> @pat.defs
+  attr (@stmt.out_scope -> @pat.defs) precedence = 1
   edge @stmt.out_scope -> @stmt.scope
 }
 
