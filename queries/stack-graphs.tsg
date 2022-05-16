@@ -12,48 +12,84 @@
 ;     .types - The type namespace of the current lexical scope, used for
 ;         looking up types, modules, and crates.
 ;
-; Rust has separate value and type namespaces. That is, every lexical scope
-; can contain both value bindings and type bindings, and they're distinct,
-; as though the things in the type namespace (types, modules, crates) always
-; had names that started with a special invisible sigil.
+; Rust has separate value and type namespaces. That is, every lexical scope can
+; contain both value bindings and type bindings, and they're distinct, as
+; though the things in the type namespace (types, modules, crates) always had
+; names that started with a special invisible sigil. For now we represent the
+; type namespace as a separate tree of scope nodes.
 ;
-; For now we represent the type namespace as a separate node.
+; Lifetimes have their own separate namespace, but we put them in the
+; type-namespace nodes. Since lifetimes always start with an apostrophe,
+; there can't be any confusion.
+;
+; The .scope tree and the .types tree are each stitched together with edges
+; that point "up" the tree, toward the root. They stop at module boundaries because
+; in Rust, each module is a root scope.
 ;
 ; The identifier syntax-node of an item's name or a binding name in a pattern
 ; has:
 ;
 ;     .def - The node that pops the item's name.
+;
+; For convenience, some nodes have:
+;
+;     .defs - A static-environment rib: a stepping-stone node from a scope node
+;         toward actual local definitions, but without any inheritance edges.
+;         These are stitched together with edges that point down the tree,
+;         toward the leaves. They're necessary when we can't match the full path
+;         from a scope to a binding with a single pattern.
+;
+; Note: Tree-sitter's Rust parser tries to distinguish various uses of
+; identifiers and give them different syntax-node names (like
+; `type_identifier`), but it's imprecise, and there are ambiguous cases. We
+; therefore often have to make a long list of exactly what identifier contexts
+; we're talking about.
 
+; Magic invocations copied from tree-sitter-typescript.
 attribute node_reference = node         => type = "push_symbol", symbol = (source-text node), is_reference, source_node = node
 attribute node_symbol = node            => symbol = (source-text node), source_node = node
 attribute node_definition = node        => type = "pop_symbol", node_symbol = node, is_definition
 attribute push_symbol = symbol          => type = "push_symbol", symbol = symbol
 attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
+;; # Scope nodes
+
+;; In which we attach `.scope` and `.types` nodes to every syntax node that
+;; needs them, and connect these nodes in two parallel scope trees.
+;;
+;; Most nodes simply inherit these scopes from their parent. The last rule of
+;; this section is a massive query listing every one of these trivial cases.
+;; The rest of the section covers the special cases.
+
 ;; Root scopes.
 [
   (source_file) @root
   (mod_item body: (declaration_list) @root)
 ] {
+  ;; New nodes, no inheritance.
   node @root.scope
   node @root.types
 }
 
-;; Create the inner scope for expressions that introduce local bindings
-;; using patterns.
+;; Expressions that introduce local bindings using patterns.
 [
   (for_expression pattern: (_) @pat) @parent
   (if_let_expression pattern: (_) @pat) @parent
   (match_arm pattern: (_) @pat) @parent
   (while_let_expression pattern: (_) @pat) @parent
 ] {
+  ;; Here and throughout, an edge from a scope node to definition nodes has
+  ;; precedence 1, higher than scope-inheritance edges (precedence 0), so that
+  ;; inner bindings are preferred over (i.e. they shadow) outer bindings.
   node @parent.inner_scope
   edge @parent.inner_scope -> @pat.defs
   attr (@parent.inner_scope -> @pat.defs) precedence = 1
   edge @parent.inner_scope -> @parent.scope
 }
 
-;; Link children to parents.
+;; Assign the children of these expressions the inner_scope of their parents.
+;; (Since these expressions don't introduce type bindings, the children
+;; simply inherit the parent scope for their type namespace.)
 [
   (for_expression body: (_) @child) @parent
   (if_let_expression alternative: (_) @child) @parent
@@ -144,10 +180,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; Items that have a `type_parameters` child have an `.inner_types` node
 ;; that is the type namespace presented to their children.
-;;
-;; Items that could have type parameters, but in fact don't, also need a
-;; `.inner_types` node, but it's just the same node as the enclosing type
-;; namespace.
 [
   (associated_type type_parameters: (type_parameters)? @params) @parent
   (enum_item type_parameters: (type_parameters)? @params) @parent
@@ -173,11 +205,14 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     attr (@parent.inner_values -> @params.const_param_defs) precedence = 1
     edge @parent.inner_values -> @parent.scope
   } else {
+    ;; Items that could have type parameters, but in fact don't, also need
+    ;; `inner` nodes, but they're just the same node as the enclosing ones.
     let @parent.inner_types = @parent.types
     let @parent.inner_values = @parent.scope
   }
 }
 
+; Generic parameters.
 [
   (type_parameters (lifetime) @lifetime) @params
   (for_lifetimes (lifetime) @lifetime) @params
@@ -273,14 +308,14 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 
 
-;; === Default scope propagation
-
+;; Default scope propagation
+;;
 ;; Propagate scope for all syntax that does not introduce bindings.
 [
   ;; Items in the file-level module scope
   (source_file (_) @child) @parent
 
-  ;; === Types
+  ;; ### Types
   ;; function_type is not listed because it can have `for_lifetimes`,
   ;; which affect the scope of its children.
   (abstract_type trait: (_) @child) @parent
@@ -297,7 +332,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (tuple_type (_) @child) @parent
   (type_arguments (_) @child) @parent
 
-  ;; === Expressions
+  ;; ### Expressions
   (arguments (_) @child) @parent
   (array_expression (_) @child) @parent
   (array_expression length: (_) @child) @parent
@@ -359,13 +394,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (while_let_expression value: (_) @child) @parent
   (yield_expression (_) @child) @parent
 
-  ;; === Statements
+  ;; ### Statements
   (let_declaration pattern: (_) @child) @parent
   (let_declaration type: (_) @child) @parent
   (let_declaration value: (_) @child) @parent
   (expression_statement (_) @child) @parent
 
-  ;; === Patterns
+  ;; ### Patterns
   (captured_pattern (identifier) "@" (_) @child) @parent
   (captured_pattern (identifier) @child "@" (_)) @parent
   (field_pattern (_) @child) @parent
@@ -380,7 +415,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (tuple_pattern (_) @child) @parent
   (tuple_struct_pattern (_) @child) @parent
 
-  ;; === Items
+  ;; ### Items
   ;; Of course all items are declarations and introduce bindings into the
   ;; enclosing scope. But the real reason fn/impl/struct/enum/union/type/trait
   ;; are not here is that they can have type parameters, which affect the scope
@@ -426,22 +461,24 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @child.types = @parent.types
 }
 
-;; === Marking unqualified references
+
+
+;; # Marking unqualified references
 
 ;; List all contexts where an identifier is a reference to a binding in the
 ;; "values" namespace.
 ;;
 ;; In many contexts, it is not:
-;; -   after `:`, or before `::`, or inside `<...>`,
+;; -   after `:`, or before `::`, or inside `<...>`, or after `as`,
 ;;     it refers to something in the type namespace
 ;; -   in `#[...]` it refers to an attribute, or something
 ;; -   before `!` it refers to a macro
 ;; -   between `.` and `(` it refers to a method
 ;; -   otherwise after `.` it refers to a field
-;; -   and of course, if it's the name of an item or binding,
+;; -   and of course, if it's the `name:` of an item or binding,
 ;;     it isn't a reference at all.
 [
-  ;; === Expressions
+  ;; ### Expressions
   (arguments (identifier) @ident)
   (array_expression (identifier) @ident)
   (assignment_expression left: (identifier) @ident)
@@ -476,15 +513,15 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (while_let_expression value: (identifier) @ident)
   (yield_expression (identifier) @ident)
 
-  ;; === Types
+  ;; ### Types
   (array_type length: (identifier) @ident)
 
-  ;; === Statements
+  ;; ### Statements
   (block (_)* (identifier) @ident)
   (expression_statement (identifier) @ident)
   (let_declaration value: (identifier) @ident)
 
-  ;; === Items
+  ;; ### Items
   (const_item value: (identifier) @ident)
   (static_item value: (identifier) @ident)
 ] {
@@ -496,7 +533,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; List all contexts where an identifier is a reference to a binding in the
 ;; "types" namespace.
 [
-  ;; === Types
+  ;; ### Types
   (abstract_type trait: (type_identifier) @ident)
   (array_type element: (type_identifier) @ident)
   (bounded_type (type_identifier) @ident)
@@ -515,20 +552,21 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (tuple_type (type_identifier) @ident)
   (type_arguments (type_identifier) @ident) ;; questionable
 
-  ;; === Expressions
+  ;; ### Expressions
   (type_cast_expression type: (type_identifier) @ident)
   (bracketed_type (type_identifier) @ident)
   (struct_expression name: (type_identifier) @ident)
 
-  ;; === Patterns
+  ;; ### Patterns
   (struct_pattern type: (type_identifier) @ident)
 
-  ;; === Items
+  ;; ### Items
   (const_item type: (type_identifier) @ident)
   (constrained_type_parameter left: (type_identifier) @ident)
   (field_declaration type: (type_identifier) @ident)
   (function_item return_type: (type_identifier) @ident)
   (impl_item trait: (type_identifier) @ident)
+  (impl_item type: (type_identifier) @ident)
   (ordered_field_declaration_list type: (type_identifier) @ident)
   (parameter type: (type_identifier) @ident)
   (static_item type: (type_identifier) @ident)
@@ -539,6 +577,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@ident.use) node_reference = @ident
   edge @ident.use -> @ident.types
 }
+
+
+
+; # Item definitions
 
 [
   (const_item name: (_) @name) @item
@@ -567,10 +609,14 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @item.types -> @item.def
 }
 
-;; === Function and closure parameters
 
-;; This is awkward because `closure_parameters have two different structures
+
+;; # Function and closure parameters
+
+;; This is awkward because `closure_parameters` have two different structures
 ;; only one of which (`parameter`) can be easily distinguished with a query.
+;;
+;; TODO - See if this can be made any tidier.
 
 [(parameters) (closure_parameters)] @parameters {
   node @parameters.defs
@@ -591,7 +637,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @pat.defs = @param.defs
 }
 
-
 (closure_expression parameters: (_) @parameters body: (_) @body) @parent {
   node @body.scope
   edge @body.scope -> @parameters.defs
@@ -610,7 +655,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 
 
-;; === Fields
+;; # Fields
 ;; Link fields in struct expressions and patterns to their definitions.
 
 (struct_item)@struct {
@@ -661,7 +706,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge push_fields -> @ty.use
 }
 
-;; === Lifetimes
+
+
+;; # Lifetimes
 ;; See also `(type_parameters (lifetime) @lifetime) @params` above.
 
 ;; Uses of lifetimes.
