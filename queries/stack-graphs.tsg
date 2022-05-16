@@ -67,14 +67,14 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 ;; Create the "definitions" node for each pattern. This query matches only the
-;; outermost node of each pattern.
+;; outermost node of each pattern. Parameters are awkward so they're dealt with
+;; elsewhere.
 [
   (for_expression pattern: (_) @pat)
   (if_let_expression pattern: (_) @pat)
   (match_arm pattern: (_) @pat)
   (while_let_expression pattern: (_) @pat)
   (let_declaration pattern: (_) @pat)
-  (parameter pattern: (_) @pat)
   (closure_parameters (_) @pat)
 ] {
   node @pat.defs
@@ -238,17 +238,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   let @child.scope = @parent.inner_values
   let @child.types = @parent.inner_types
-}
-
-[
-  (function_item parameters: (_) @parameters body: (_) @body) @parent
-  (closure_expression parameters: (_) @parameters body: (_) @body) @parent
-] {
-  node @body.scope
-  edge @body.scope -> @parameters.defs
-  attr (@body.scope -> @parameters.defs) precedence = 1
-  edge @body.scope -> @parent.inner_values
-  let @body.types = @parent.inner_types
 }
 
 (let_declaration pattern: (_) @pat) @stmt {
@@ -578,13 +567,48 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @item.types -> @item.def
 }
 
-(parameters)@parameters {
+;; === Function and closure parameters
+
+;; This is awkward because `closure_parameters have two different structures
+;; only one of which (`parameter`) can be easily distinguished with a query.
+
+[(parameters) (closure_parameters)] @parameters {
   node @parameters.defs
 }
 
-(parameters (parameter pattern: (_) @pattern)) @parameters {
-  edge @parameters.defs -> @pattern.defs
+(parameter) @parameter {
+  node @parameter.defs
 }
+
+[
+  (parameters (parameter) @child) @parameters
+  (closure_parameters (_) @child) @parameters
+] {
+  edge @parameters.defs -> @child.defs
+}
+
+(parameter pattern: (_) @pat) @param {
+  let @pat.defs = @param.defs
+}
+
+
+(closure_expression parameters: (_) @parameters body: (_) @body) @parent {
+  node @body.scope
+  edge @body.scope -> @parameters.defs
+  attr (@body.scope -> @parameters.defs) precedence = 1
+  edge @body.scope -> @parent.scope
+  let @body.types = @parent.types
+}
+
+(function_item parameters: (_) @parameters body: (_) @body) @parent {
+  node @body.scope
+  edge @body.scope -> @parameters.defs
+  attr (@body.scope -> @parameters.defs) precedence = 1
+  edge @body.scope -> @parent.inner_values
+  let @body.types = @parent.inner_types
+}
+
+
 
 ;; === Fields
 ;; Link fields in struct expressions and patterns to their definitions.
