@@ -19,13 +19,10 @@
 ;
 ; For now we represent the type namespace as a separate node.
 ;
-; TODO: see if a function defined in a block can access other *items* in that
-; block scope but not locals, arguments, or generic parameters. if so we need
-; more scopes or more namespaces
+; The identifier syntax-node of an item's name or a binding name in a pattern
+; has:
 ;
-; Items have a node:
-;
-;     .definition - The node that pops the item's name.
+;     .def - The node that pops the item's name.
 
 attribute node_reference = node         => type = "push_symbol", symbol = (source-text node), is_reference, source_node = node
 attribute node_symbol = node            => symbol = (source-text node), source_node = node
@@ -164,6 +161,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @ident.def
   attr (@ident.def) node_definition = @ident
   edge @params.type_param_defs -> @ident.def
+}
+
+(type_parameters (const_parameter name: (_) @ident)) @params {
+  node @ident.def
+  attr (@ident.def) node_definition = @ident
+  edge @params.const_param_defs -> @ident.def
 }
 
 ;; Items that could have type parameters, but in fact don't, also need a
