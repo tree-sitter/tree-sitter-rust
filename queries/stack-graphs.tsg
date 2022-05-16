@@ -82,17 +82,18 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; Subpatterns inherit the parent's defs node.
 [
-  (match_pattern (_) @pat (_)*) @parent
-  (tuple_pattern (_) @pat) @parent
-  (slice_pattern (_) @pat) @parent
+  (captured_pattern (identifier) "@" (_) @pat) @parent
+  (captured_pattern (identifier) @pat "@" (_)) @parent
   (field_pattern name: (shorthand_field_identifier) @pat) @parent
   (field_pattern pattern: (_) @pat) @parent
+  (match_pattern (_) @pat (_)*) @parent
   (mut_pattern (mutable_specifier) (_) @pat) @parent
-  (ref_pattern (_) @pat) @parent
-  (captured_pattern (identifier) @pat "@" (_)) @parent
-  (captured_pattern (identifier) "@" (_) @pat) @parent
-  (reference_pattern "&" (mutable_specifier)? (_) @pat) @parent
   (or_pattern (_) @pat) @parent
+  (ref_pattern (_) @pat) @parent
+  (reference_pattern "&" (mutable_specifier)? (_) @pat) @parent
+  (slice_pattern (_) @pat) @parent
+  (struct_pattern (field_pattern) @pat) @parent
+  (tuple_pattern (_) @pat) @parent
 ] {
   let @pat.defs = @parent.defs
 }
@@ -117,7 +118,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (match_pattern (identifier) @ident (_)*)
   (tuple_pattern (identifier) @ident)
   (slice_pattern (identifier) @ident)
-  (field_pattern name: (shorthand_field_identifier) @pat)
+  (field_pattern name: (shorthand_field_identifier) @ident)
   (field_pattern pattern: (identifier) @ident)
   (mut_pattern (mutable_specifier) (identifier) @ident)
   (ref_pattern (identifier) @ident)
@@ -281,6 +282,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;;   (scoped_identifier name: (_) @child) @parent
 ;;   (scoped_type_identifier name: (_) @child) @parent
 
+
+
+;; === Default scope propagation
+
 ;; Propagate scope for all syntax that does not introduce bindings.
 [
   ;; Items in the file-level module scope
@@ -343,7 +348,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (match_block (_) @child) @parent
   (match_expression value: (_) @child) @parent
   (match_expression body: (_) @child) @parent
-  (match_pattern (_) @child (_)*) @parent
+  (match_pattern !condition (_) @child) @parent
+  (match_pattern (_) @child condition: (_)) @parent
   (parenthesized_expression (_) @child) @parent
   (range_expression (_) @child) @parent
   (reference_expression value: (_) @child) @parent
@@ -430,6 +436,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @child.scope = @parent.scope
   let @child.types = @parent.types
 }
+
+;; === Marking unqualified references
 
 ;; List all contexts where an identifier is a reference to a binding in the
 ;; "values" namespace.
@@ -593,6 +601,17 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @field.def
   attr (@field.def) node_definition = @field
   edge @struct.fields -> @field.def
+}
+
+[
+  (struct_expression
+    body: (field_initializer_list
+      (field_initializer name: (field_identifier) @field_name)
+    )
+  )
+  (struct_pattern (field_pattern name: (_) @field_name))
+] {
+  node @field_name.use
 }
 
 (struct_expression
