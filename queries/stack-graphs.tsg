@@ -479,10 +479,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (generic_type_with_turbofish type: (type_identifier) @ident)
   (pointer_type type: (type_identifier) @ident)
   (reference_type type: (type_identifier) @ident)
-  ;; Dunno about the second child of scoped_identifier
-  ;; definitely lexical scopes have a types/values split; what about other namespaces,
+  ;; Scoped identifiers are more complicated than that, so comment them out for now.
+  ;; (Also the scoped_identifier nodes in use_item nodes should not match.)
+  ;; Definitely lexical scopes have a types/values split; what about other namespaces,
   ;; like the one under a trait, a struct, a module...?
-  (scoped_identifier path: (identifier) @ident)
+  ;;(scoped_identifier path: (identifier) @ident)
   (tuple_type (type_identifier) @ident)
   (type_arguments (type_identifier) @ident) ;; questionable
 
