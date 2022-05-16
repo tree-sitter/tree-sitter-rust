@@ -143,21 +143,49 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; Items that have a `type_parameters` child have an `.inner_types` node
 ;; that is the type namespace presented to their children.
-(_ (type_parameters) @params) @parent {
-  node @parent.inner_types
-  node @params.type_param_defs
-  edge @parent.inner_types -> @params.type_param_defs
-  attr (@parent.inner_types -> @params.type_param_defs) precedence = 1
-  edge @parent.inner_types -> @parent.types
+;;
+;; Items that could have type parameters, but in fact don't, also need a
+;; `.inner_types` node, but it's just the same node as the enclosing type
+;; namespace.
+[
+  (associated_type type_parameters: (type_parameters)? @params) @parent
+  (enum_item type_parameters: (type_parameters)? @params) @parent
+  (function_item type_parameters: (type_parameters)? @params) @parent
+  (function_signature_item type_parameters: (type_parameters)? @params) @parent
+  (impl_item type_parameters: (type_parameters)? @params) @parent
+  (struct_item type_parameters: (type_parameters)? @params) @parent
+  (trait_item type_parameters: (type_parameters)? @params) @parent
+  (type_item type_parameters: (type_parameters)? @params) @parent
+  (union_item type_parameters: (type_parameters)? @params) @parent
+  (function_type (for_lifetimes)? @params) @parent
+] {
+  if some @params {
+    node @parent.inner_types
+    node @params.type_param_defs
+    edge @parent.inner_types -> @params.type_param_defs
+    attr (@parent.inner_types -> @params.type_param_defs) precedence = 1
+    edge @parent.inner_types -> @parent.types
 
-  node @parent.inner_values
-  node @params.const_param_defs
-  edge @parent.inner_values -> @params.const_param_defs
-  attr (@parent.inner_values -> @params.const_param_defs) precedence = 1
-  edge @parent.inner_values -> @parent.scope
+    node @parent.inner_values
+    node @params.const_param_defs
+    edge @parent.inner_values -> @params.const_param_defs
+    attr (@parent.inner_values -> @params.const_param_defs) precedence = 1
+    edge @parent.inner_values -> @parent.scope
+  } else {
+    let @parent.inner_types = @parent.types
+    let @parent.inner_values = @parent.scope
+  }
 }
 
-;;(type_parameters (lifetime) @lifetime) @params { ... }
+[
+  (type_parameters (lifetime) @lifetime) @params
+  (for_lifetimes (lifetime) @lifetime) @params
+] {
+  node @lifetime.def
+  attr (@lifetime.def) node_definition = @lifetime
+  edge @params.type_param_defs -> @lifetime.def
+}
+
 (type_parameters (type_identifier) @ident) @params {
   node @ident.def
   attr (@ident.def) node_definition = @ident
@@ -170,26 +198,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @params.const_param_defs -> @ident.def
 }
 
-;; Items that could have type parameters, but in fact don't, also need a
-;; `.inner_types` node, but it's just the same node as the enclosing type
-;; namespace.
-[
-  (associated_type !type_parameters)
-  (enum_item !type_parameters)
-  (function_item !type_parameters)
-  (function_signature_item !type_parameters)
-  (impl_item !type_parameters)
-  (struct_item !type_parameters)
-  (trait_item !type_parameters)
-  (type_item !type_parameters)
-  (union_item !type_parameters)
-] @item {
-  let @item.inner_types = @item.types
-  let @item.inner_values = @item.scope
-}
-
-;; all contexts in most items, except the name.
-;; all contexts within a function except the name and the body.
+;; Direct children of generics get the inner scope.
+;;
+;; This lists all contexts in most items, except the name.
+;; and all contexts within a function except the name and the body;
+;; the body is special because it also sees the function parameter bindings.
 [
   (associated_type type_parameters: (_) @child) @parent
   (associated_type bounds: (_) @child) @parent
@@ -216,6 +229,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (type_item type: (_) @child) @parent
   (union_item type_parameters: (_) @child) @parent
   (union_item body: (_) @child) @parent
+
+  (function_type trait: (_) @child) @parent  ;; only for Fn, FnMut, FnOnce
+  (function_type parameters: (_) @child) @parent
+  (function_type return_type: (_) @child) @parent
 ] {
   let @child.scope = @parent.inner_values
   let @child.types = @parent.inner_types
@@ -269,17 +286,17 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (source_file (_) @child) @parent
 
   ;; === Types
+  ;; function_type is not listed because it can have `for_lifetimes`,
+  ;; which affect the scope of its children.
   (abstract_type trait: (_) @child) @parent
   (array_type element: (_) @child) @parent
   (array_type length: (_) @child) @parent
   (bounded_type (_) @child) @parent
   (dynamic_type trait: (_) @child) @parent
-  (function_type trait: (_) @child) @parent  ;; only for Fn, FnMut, FnOnce
-  (function_type parameters: (_) @child) @parent
-  (function_type return_type: (_) @child) @parent
   (generic_type type: (_) @child) @parent
   (generic_type type_arguments: (_) @child) @parent
   (pointer_type type: (_) @child) @parent
+  (reference_type (lifetime) @child) @parent
   (reference_type type: (_) @child) @parent
   (scoped_type_identifier path: (_) @child) @parent
   (tuple_type (_) @child) @parent
@@ -401,6 +418,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (trait_item name: (_) @child) @parent
   (type_item name: (_) @child) @parent
   (union_item name: (_) @child) @parent
+  (where_clause (where_predicate) @child) @parent
+  (where_predicate left: (_) @child) @parent
+  (where_predicate bounds: (_) @child) @parent
+  (trait_bounds (_) @child) @parent
+  (removed_trait_bound (_) @child) @parent
 ] {
   let @child.scope = @parent.scope
   let @child.types = @parent.types
@@ -591,4 +613,22 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (push_fields) push_symbol = "%fields"
   edge @field_name.use -> push_fields
   edge push_fields -> @ty.use
+}
+
+;; === Lifetimes
+;; See also `(type_parameters (lifetime) @lifetime) @params` above.
+
+;; Uses of lifetimes.
+[
+  (where_predicate left: (lifetime) @lifetime)
+  (trait_bounds (lifetime) @lifetime)
+  (constrained_type_parameter left: (lifetime) @lifetime)
+  (self_parameter (lifetime) @lifetime)
+  (bounded_type (lifetime) @lifetime)
+  (type_arguments (lifetime) @lifetime)
+  (reference_type (lifetime) @lifetime)
+] {
+  node @lifetime.use
+  attr (@lifetime.use) node_reference = @lifetime
+  edge @lifetime.use -> @lifetime.types
 }
