@@ -10,21 +10,15 @@ pub struct A {
     //               ^ defined: 5
 }
 
-// pub struct Parser<'a> {
-//     source: &'a str,
-//     //       ^ defined: 13
-//     point: usize,
-// }
-
 pub enum MyResult<T, E> {
     Ok(T),
-    // ^ defined: 19
+    // ^ defined: 13
     Err {
         err: E,
-        //   ^ defined: 19
+        //   ^ defined: 13
         blame: String,
         more_issues: Vec<E>,
-        //               ^ defined: 19
+        //               ^ defined: 13
     },
     Unsure,
 }
