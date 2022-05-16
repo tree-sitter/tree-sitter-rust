@@ -218,6 +218,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (impl_item trait: (_) @child) @parent
   (impl_item type: (_) @child) @parent
   (impl_item (where_clause) @child) @parent
+  (impl_item body: (_) @child) @parent
   (struct_item type_parameters: (_) @child) @parent
   (struct_item (where_clause) @child) @parent
   (struct_item body: (_) @child) @parent
@@ -400,6 +401,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (const_item name: (_) @child) @parent
   (const_item type: (_) @child) @parent
   (const_item value: (_) @child) @parent
+  (declaration_list (_) @child) @parent
   (enum_item name: (_) @child) @parent
   (enum_variant_list (_) @child) @parent
   (enum_variant body: (_) @child) @parent
@@ -411,6 +413,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (function_item name: (_) @child) @parent
   (parameter pattern: (_) @child) @parent
   (parameter type: (_) @child) @parent
+  (self_parameter (lifetime) @child) @parent
   (parameters (_) @child) @parent
   (static_item type: (_) @child) @parent
   (static_item value: (_) @child) @parent
