@@ -540,3 +540,43 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 (parameters (parameter pattern: (_) @pattern)) @parameters {
   edge @parameters.defs -> @pattern.defs
 }
+
+;; === Fields
+;; Link fields in struct expressions and patterns to their definitions.
+
+(struct_item)@struct {
+  node @struct.fields
+  attr (@struct.fields) pop_symbol = "%fields"
+  edge @struct.def -> @struct.fields
+}
+
+(struct_item
+  body: (field_declaration_list (field_declaration name: (_) @field))
+) @struct {
+  node @field.def
+  attr (@field.def) node_definition = @field
+  edge @struct.fields -> @field.def
+}
+
+(struct_expression
+  name: (_) @ty
+  body: (field_initializer_list [
+    (field_initializer name: (field_identifier) @field_name)
+    (shorthand_field_initializer (identifier) @field_name)
+  ])
+) {
+  node push_fields
+  attr (push_fields) push_symbol = "%fields"
+  edge @field_name.use -> push_fields
+  edge push_fields -> @ty.use
+}
+
+(struct_pattern
+  type: (_) @ty
+  (field_pattern name: (_) @field_name)
+) {
+  node push_fields
+  attr (push_fields) push_symbol = "%fields"
+  edge @field_name.use -> push_fields
+  edge push_fields -> @ty.use
+}
