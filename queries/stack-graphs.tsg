@@ -89,7 +89,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (field_pattern pattern: (_) @pat) @parent
   (mut_pattern (mutable_specifier) (_) @pat) @parent
   (ref_pattern (_) @pat) @parent
-  (captured_pattern (_) @pat) @parent
+  (captured_pattern (identifier) @pat "@" (_)) @parent
+  (captured_pattern (identifier) "@" (_) @pat) @parent
   (reference_pattern "&" (mutable_specifier)? (_) @pat) @parent
   (or_pattern (_) @pat) @parent
 ] {
@@ -120,7 +121,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (field_pattern pattern: (identifier) @ident)
   (mut_pattern (mutable_specifier) (identifier) @ident)
   (ref_pattern (identifier) @ident)
-  (captured_pattern (_) "@" (identifier) @ident)
+  (captured_pattern (identifier) @ident "@" (_))
   (reference_pattern "&" (mutable_specifier)? (identifier) @ident)
   (or_pattern (identifier) @ident)
 ] {
@@ -323,6 +324,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (match_arm pattern: (_) @child) @parent
   (match_block (_) @child) @parent
   (match_expression value: (_) @child) @parent
+  (match_expression body: (_) @child) @parent
   (match_pattern (_) @child (_)*) @parent
   (parenthesized_expression (_) @child) @parent
   (range_expression (_) @child) @parent
@@ -351,7 +353,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (expression_statement (_) @child) @parent
 
   ;; === Patterns
-  (captured_pattern (_) "@" (_) @child) @parent
+  (captured_pattern (identifier) "@" (_) @child) @parent
+  (captured_pattern (identifier) @child "@" (_)) @parent
   (field_pattern (_) @child) @parent
   (mut_pattern (mutable_specifier) (_) @child) @parent
   (or_pattern (_) @child) @parent
