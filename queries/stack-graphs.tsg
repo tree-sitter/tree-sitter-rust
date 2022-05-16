@@ -390,14 +390,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (trait_item name: (_) @child) @parent
   (type_item name: (_) @child) @parent
   (union_item name: (_) @child) @parent
-
-  ;; === Oddments
-  ;; These contain identifiers, so I guess we have to do something...
-  ;; TODO - rip all this out
-  (attribute_item (_) @child) @parent
-  (inner_attribute_item (_) @child) @parent
-  (meta_item (_) @child) @parent
-  (meta_arguments (_) @child) @parent
 ] {
   let @child.scope = @parent.scope
   let @child.types = @parent.types
