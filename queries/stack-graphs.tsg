@@ -461,51 +461,51 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;;     it isn't a reference at all.
 [
   ;; ### Expressions
-  (arguments (identifier) @ident)
-  (array_expression (identifier) @ident)
-  (assignment_expression left: (identifier) @ident)
-  (assignment_expression right: (identifier) @ident)
-  (await_expression (identifier) @ident)
-  (base_field_initializer (identifier) @ident)
-  (binary_expression left: (identifier) @ident)
-  (binary_expression right: (identifier) @ident)
-  (break_expression (identifier) @ident)
-  (call_expression function: (identifier) @ident)
-  (compound_assignment_expr left: (identifier) @ident)
-  (compound_assignment_expr right: (identifier) @ident)
-  (field_expression value: (identifier) @ident)
-  (field_initializer value: (identifier) @ident)
-  (for_expression value: (identifier) @ident)
-  (generic_function function: (identifier) @ident)
-  (if_expression condition: (identifier) @ident)
-  (if_let_expression value: (identifier) @ident)
-  (index_expression (identifier) @ident)
-  (match_expression value: (identifier) @ident)
-  (match_pattern (_) "if" (identifier) @ident)
-  (parenthesized_expression (identifier) @ident)
-  (range_expression (identifier) @ident)
-  (reference_expression value: (identifier) @ident)
-  (return_expression (identifier) @ident)
-  (shorthand_field_initializer (identifier) @ident)
-  (try_expression (identifier) @ident)
-  (tuple_expression (identifier) @ident)
-  (type_cast_expression value: (identifier) @ident)
-  (unary_expression (identifier) @ident)
-  (while_expression condition: (identifier) @ident)
-  (while_let_expression value: (identifier) @ident)
-  (yield_expression (identifier) @ident)
+  (arguments [(identifier) (self)] @ident)
+  (array_expression [(identifier) (self)] @ident)
+  (assignment_expression left: [(identifier) (self)] @ident)
+  (assignment_expression right: [(identifier) (self)] @ident)
+  (await_expression [(identifier) (self)] @ident)
+  (base_field_initializer [(identifier) (self)] @ident)
+  (binary_expression left: [(identifier) (self)] @ident)
+  (binary_expression right: [(identifier) (self)] @ident)
+  (break_expression [(identifier) (self)] @ident)
+  (call_expression function: [(identifier) (self)] @ident)
+  (compound_assignment_expr left: [(identifier) (self)] @ident)
+  (compound_assignment_expr right: [(identifier) (self)] @ident)
+  (field_expression value: [(identifier) (self)] @ident)
+  (field_initializer value: [(identifier) (self)] @ident)
+  (for_expression value: [(identifier) (self)] @ident)
+  (generic_function function: [(identifier) (self)] @ident)
+  (if_expression condition: [(identifier) (self)] @ident)
+  (if_let_expression value: [(identifier) (self)] @ident)
+  (index_expression [(identifier) (self)] @ident)
+  (match_expression value: [(identifier) (self)] @ident)
+  (match_pattern (_) "if" [(identifier) (self)] @ident)
+  (parenthesized_expression [(identifier) (self)] @ident)
+  (range_expression [(identifier) (self)] @ident)
+  (reference_expression value: [(identifier) (self)] @ident)
+  (return_expression [(identifier) (self)] @ident)
+  (shorthand_field_initializer [(identifier) (self)] @ident)
+  (try_expression [(identifier) (self)] @ident)
+  (tuple_expression [(identifier) (self)] @ident)
+  (type_cast_expression value: [(identifier) (self)] @ident)
+  (unary_expression [(identifier) (self)] @ident)
+  (while_expression condition: [(identifier) (self)] @ident)
+  (while_let_expression value: [(identifier) (self)] @ident)
+  (yield_expression [(identifier) (self)] @ident)
 
   ;; ### Types
-  (array_type length: (identifier) @ident)
+  (array_type length: [(identifier) (self)] @ident)
 
   ;; ### Statements
-  (block (_)* (identifier) @ident)
-  (expression_statement (identifier) @ident)
-  (let_declaration value: (identifier) @ident)
+  (block (_)* [(identifier) (self)] @ident)
+  (expression_statement [(identifier) (self)] @ident)
+  (let_declaration value: [(identifier) (self)] @ident)
 
   ;; ### Items
-  (const_item value: (identifier) @ident)
-  (static_item value: (identifier) @ident)
+  (const_item value: [(identifier) (self)] @ident)
+  (static_item value: [(identifier) (self)] @ident)
 ] {
   node @ident.use
   attr (@ident.use) node_reference = @ident
@@ -618,12 +618,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @parameters.defs
 }
 
-(parameter) @parameter {
+[(parameter) (self_parameter)] @parameter {
   node @parameter.defs
 }
 
 [
   (parameters (parameter) @child) @parameters
+  (parameters (self_parameter) @child) @parameters
   (closure_parameters (_) @child) @parameters
 ] {
   edge @parameters.defs -> @child.defs
@@ -631,6 +632,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 (parameter pattern: (_) @pat) @param {
   let @pat.defs = @param.defs
+}
+
+(self_parameter (self) @self) @param {
+  node @self.def
+  attr (@self.def) node_definition = @self
+  edge @param.defs -> @self.def
 }
 
 (closure_expression parameters: (_) @parameters body: (_) @body) @parent {
