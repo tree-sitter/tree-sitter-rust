@@ -130,17 +130,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (slice_pattern (_) @pat) @parent
   (struct_pattern (field_pattern) @pat) @parent
   (tuple_pattern (_) @pat) @parent
+  (tuple_struct_pattern type: (_) (_) @pat) @parent
 ] {
   let @pat.defs = @parent.defs
-}
-
-;; Tuple-struct subpatterns inherit the parent's defs node.
-[
-  (tuple_struct_pattern type: (_) (_)* @pats) @parent
-] {
-  for pat in @pats {
-    let pat.defs = @parent.defs
-  }
 }
 
 ;; Identifier-patterns are definitions.
@@ -153,6 +145,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (closure_parameters (identifier) @ident)
   (match_pattern (identifier) @ident (_)*)
   (tuple_pattern (identifier) @ident)
+  (tuple_struct_pattern type: (_) (identifier) @ident)
   (slice_pattern (identifier) @ident)
   (field_pattern name: (shorthand_field_identifier) @ident)
   (field_pattern pattern: (identifier) @ident)
@@ -166,17 +159,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@ident.def) node_definition = @ident
   edge @ident.defs -> @ident.def
 }
-
-;; Identifier sub-patterns of tuple-struct patterns are definitions.
-;; But I don't see how to make this pattern work. The subpatterns
-;; need to be a named field.
-;; [
-;;   (tuple_struct_pattern type: (_) (_)* (identifier) @ident (_)*) @parent
-;; ] {
-;;   node @ident.def
-;;   attr (@ident.def) node_definition = @ident
-;;   edge @ident.defs -> @ident.def
-;; }
 
 ;; Items that have a `type_parameters` child have an `.inner_types` node
 ;; that is the type namespace presented to their children.
@@ -578,6 +560,20 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @ident.use -> @ident.types
 }
 
+;; The type-tag in a tuple_struct_pattern is a gruesome special case in rustc.
+;; It looks in both namespaces, preferring inner scopes to outer scopes, and
+;; when it finds both a value and a type in the same lexical scope, picking the
+;; type.
+;;
+;; Our graph can't implement this exactly, but we can get pretty close.
+(tuple_struct_pattern type: (identifier) @ident) {
+  node @ident.use
+  attr (@ident.use) node_reference = @ident
+  edge @ident.use -> @ident.types
+  attr (@ident.use -> @ident.types) precedence = 1
+  edge @ident.use -> @ident.scope
+}
+
 
 
 ; # Item definitions
@@ -658,7 +654,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; # Fields
 ;; Link fields in struct expressions and patterns to their definitions.
 
-(struct_item)@struct {
+(struct_item) @struct {
   node @struct.fields
   attr (@struct.fields) pop_symbol = "%fields"
   edge @struct.def -> @struct.fields
