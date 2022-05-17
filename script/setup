@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -eu
+
+ROOT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && cd .. && pwd)
+
+(cd "$ROOT_DIR"; cargo install --root . --version 0.1.0 --features cli tree-sitter-stack-graphs)
