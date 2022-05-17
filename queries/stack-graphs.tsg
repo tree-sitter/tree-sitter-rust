@@ -585,24 +585,25 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (struct_item name: (_) @name) @item
   (union_item name: (_) @name) @item
 ] {
-  node @item.def
-  attr (@item.def) node_definition = @name
+  node @name.def
+  attr (@name.def) node_definition = @name
+  let @item.def = @name.def
 }
 
 [
-  (const_item name: (_) @name) @item
-  (struct_item name: (_) @name) @item
-  (function_item name: (_) @name) @item
+  (const_item name: (_) @name)
+  (struct_item name: (_) @name)
+  (function_item name: (_) @name)
 ] {
-  edge @item.scope -> @item.def
+  edge @name.scope -> @name.def
 }
 
 [
-  (enum_item name: (_) @name) @item
-  (struct_item name: (_) @name) @item
-  (union_item name: (_) @name) @item
+  (enum_item name: (_) @name)
+  (struct_item name: (_) @name)
+  (union_item name: (_) @name)
 ] {
-  edge @item.types -> @item.def
+  edge @name.types -> @name.def
 }
 
 
