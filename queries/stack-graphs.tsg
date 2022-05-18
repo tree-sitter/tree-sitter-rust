@@ -572,7 +572,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (pointer_type type: (type_identifier) @ident)
   (reference_type type: (type_identifier) @ident)
   ;; Scoped identifiers are more complicated than that, so comment them out for now.
-  ;; (Also the scoped_identifier nodes in use_item nodes should not match.)
+  ;; (Also the scoped_identifier nodes in use_declaration nodes should not match.)
   ;; Definitely lexical scopes have a types/values split; what about other namespaces,
   ;; like the one under a trait, a struct, a module...?
   ;;(scoped_identifier path: (identifier) @ident)
