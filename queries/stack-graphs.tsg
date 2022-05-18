@@ -66,7 +66,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; this section is a massive query listing every one of these trivial cases.
 ;; The rest of the section covers the special cases.
 
-;; Root scopes.
+;; ## Root scopes
 [
   (source_file) @root
   (mod_item body: (declaration_list) @root)
@@ -79,31 +79,58 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@root.scope -> @root.def_types) precedence = 1
 }
 
-;; Expressions that introduce local bindings using patterns.
+;; ## Expression scopes
+
+;; Expressions that introduce local bindings, either with patterns or loop
+;; labels.
 [
-  (for_expression pattern: (_) @pat) @parent
+  (for_expression (loop_label)? @label pattern: (_) @pat) @parent
   (if_let_expression pattern: (_) @pat) @parent
+  (loop_expression (loop_label)? @label) @parent
   (match_arm pattern: (_) @pat) @parent
-  (while_let_expression pattern: (_) @pat) @parent
+  (while_expression (loop_label)? @label) @parent
+  (while_let_expression (loop_label)? @label pattern: (_) @pat) @parent
 ] {
-  ;; Here and throughout, an edge from a scope node to definition nodes has
-  ;; precedence 1, higher than scope-inheritance edges (precedence 0), so that
-  ;; inner bindings are preferred over (i.e. they shadow) outer bindings.
-  node @parent.inner_scope
-  edge @parent.inner_scope -> @pat.defs
-  attr (@parent.inner_scope -> @pat.defs) precedence = 1
-  edge @parent.inner_scope -> @parent.scope
+  if some @label {
+    node @parent.inner_scope
+    edge @parent.inner_scope -> @parent.scope
+    if some @pat {
+      ;; Here and throughout, an edge from a scope node to definition nodes has
+      ;; precedence 1, higher than scope-inheritance edges (precedence 0), so that
+      ;; inner bindings are preferred over (i.e. they shadow) outer bindings.
+      edge @parent.inner_scope -> @pat.defs
+      attr (@parent.inner_scope -> @pat.defs) precedence = 1
+    }
+
+    node def_loops
+    attr (def_loops) pop_symbol = "%loop"
+    edge @parent.inner_scope -> def_loops
+    attr (@parent.inner_scope -> def_loops) precedence = 1
+
+    ; Bind the label in the loop namespace
+    node @label.def
+    attr (@label.def) node_definition = @label
+    edge def_loops -> @label.def
+  } else {
+    if some @pat {
+      node @parent.inner_scope
+      edge @parent.inner_scope -> @parent.scope
+      edge @parent.inner_scope -> @pat.defs
+      attr (@parent.inner_scope -> @pat.defs) precedence = 1
+    } else {
+      let @parent.inner_scope = @parent.scope
+    }
+  }
 }
 
 ;; Assign the children of these expressions the inner_scope of their parents.
-;; (Since these expressions don't introduce type bindings, the children
-;; simply inherit the parent scope for their type namespace.)
 [
   (for_expression body: (_) @child) @parent
   (if_let_expression alternative: (_) @child) @parent
-  (if_let_expression consequence: (_) @child) @parent
+  (loop_expression body: (_) @child) @parent
   (match_arm pattern: (match_pattern condition: (_) @child)) @parent
   (match_arm value: (_) @child) @parent
+  (while_expression body: (_) @child) @parent
   (while_let_expression body: (_) @child) @parent
 ] {
   let @child.scope = @parent.inner_scope
@@ -262,7 +289,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @child.scope = @parent.inner_scope
 }
 
-;; Block scopes.
+;; ## Block scopes.
 ;;
 ;; Items in a block are visible throughout the block. Let-declaration bindings
 ;; in a block are visible starting with the next statement or expression.
@@ -333,6 +360,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @child.scope = @child.block_scope_before
 }
 
+;; ## Other "scopes"
+
 ;; Other contexts that affect the scope of children:
 ;;   (field_initializer name: (_) @child) @parent
 ;;   (scoped_identifier name: (_) @child) @parent
@@ -397,8 +426,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (if_expression consequence: (_) @child) @parent
   (if_let_expression pattern: (_) @child) @parent
   (if_let_expression value: (_) @child) @parent
+  (if_let_expression alternative: (_) @child) @parent
   (index_expression (_) @child) @parent
-  (loop_expression body: (_) @child) @parent
   (macro_invocation macro: (_) @child) @parent
   (match_arm pattern: (_) @child) @parent
   (match_block (_) @child) @parent
@@ -421,7 +450,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (unary_expression (_) @child) @parent
   (unsafe_block (_) @child) @parent
   (while_expression condition: (_) @child) @parent
-  (while_expression body: (_) @child) @parent
   (while_let_expression pattern: (_) @child) @parent
   (while_let_expression value: (_) @child) @parent
   (yield_expression (_) @child) @parent
@@ -815,4 +843,21 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (t) push_symbol = "%type"
   edge @lifetime.use -> t
   edge t -> @lifetime.scope
+}
+
+;; # Loop labels
+;; These look like lifetimes.
+;; TODO - are they in the same namespace as lifetimes?
+
+;; Uses of loop labels.
+[
+  (break_expression (loop_label) @label)
+  (continue_expression (loop_label) @label)
+] @expr {
+  node @label.use
+  attr (@label.use) node_reference = @label
+  node t
+  attr (t) push_symbol = "%loop"
+  edge @label.use -> t
+  edge t -> @expr.scope
 }
