@@ -9,22 +9,25 @@
 ;         namespace is used for looking up functions, local variables,
 ;         arguments, consts, statics, and constructors.
 ;
-;     .types - The type namespace of the current lexical scope, used for
-;         looking up types, modules, and crates.
-;
 ; Rust has separate value and type namespaces. That is, every lexical scope can
 ; contain both value bindings and type bindings, and they're distinct, as
 ; though the things in the type namespace (types, modules, crates) always had
 ; names that started with a special invisible sigil. For now we represent the
-; type namespace as a separate tree of scope nodes.
+; type namespace as a separate node. There's an edge from every `.scope` that
+; can contain type bindings to the corresponding type-namespace node, which
+; pops a special symbol `"%type"`.
 ;
-; Lifetimes have their own separate namespace, but we put them in the
-; type-namespace nodes. Since lifetimes always start with an apostrophe,
-; there can't be any confusion.
+; Thus references to values can just push the identifier and go to the scope;
+; but references to types must push the type-identifier, then push `"%type"`,
+; then go to the scope.
 ;
-; The .scope tree and the .types tree are each stitched together with edges
-; that point "up" the tree, toward the root. They stop at module boundaries because
-; in Rust, each module is a root scope.
+; Lifetimes have their own separate namespace in Rust, but we put them in the
+; type-namespace nodes. Since lifetimes always start with an apostrophe, there
+; can't be any confusion.
+;
+; The .scope tree is stitched together with edges that point "up" the tree,
+; toward the root. These trees stop at module nodes, because in Rust, modules
+; do not inherit access to the enclosing block or module's bindings.
 ;
 ; The identifier syntax-node of an item's name or a binding name in a pattern
 ; has:
@@ -43,9 +46,9 @@
 ;
 ; Note: Tree-sitter's Rust parser tries to distinguish various uses of
 ; identifiers and give them different syntax-node names (like
-; `type_identifier`), but it's imprecise, and there are ambiguous cases. We
-; therefore often have to make a long list of exactly what identifier contexts
-; we're talking about.
+; `type_identifier`), but it's imprecise, and there are ambiguous cases built
+; into the Rust language. We therefore often have to make a long list of
+; exactly what nodes or contexts we're talking about.
 
 ; Magic invocations copied from tree-sitter-typescript.
 attribute node_reference = node         => type = "push_symbol", symbol = (source-text node), is_reference, source_node = node
@@ -56,8 +59,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; # Scope nodes
 
-;; In which we attach `.scope` and `.types` nodes to every syntax node that
-;; needs them, and connect these nodes in two parallel scope trees.
+;; In which we attach `.scope` nodes to every syntax node that needs them, and
+;; connect these nodes in a scope tree.
 ;;
 ;; Most nodes simply inherit these scopes from their parent. The last rule of
 ;; this section is a massive query listing every one of these trivial cases.
@@ -70,7 +73,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   ;; New nodes, no inheritance.
   node @root.scope
-  node @root.types
+  node @root.def_types
+  attr (@root.def_types) pop_symbol = "%type"
+  edge @root.scope -> @root.def_types
+  attr (@root.scope -> @root.def_types) precedence = 1
 }
 
 ;; Expressions that introduce local bindings using patterns.
@@ -101,7 +107,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (while_let_expression body: (_) @child) @parent
 ] {
   let @child.scope = @parent.inner_scope
-  let @child.types = @parent.types
 }
 
 ;; Create the "definitions" node for each pattern. This query matches only the
@@ -177,22 +182,21 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (function_type (for_lifetimes)? @params) @parent
 ] {
   if some @params {
-    node @parent.inner_types
-    node @params.type_param_defs
-    edge @parent.inner_types -> @params.type_param_defs
-    attr (@parent.inner_types -> @params.type_param_defs) precedence = 1
-    edge @parent.inner_types -> @parent.types
+    node @parent.inner_scope
+    edge @parent.inner_scope -> @parent.scope
 
-    node @parent.inner_values
     node @params.const_param_defs
-    edge @parent.inner_values -> @params.const_param_defs
-    attr (@parent.inner_values -> @params.const_param_defs) precedence = 1
-    edge @parent.inner_values -> @parent.scope
+    edge @parent.inner_scope -> @params.const_param_defs
+    attr (@parent.inner_scope -> @params.const_param_defs) precedence = 1
+
+    node @params.type_param_defs
+    attr (@params.type_param_defs) pop_symbol = "%type"
+    edge @parent.inner_scope -> @params.type_param_defs
+    attr (@parent.inner_scope -> @params.type_param_defs) precedence = 1
   } else {
     ;; Items that could have type parameters, but in fact don't, also need
     ;; `inner` nodes, but they're just the same node as the enclosing ones.
-    let @parent.inner_types = @parent.types
-    let @parent.inner_values = @parent.scope
+    let @parent.inner_scope = @parent.scope
   }
 }
 
@@ -255,8 +259,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (function_type parameters: (_) @child) @parent
   (function_type return_type: (_) @child) @parent
 ] {
-  let @child.scope = @parent.inner_values
-  let @child.types = @parent.inner_types
+  let @child.scope = @parent.inner_scope
 }
 
 ;; Block scopes.
@@ -272,8 +275,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   ;; to distinguish blocks that have items from those that don't.
   node @block.item_scope
   edge @block.item_scope -> @block.scope
+
   node @block.item_types
-  edge @block.item_types -> @block.types
+  attr (@block.item_types) pop_symbol = "%type"
+  edge @block.item_scope -> @block.item_types
+  attr (@block.item_scope -> @block.item_types) precedence = 1
 }
 
 ;; The next two rules define each child's `.block_scope_before`.
@@ -324,7 +330,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; Finally, give each child its scope.
 (block (_) @child) @block {
-  let @child.types = @block.item_types
   let @child.scope = @child.block_scope_before
 }
 
@@ -485,7 +490,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (removed_trait_bound (_) @child) @parent
 ] {
   let @child.scope = @parent.scope
-  let @child.types = @parent.types
 }
 
 
@@ -602,7 +606,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   node @ident.use
   attr (@ident.use) node_reference = @ident
-  edge @ident.use -> @ident.types
+
+  let t = (node)
+  attr (t) push_symbol = "%type"
+  edge @ident.use -> t
+  edge t -> @ident.scope
 }
 
 ;; The type-tag in a tuple_struct_pattern is a gruesome special case in rustc.
@@ -614,8 +622,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 (tuple_struct_pattern type: (identifier) @ident) {
   node @ident.use
   attr (@ident.use) node_reference = @ident
-  edge @ident.use -> @ident.types
-  attr (@ident.use -> @ident.types) precedence = 1
+
+  ;; Optional "%type" node!
+  let t = (node)
+  attr (t) push_symbol = "%type"
+  edge @ident.use -> t
+  attr (@ident.use -> t) precedence = 1
+  edge t -> @ident.scope
   edge @ident.use -> @ident.scope
 }
 
@@ -628,9 +641,15 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (source_file (_) @child) @parent
 ] {
   let @child.item_def_scope = @parent.scope
-  let @child.item_def_types = @parent.types
+  let @child.item_def_types = @parent.def_types
 }
 
+;; Tell block-scoped items which node they should hang definitions on.
+;;
+;; (The two scoped variables `.item_def_scope` and `item_scope` look like they
+;; ought to have the same name, but that wouldn't work. The selector here does
+;; not select only item children but all children; one of those children might
+;; be another block, and then there'd be a conflict.)
 (block (_) @child) @parent {
   let @child.item_def_scope = @parent.item_scope
   let @child.item_def_types = @parent.item_types
@@ -648,6 +667,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @item.def = @name.def
 }
 
+; Bind items in the value namespace. Note: We bind structs in both namespaces.
+; This is definitely correct for unit structs and tuple structs. Does Rust bind
+; named-field structs in the value namespace? XXX TODO find out
 [
   (const_item name: (_) @name) @item
   (struct_item name: (_) @name) @item
@@ -657,6 +679,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@item.item_def_scope -> @name.def) precedence = 1
 }
 
+; Bind items in the type namespace.
 [
   (enum_item name: (_) @name) @item
   (struct_item name: (_) @name) @item
@@ -706,15 +729,15 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @body.scope -> @parameters.defs
   attr (@body.scope -> @parameters.defs) precedence = 1
   edge @body.scope -> @parent.scope
-  let @body.types = @parent.types
+  ;; no %type node
 }
 
 (function_item parameters: (_) @parameters body: (_) @body) @parent {
   node @body.scope
   edge @body.scope -> @parameters.defs
   attr (@body.scope -> @parameters.defs) precedence = 1
-  edge @body.scope -> @parent.inner_values
-  let @body.types = @parent.inner_types
+  edge @body.scope -> @parent.inner_scope
+  ;; no %type node
 }
 
 
@@ -788,5 +811,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   node @lifetime.use
   attr (@lifetime.use) node_reference = @lifetime
-  edge @lifetime.use -> @lifetime.types
+  node t
+  attr (t) push_symbol = "%type"
+  edge @lifetime.use -> t
+  edge t -> @lifetime.scope
 }
