@@ -31,6 +31,8 @@
 ;
 ;     .def - The node that pops the item's name.
 ;
+; Items also have a `.def` that aliases this node.
+;
 ; For convenience, some nodes have:
 ;
 ;     .defs - A static-environment rib: a stepping-stone node from a scope node
@@ -257,30 +259,73 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @child.types = @parent.inner_types
 }
 
+;; Block scopes.
+;;
+;; Items in a block are visible throughout the block. Let-declaration bindings
+;; in a block are visible starting with the next statement or expression.
+
+;; Create the item scope.
+(block) @block {
+  ;; TODO: Figure out how to create these nodes conditionally. They're only
+  ;; needed if the block contains items; otherwise these can just be aliases.
+  ;; The reason it isn't done is I don't know how to use the query language
+  ;; to distinguish blocks that have items from those that don't.
+  node @block.item_scope
+  edge @block.item_scope -> @block.scope
+  node @block.item_types
+  edge @block.item_types -> @block.types
+}
+
+;; The next two rules define each child's `.block_scope_before`.
+(block . (_) @first_child) @block {
+  let @first_child.block_scope_before = @block.item_scope
+}
+
+(block (_) @prev . (_) @next) {
+  let @next.block_scope_before = @prev.block_scope_after
+}
+
+;; The next two rules define `.block_scope_after` for each statement child.
 (let_declaration pattern: (_) @pat) @stmt {
-  node @stmt.out_scope
-  edge @stmt.out_scope -> @pat.defs
-  attr (@stmt.out_scope -> @pat.defs) precedence = 1
-  edge @stmt.out_scope -> @stmt.scope
+  node @stmt.block_scope_after
+  edge @stmt.block_scope_after -> @pat.defs
+  attr (@stmt.block_scope_after -> @pat.defs) precedence = 1
+  edge @stmt.block_scope_after -> @stmt.block_scope_before
 }
 
-[
-  (expression_statement) @stmt
-  (line_comment) @stmt
-] {
-  let @stmt.out_scope = @stmt.scope
+(block [
+  ;; This is every node type that can appear in a block as a statement, except
+  ;; `let_declaration`. Awkward but I don't know how else to write this.
+  (empty_statement)
+  (expression_statement)
+  (line_comment)
+  (macro_definition)
+  (attribute_item)
+  (inner_attribute_item)
+
+  (const_item)
+  (mod_item)
+  (foreign_mod_item)
+  (struct_item)
+  (union_item)
+  (enum_item)
+  (type_item)
+  (function_item)
+  (function_signature_item)
+  (impl_item)
+  (trait_item)
+  (associated_type)
+  (use_declaration)
+  (extern_crate_declaration)
+  (static_item)
+] @stmt) {
+  let @stmt.block_scope_after = @stmt.block_scope_before
 }
 
-(block (_) @child) @parent {
-  let @child.types = @parent.types
-}
-
-(block (_)* @children) @parent {
-  var current_scope = @parent.scope
-  for child in @children {
-    let child.scope = current_scope
-    set current_scope = child.out_scope
-  }
+;; Finally, give each child its scope.
+(block (_) @child) @block {
+  let @child.types = @block.item_types
+  let @child.scope = @child.block_scope_before
 }
 
 ;; Other contexts that affect the scope of children:
@@ -579,6 +624,19 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ; # Item definitions
 
 [
+  (declaration_list (_) @child) @parent
+  (source_file (_) @child) @parent
+] {
+  let @child.item_def_scope = @parent.scope
+  let @child.item_def_types = @parent.types
+}
+
+(block (_) @child) @parent {
+  let @child.item_def_scope = @parent.item_scope
+  let @child.item_def_types = @parent.item_types
+}
+
+[
   (const_item name: (_) @name) @item
   (enum_item name: (_) @name) @item
   (function_item name: (_) @name) @item
@@ -591,19 +649,21 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 [
-  (const_item name: (_) @name)
-  (struct_item name: (_) @name)
-  (function_item name: (_) @name)
+  (const_item name: (_) @name) @item
+  (struct_item name: (_) @name) @item
+  (function_item name: (_) @name) @item
 ] {
-  edge @name.scope -> @name.def
+  edge @item.item_def_scope -> @name.def
+  attr (@item.item_def_scope -> @name.def) precedence = 1
 }
 
 [
-  (enum_item name: (_) @name)
-  (struct_item name: (_) @name)
-  (union_item name: (_) @name)
+  (enum_item name: (_) @name) @item
+  (struct_item name: (_) @name) @item
+  (union_item name: (_) @name) @item
 ] {
-  edge @name.types -> @name.def
+  edge @item.item_def_types -> @name.def
+  attr (@item.item_def_types -> @name.def) precedence = 1
 }
 
 
