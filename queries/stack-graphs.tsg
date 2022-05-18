@@ -745,6 +745,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (struct_pattern (field_pattern name: (_) @field_name))
 ] {
   node @field_name.use
+  attr (@field_name.use) node_reference = @field_name
 }
 
 (struct_expression
