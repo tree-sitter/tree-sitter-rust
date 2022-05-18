@@ -1,9 +1,9 @@
-struct Parser<'a> {
-    text: &'a str,
-    point: usize,
+pub struct Parser<'a> {
+    pub text: &'a str,
+    pub point: usize,
 }
 
-fn f(s: &str) {
+pub fn f(s: &str) {
     let mut _parser = Parser { text: s, point: 0 };
     //                ^ defined: 1
     //                         ^ defined: 2
@@ -11,3 +11,5 @@ fn f(s: &str) {
     //                                  ^ defined: 3
     todo!();
 }
+
+fn main() {}

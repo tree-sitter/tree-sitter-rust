@@ -20,3 +20,5 @@ pub fn f<T>(
 //   ^ defined: 16
     t
 }
+
+fn main() {}

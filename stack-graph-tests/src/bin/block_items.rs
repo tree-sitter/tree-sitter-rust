@@ -11,3 +11,5 @@ fn test() {
         struct Info(String);
     }
 }
+
+fn main() {}

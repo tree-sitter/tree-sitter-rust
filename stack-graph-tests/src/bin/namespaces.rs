@@ -13,3 +13,5 @@ pub fn Point(x: u32, y: u32) -> Point {
     p
 //  ^ defined: 9
 }
+
+fn main() {}

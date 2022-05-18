@@ -23,9 +23,11 @@ impl<'src>
     Parser<'src>
 //         ^ defined: 22
 {
-    fn source(&'src self) -> &'src str {
-        //     ^ defined: 22
-        //                    ^ defined: 22
+    pub fn source(&'src self) -> &'src str {
+        //         ^ defined: 22
+        //                        ^ defined: 22
         self.source
     }
 }
+
+fn main() {}

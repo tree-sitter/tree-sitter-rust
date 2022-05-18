@@ -3,11 +3,11 @@ pub struct Frob;
 pub struct Point(u32, u32);
 
 pub struct A {
-    x: u32,
-    y: Point,
-    // ^ defined: 3
-    next: Option<Box<A>>,
-    //               ^ defined: 5
+    pub x: u32,
+    pub y: Point,
+    //     ^ defined: 3
+    pub next: Option<Box<A>>,
+    //                   ^ defined: 5
 }
 
 pub enum MyResult<T, E> {
@@ -34,3 +34,5 @@ pub const ORIGIN: Point = Point(0, 0);
 pub const POINT_FN: fn(u32, u32) -> Point = Point;
 //                                  ^ defined: 3
 //                                          ^ defined: 3
+
+fn main() {}

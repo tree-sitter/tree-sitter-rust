@@ -1,4 +1,4 @@
-fn is_ok(t: i32) -> bool {
+pub fn is_ok(t: i32) -> bool {
     match t.count_ones() {
         ones@(8..=30) =>
             ones % 2 == 0,
@@ -6,3 +6,5 @@ fn is_ok(t: i32) -> bool {
         _ => false,
     }
 }
+
+fn main() {}

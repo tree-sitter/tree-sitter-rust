@@ -1,4 +1,4 @@
-fn fib(
+pub fn fib(
     n: i64
 ) -> i64 {
     if n <= 1 {
@@ -11,3 +11,5 @@ fn fib(
 //                   ^ defined: 2
     }
 }
+
+fn main() {}

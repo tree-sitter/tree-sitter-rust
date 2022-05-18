@@ -20,3 +20,5 @@ pub fn handle(r: std::io::Result<Point>) {
         //                                    ^ defined: 17
     }
 }
+
+fn main() {}
