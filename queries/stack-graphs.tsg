@@ -194,6 +194,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @ident.defs -> @ident.def
 }
 
+;; ## Generic parameters
+
 ;; Items that have a `type_parameters` child have an `.inner_types` node
 ;; that is the type namespace presented to their children.
 [
@@ -227,7 +229,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   }
 }
 
-; Generic parameters.
+; Generic parameters are definitions.
 [
   (type_parameters (lifetime) @lifetime) @params
   (for_lifetimes (lifetime) @lifetime) @params
@@ -251,7 +253,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; Direct children of generics get the inner scope.
 ;;
-;; This lists all contexts in most items, except the name.
+;; This lists all contexts in most items, except the name,
 ;; and all contexts within a function except the name and the body;
 ;; the body is special because it also sees the function parameter bindings.
 [
@@ -354,14 +356,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] @stmt) {
   let @stmt.block_scope_after = @stmt.scope
 }
-
-;; ## Other "scopes"
-
-;; Other contexts that affect the scope of children:
-;;   (field_initializer name: (_) @child) @parent
-;;   (scoped_identifier name: (_) @child) @parent
-;;   (scoped_type_identifier name: (_) @child) @parent
-
 
 
 ;; Default scope propagation
@@ -531,6 +525,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; -   otherwise after `.` it refers to a field
 ;; -   and of course, if it's the `name:` of an item or binding,
 ;;     it isn't a reference at all.
+;;
+;; The grammar parses many of these as `identifier` syntax nodes, so it's
+;; necessary to use a giant pattern to get only expression contexts.
 [
   ;; ### Expressions
   (arguments [(identifier) (self)] @ident)
@@ -585,7 +582,19 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 ;; List all contexts where an identifier is a reference to a binding in the
-;; "types" namespace.
+;; "types" namespace of the current scope.
+;;
+;; The grammar also parses the following as `type_identifier`:
+;; - names of many items, like the `X` in `struct X {}`
+;; - type parameters, like the `T` in `fn f<T>() {}`
+;; - the `Item` in `Iterator<Item=T>`
+;; - identifiers after `::` when they refer to types
+;; None of these should match here, so it's necessary to use a huge pattern to
+;; get only type-expression contexts.
+;;
+;; Identifiers immediately before `::` in a `scoped_identifier` are also likely
+;; just a bit different (I don't actually know) and are handled elsewhere for
+;; now.
 [
   ;; ### Types
   (abstract_type trait: (type_identifier) @ident)
@@ -598,11 +607,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (generic_type_with_turbofish type: (type_identifier) @ident)
   (pointer_type type: (type_identifier) @ident)
   (reference_type type: (type_identifier) @ident)
-  ;; Scoped identifiers are more complicated than that, so comment them out for now.
-  ;; (Also the scoped_identifier nodes in use_declaration nodes should not match.)
-  ;; Definitely lexical scopes have a types/values split; what about other namespaces,
-  ;; like the one under a trait, a struct, a module...?
-  ;;(scoped_identifier path: (identifier) @ident)
   (tuple_type (type_identifier) @ident)
   (type_arguments (type_identifier) @ident) ;; questionable
 
@@ -679,12 +683,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 [
-  (const_item name: (_) @name) @item
-  (enum_item name: (_) @name) @item
-  (function_item name: (_) @name) @item
-  (struct_item name: (_) @name) @item
-  (union_item name: (_) @name) @item
-] {
+  (const_item name: (_) @name)
+  (enum_item name: (_) @name)
+  (function_item name: (_) @name)
+  (mod_item name: (_) @name)
+  (struct_item name: (_) @name)
+  (union_item name: (_) @name)
+] @item {
   node @name.def
   attr (@name.def) node_definition = @name
   let @item.def = @name.def
@@ -694,20 +699,20 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ; This is definitely correct for unit structs and tuple structs. Does Rust bind
 ; named-field structs in the value namespace? XXX TODO find out
 [
-  (const_item name: (_) @name) @item
-  (struct_item name: (_) @name) @item
-  (function_item name: (_) @name) @item
-] {
+  (const_item name: (_) @name)
+  (struct_item name: (_) @name)
+  (function_item name: (_) @name)
+] @item {
   edge @item.item_def_scope -> @name.def
   attr (@item.item_def_scope -> @name.def) precedence = 1
 }
 
 ; Bind items in the type namespace.
 [
-  (enum_item name: (_) @name) @item
-  (struct_item name: (_) @name) @item
-  (union_item name: (_) @name) @item
-] {
+  (enum_item name: (_) @name)
+  (struct_item name: (_) @name)
+  (union_item name: (_) @name)
+] @item {
   edge @item.item_def_types -> @name.def
   attr (@item.item_def_types -> @name.def) precedence = 1
 }
@@ -730,10 +735,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 [
-  (parameters (parameter) @child) @parameters
-  (parameters (self_parameter) @child) @parameters
-  (closure_parameters (_) @child) @parameters
-] {
+  (parameters (parameter) @child)
+  (parameters (self_parameter) @child)
+  (closure_parameters (_) @child)
+] @parameters {
   edge @parameters.defs -> @child.defs
 }
 
@@ -752,7 +757,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @body.scope -> @parameters.defs
   attr (@body.scope -> @parameters.defs) precedence = 1
   edge @body.scope -> @parent.scope
-  ;; no %type node
 }
 
 (function_item parameters: (_) @parameters body: (_) @body) @parent {
@@ -760,7 +764,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @body.scope -> @parameters.defs
   attr (@body.scope -> @parameters.defs) precedence = 1
   edge @body.scope -> @parent.inner_scope
-  ;; no %type node
 }
 
 
