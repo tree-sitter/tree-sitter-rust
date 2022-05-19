@@ -381,6 +381,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (scoped_type_identifier path: (_) @child) @parent
   (tuple_type (_) @child) @parent
   (type_arguments (_) @child) @parent
+  ;;(type_binding type_arguments: (_) @child) @parent  ;; bogus grammar
+  (type_binding type: (_) @child) @parent
 
   ;; ### Expressions
   (arguments (_) @child) @parent
@@ -608,7 +610,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (pointer_type type: (type_identifier) @ident)
   (reference_type type: (type_identifier) @ident)
   (tuple_type (type_identifier) @ident)
-  (type_arguments (type_identifier) @ident) ;; questionable
+  (type_arguments (type_identifier) @ident) ;; ambiguous, but treat as a type for now
+  (type_binding type: (type_identifier) @ident)
 
   ;; ### Expressions
   (type_cast_expression type: (type_identifier) @ident)
