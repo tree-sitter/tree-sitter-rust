@@ -517,7 +517,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; "values" namespace.
 ;;
 ;; In many contexts, it is not:
-;; -   after `:`, or before `::`, or inside `<...>`, or after `as`,
+;; -   after `let x:`, or before `::`, or inside `<...>`, or after `as`,
 ;;     it refers to something in the type namespace
 ;; -   in `#[...]` it refers to an attribute, or something
 ;; -   before `!` it refers to a macro
