@@ -800,7 +800,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 (struct_expression
-  name: (_) @ty
+  name: (type_identifier) @ty
   body: (field_initializer_list [
     (field_initializer name: (field_identifier) @field_name)
     (shorthand_field_initializer (identifier) @field_name)
@@ -813,7 +813,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 (struct_pattern
-  type: (_) @ty
+  type: (type_identifier) @ty
   (field_pattern name: (_) @field_name)
 ) {
   node push_fields
