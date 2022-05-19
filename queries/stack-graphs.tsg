@@ -309,13 +309,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@block.item_scope -> @block.item_types) precedence = 1
 }
 
-;; The next two rules define each child's `.block_scope_before`.
+;; The next two rules define each child's `.scope`.
 (block . (_) @first_child) @block {
-  let @first_child.block_scope_before = @block.item_scope
+  let @first_child.scope = @block.item_scope
 }
 
 (block (_) @prev . (_) @next) {
-  let @next.block_scope_before = @prev.block_scope_after
+  let @next.scope = @prev.block_scope_after
 }
 
 ;; The next two rules define `.block_scope_after` for each statement child.
@@ -323,7 +323,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @stmt.block_scope_after
   edge @stmt.block_scope_after -> @pat.defs
   attr (@stmt.block_scope_after -> @pat.defs) precedence = 1
-  edge @stmt.block_scope_after -> @stmt.block_scope_before
+  edge @stmt.block_scope_after -> @stmt.scope
 }
 
 (block [
@@ -352,12 +352,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (extern_crate_declaration)
   (static_item)
 ] @stmt) {
-  let @stmt.block_scope_after = @stmt.block_scope_before
-}
-
-;; Finally, give each child its scope.
-(block (_) @child) @block {
-  let @child.scope = @child.block_scope_before
+  let @stmt.block_scope_after = @stmt.scope
 }
 
 ;; ## Other "scopes"
