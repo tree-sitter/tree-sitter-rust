@@ -156,7 +156,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (captured_pattern (identifier) @pat "@" (_)) @parent
   (field_pattern name: (shorthand_field_identifier) @pat) @parent
   (field_pattern pattern: (_) @pat) @parent
-  (match_pattern (_) @pat (_)*) @parent
+  (match_pattern . (_) @pat) @parent
   (mut_pattern (mutable_specifier) (_) @pat) @parent
   (or_pattern (_) @pat) @parent
   (ref_pattern (_) @pat) @parent
@@ -177,7 +177,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (let_declaration pattern: (identifier) @ident)
   (parameter pattern: (identifier) @ident)
   (closure_parameters (identifier) @ident)
-  (match_pattern (identifier) @ident (_)*)
+  (match_pattern . (identifier) @ident)
   (tuple_pattern (identifier) @ident)
   (tuple_struct_pattern type: (_) (identifier) @ident)
   (slice_pattern (identifier) @ident)
@@ -424,8 +424,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (match_block (_) @child) @parent
   (match_expression value: (_) @child) @parent
   (match_expression body: (_) @child) @parent
-  (match_pattern !condition (_) @child) @parent
-  (match_pattern (_) @child condition: (_)) @parent
+  (match_pattern . (_) @child) @parent
   (parenthesized_expression (_) @child) @parent
   (range_expression (_) @child) @parent
   (reference_expression value: (_) @child) @parent
@@ -552,7 +551,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (if_let_expression value: [(identifier) (self)] @ident)
   (index_expression [(identifier) (self)] @ident)
   (match_expression value: [(identifier) (self)] @ident)
-  (match_pattern (_) "if" [(identifier) (self)] @ident)
+  (match_pattern condition: [(identifier) (self)] @ident)
   (parenthesized_expression [(identifier) (self)] @ident)
   (range_expression [(identifier) (self)] @ident)
   (reference_expression value: [(identifier) (self)] @ident)
