@@ -366,6 +366,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @stmt.block_scope_after = @stmt.scope
 }
 
+(scoped_use_list list: (_) @child) @parent {
+  ;; XXX This is completely bogus but there has to be a node here
+  ;; because this can contain paths.
+  node @child.scope ;; bug
+}
+
 
 ;; Default scope propagation
 ;;
@@ -468,7 +474,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (range_pattern (_) @child) @parent
   (ref_pattern (_) @child) @parent
   (reference_pattern (_) @child) @parent
-  (scoped_identifier path: (_) @child) @parent
   (slice_pattern (_) @child) @parent
   (struct_pattern (_) @child) @parent
   (tuple_pattern (_) @child) @parent
@@ -515,6 +520,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (where_predicate bounds: (_) @child) @parent
   (trait_bounds (_) @child) @parent
   (removed_trait_bound (_) @child) @parent
+
+  ;; ### Imports
+  (scoped_use_list path: (_) @child) @parent
+  (use_as_clause path: (_) @child) @parent
+  (use_declaration argument: (_) @child) @parent
+  (use_list (_) @child) @parent
+  (use_wildcard (_) @child "::" "*") @parent
 ] {
   let @child.scope = @parent.scope
 }
@@ -523,6 +535,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; # Marking unqualified references
 
+;; ## Expression context
+;;
 ;; List all contexts where an identifier is a reference to a binding in the
 ;; "values" namespace.
 ;;
@@ -591,6 +605,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @ident.use -> @ident.scope
 }
 
+;; ## Type context
+;;
 ;; List all contexts where an identifier is a reference to a binding in the
 ;; "types" namespace of the current scope.
 ;;
@@ -780,6 +796,213 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 
 
+;; # Paths
+;;
+;; What tree-sitter-rust calls a `scoped_identifier` is what the rest of the
+;; Rust world calls a path.
+
+;; The `path:` of a `scoped_identifier` or `scoped_type_identifier` is one of
+;; - `self` / `super` / `crate`
+;; - identifier
+;; - scoped_identifier
+;; - bracketed_type
+;; - generic_type
+;; So far we only handle `identifier` and `scoped_identifier`.
+
+;; Note: This is a complete copy of the huge list under "Marking unqualified
+;; references". Obviously the duplication is very bad. I don't know how else to
+;; get this effect.
+
+[
+  ;; ### Expressions
+  (arguments (_) @here)
+  (array_expression (_) @here)
+  (assignment_expression left: (_) @here)
+  (assignment_expression right: (_) @here)
+  (await_expression (_) @here)
+  (base_field_initializer (_) @here)
+  (binary_expression left: (_) @here)
+  (binary_expression right: (_) @here)
+  (break_expression (_) @here)
+  (call_expression function: (_) @here)
+  (compound_assignment_expr left: (_) @here)
+  (compound_assignment_expr right: (_) @here)
+  (field_expression value: (_) @here)
+  (field_initializer value: (_) @here)
+  (for_expression value: (_) @here)
+  (generic_function function: (_) @here)
+  (if_expression condition: (_) @here)
+  (if_let_expression value: (_) @here)
+  (index_expression (_) @here)
+  (match_expression value: (_) @here)
+  (match_pattern condition: (_) @here)
+  (parenthesized_expression (_) @here)
+  (range_expression (_) @here)
+  (reference_expression value: (_) @here)
+  (return_expression (_) @here)
+  (shorthand_field_initializer (_) @here)
+  (try_expression (_) @here)
+  (tuple_expression (_) @here)
+  (type_cast_expression value: (_) @here)
+  (unary_expression (_) @here)
+  (while_expression condition: (_) @here)
+  (while_let_expression value: (_) @here)
+  (yield_expression (_) @here)
+
+  ;; ### Types
+  (array_type length: (_) @here)
+
+  ;; ### Statements
+  (block (_)* (_) @here)
+  (expression_statement (_) @here)
+  (let_declaration value: (_) @here)
+
+  ;; ### Items
+  (const_item value: (_) @here)
+  (static_item value: (_) @here)
+] {
+  let @here.context = "%value"
+}
+
+;; Note: This is a complete copy of the second huge list under "Marking
+;; unqualified references".
+[
+  ;; ### Types
+  (abstract_type trait: (_) @here)
+  (array_type element: (_) @here)
+  (bounded_type (_) @here)
+  (dynamic_type trait: (_) @here)
+  (function_type trait: (_) @here)  ;; only for Fn, FnMut, FnOnce
+  (function_type return_type: (_) @here)
+  (generic_type type: (_) @here)
+  (generic_type_with_turbofish type: (_) @here)
+  (pointer_type type: (_) @here)
+  (reference_type type: (_) @here)
+  (scoped_type_identifier path: (_) @here)
+  (tuple_type (_) @here)
+  (type_binding type: (_) @here)
+
+  ;; ### Expressions
+  (type_cast_expression type: (_) @here)
+  (bracketed_type (_) @here)
+  (struct_expression name: (_) @here)
+  (scoped_identifier path: (_) @here)
+
+  ;; ### Patterns
+  (struct_pattern type: (_) @here)
+
+  ;; ### Items
+  (const_item type: (_) @here)
+  (constrained_type_parameter left: (_) @here)
+  (field_declaration type: (_) @here)
+  (function_item return_type: (_) @here)
+  (impl_item trait: (_) @here)
+  (impl_item type: (_) @here)
+  (ordered_field_declaration_list type: (_) @here)
+  (parameter type: (_) @here)
+  (static_item type: (_) @here)
+  (trait_bounds (_) @here)
+  (where_predicate left: (_) @here)
+] {
+  let @here.context = "%type"
+}
+
+;; Ambiguous contexts
+(type_arguments (_) @here) {
+  ;; type or value depending on the generic, I think
+  let @here.context = "%type" ;; bug
+}
+
+(tuple_struct_pattern type: (_) @here) {
+  ;; type or value, whichever comes first
+  let @here.context = "%value" ;; bug
+}
+
+;; Pattern context
+[
+  (for_expression pattern: (_) @here)
+  (if_let_expression pattern: (_) @here)
+  (while_let_expression pattern: (_) @here)
+  (let_declaration pattern: (_) @here)
+  (parameter pattern: (_) @here)
+  (closure_parameters (_) @here)
+  (match_pattern . (_) @here)
+  (tuple_pattern (_) @here)
+  (tuple_struct_pattern type: (_) (_) @here)
+  (slice_pattern (_) @here)
+  (field_pattern name: (shorthand_field_identifier) @ident)
+  (field_pattern pattern: (_) @here)
+  (mut_pattern (mutable_specifier) (_) @here)
+  (ref_pattern (_) @here)
+  (captured_pattern (_) @here "@" (_))
+  (reference_pattern "&" (mutable_specifier)? (_) @here)
+  (or_pattern (_) @here)
+] {
+  let @here.context = "%pattern"
+}
+
+;; Macro context
+(macro_invocation macro: (_) @here) {
+  let @here.context = "%macro"
+}
+
+;; Use-path context
+[
+  (scoped_use_list path: (_) @here)
+  (use_as_clause path: (_) @here)
+  (use_declaration argument: (_) @here)
+  (use_list (_) @here)
+  (use_wildcard (_) @here "::" "*")
+] {
+  let @here.context = "%other"
+}
+
+[
+  (scoped_identifier path: (_)? @parent name: (identifier) @name) @path
+  (scoped_type_identifier path: (_)? @parent name: [(type_identifier) @type] @name) @path
+] {
+  node @name.use
+  attr (@name.use) node_reference = @name
+  let @path.use = @name.use
+
+  node s
+  attr (s) push_symbol = (replace @path.context "%pattern" "%value")
+
+  edge @name.use -> s
+  if some @parent {
+    edge s -> @parent.use
+  } else {
+    ;; this is a crate name, will eventually connect s to the extern crates
+  }
+}
+
+[
+  (scoped_identifier path: (identifier) @name)
+  (scoped_type_identifier path: (identifier) @name)
+] {
+  ;; For now, just treat this as a type_identifier.
+  node @name.use
+  attr (@name.use) node_reference = @name
+
+  let t = (node)
+  attr (t) push_symbol = "%type"
+  edge @name.use -> t
+  edge t -> @name.scope
+}
+
+(scoped_identifier path: [
+  (self)
+  (super)
+  (crate)
+  (bracketed_type)
+  (generic_type)
+] @parent) {
+  ;; Dummy node to avoid "undefined scoped variable". Not hooked up yet.
+  node @parent.use
+}
+
+
+
 ;; # Fields
 ;; Link fields in struct expressions and patterns to their definitions.
 
@@ -810,7 +1033,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 (struct_expression
-  name: (type_identifier) @ty
+  name: [(type_identifier) (scoped_type_identifier)] @ty
   body: (field_initializer_list [
     (field_initializer name: (field_identifier) @field_name)
     (shorthand_field_initializer (identifier) @field_name)
