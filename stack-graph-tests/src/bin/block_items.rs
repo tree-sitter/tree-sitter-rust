@@ -5,10 +5,13 @@ fn test() {
 
     {
         f();
-    //  ^ defined: 9
+    //  ^ defined: 11
+        let _ = a::N;
+        //      ^ defined: 14
         fn f() -> Info { todo!(); }
-        //        ^ defined: 11
+        //        ^ defined: 13
         struct Info(String);
+        mod a { pub const N: usize = 10; }
     }
 }
 
