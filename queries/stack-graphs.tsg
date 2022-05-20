@@ -930,7 +930,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (tuple_pattern (_) @here)
   (tuple_struct_pattern type: (_) (_) @here)
   (slice_pattern (_) @here)
-  (field_pattern name: (shorthand_field_identifier) @ident)
+  (field_pattern name: (shorthand_field_identifier) @here)
   (field_pattern pattern: (_) @here)
   (mut_pattern (mutable_specifier) (_) @here)
   (ref_pattern (_) @here)
