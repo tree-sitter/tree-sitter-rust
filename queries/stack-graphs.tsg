@@ -33,6 +33,8 @@
 ; has:
 ;
 ;     .def - The node that pops the item's name.
+;     TODO - change this so the actual whole declaration has `.def`, a node that
+;     is tagged with the position of the identifier; we do that for enum variants
 ;
 ; Items also have a `.def` that aliases this node.
 ;
@@ -77,11 +79,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@root.def_types) pop_symbol = "%type"
   edge @root.scope -> @root.def_types
   attr (@root.scope -> @root.def_types) precedence = 1
-}
-
-;; Install a path from a module definition to the types defined inside it.
-(mod_item name: (identifier) @name body: (declaration_list) @body ) @mod {
-  edge @name.def -> @body.def_types
 }
 
 ;; ## Expression scopes
@@ -795,6 +792,63 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 
+;; # Qualified access
+;; In which we set up paths from definitions to their members.
+
+;; Install a path from a module definition to the types defined inside it.
+(mod_item body: (declaration_list) @body ) @mod {
+  edge @mod.def -> @body.def_types
+}
+
+;; Install a path from a struct definition to its fields.
+(struct_item body: (field_declaration_list) @fields) @struct {
+  edge @struct.def -> @fields.fields
+}
+
+;; Note this is used by struct-like enum variants too.
+(field_declaration_list) @fields {
+  node @fields.fields
+  attr (@fields.fields) pop_symbol = "%fields"
+}
+
+(field_declaration_list (field_declaration name: (_) @field)) @fields {
+  node @field.def
+  attr (@field.def) node_definition = @field
+  edge @fields.fields -> @field.def
+}
+
+;; Install paths from an enum to its variants.
+(enum_item name: (type_identifier) @name ) @enum {
+  node @enum.variants_types
+  node t
+  attr (t) pop_symbol = "%type"
+  edge @enum.def -> t
+  edge t -> @enum.variants_types
+
+  node @enum.variants_values
+  node v
+  attr (v) pop_symbol = "%value"
+  edge @enum.def -> v
+  edge v -> @enum.variants_values
+}
+
+(enum_item
+  body: (enum_variant_list
+    (enum_variant
+      name: (identifier) @name
+      (field_declaration_list)? @fields
+    ) @variant
+  )
+) @enum {
+  node @variant.def
+  attr (@variant.def) node_definition = @name
+  if some @fields {
+    edge @enum.variants_types -> @variant.def
+    edge @variant.def -> @fields.fields
+  }
+  edge @enum.variants_values -> @variant.def
+}
+
 
 ;; # Paths
 ;;
@@ -1005,20 +1059,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; # Fields
 ;; Link fields in struct expressions and patterns to their definitions.
-
-(struct_item) @struct {
-  node @struct.fields
-  attr (@struct.fields) pop_symbol = "%fields"
-  edge @struct.def -> @struct.fields
-}
-
-(struct_item
-  body: (field_declaration_list (field_declaration name: (_) @field))
-) @struct {
-  node @field.def
-  attr (@field.def) node_definition = @field
-  edge @struct.fields -> @field.def
-}
 
 [
   (struct_expression
