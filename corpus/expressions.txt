@@ -616,8 +616,8 @@ let msg = match x {
           pattern: (match_pattern
             (macro_invocation
               macro: (identifier)
-                (token_tree
-                  (integer_literal))))
+              (token_tree
+                (integer_literal))))
           value: (string_literal))
         (match_arm
           pattern: (match_pattern)
