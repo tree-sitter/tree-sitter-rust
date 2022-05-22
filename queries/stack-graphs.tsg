@@ -33,18 +33,22 @@
 ; has:
 ;
 ;     .def - The node that pops the item's name.
-;     TODO - change this so the actual whole declaration has `.def`, a node that
-;     is tagged with the position of the identifier; we do that for enum variants
+;
+; TODO - change this so the actual whole declaration has `.def`, a node that
+; is tagged with the position of the identifier; we do that for enum variants
+; already.
 ;
 ; Items also have a `.def` that aliases this node.
 ;
-; For convenience, some nodes have:
+; Some nodes have:
 ;
-;     .defs - A static-environment rib: a stepping-stone node from a scope node
-;         toward actual local definitions, but without any inheritance edges.
-;         These are stitched together with edges that point down the tree,
-;         toward the leaves. They're necessary when we can't match the full path
-;         from a scope to a binding with a single pattern.
+;     .def_values, .def_types - A static-environment rib: has paths to all
+;         variables / types *defined* in this scope, without any inheritance
+;         edges. These are necessary when we can't match the full path from a
+;         scope to a binding with a single pattern.
+;
+; TODO - make this always be a single node, not a tree of nodes the way it
+; currently is for parameters.
 ;
 ; Note: Tree-sitter's Rust parser tries to distinguish various uses of
 ; identifiers and give them different syntax-node names (like
@@ -75,10 +79,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   ;; New nodes, no inheritance.
   node @root.scope
-  node @root.def_types
-  attr (@root.def_types) pop_symbol = "%type"
-  edge @root.scope -> @root.def_types
-  attr (@root.scope -> @root.def_types) precedence = 1
 }
 
 ;; ## Expression scopes
@@ -100,8 +100,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
       ;; Here and throughout, an edge from a scope node to definition nodes has
       ;; precedence 1, higher than scope-inheritance edges (precedence 0), so that
       ;; inner bindings are preferred over (i.e. they shadow) outer bindings.
-      edge @parent.inner_scope -> @pat.defs
-      attr (@parent.inner_scope -> @pat.defs) precedence = 1
+      edge @parent.inner_scope -> @pat.def_values ;; TODO parents should provide this node
+      attr (@parent.inner_scope -> @pat.def_values) precedence = 1
     }
 
     node def_loops
@@ -117,8 +117,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     if some @pat {
       node @parent.inner_scope
       edge @parent.inner_scope -> @parent.scope
-      edge @parent.inner_scope -> @pat.defs
-      attr (@parent.inner_scope -> @pat.defs) precedence = 1
+      edge @parent.inner_scope -> @pat.def_values
+      attr (@parent.inner_scope -> @pat.def_values) precedence = 1
     } else {
       let @parent.inner_scope = @parent.scope
     }
@@ -149,7 +149,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (let_declaration pattern: (_) @pat)
   (closure_parameters (_) @pat)
 ] {
-  node @pat.defs
+  node @pat.def_values ;; TODO parent should provide this instead of creating it here
+  attr (@pat.def_values) pop_symbol = "%value"
 }
 
 ;; Subpatterns inherit the parent's defs node.
@@ -168,7 +169,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (tuple_pattern (_) @pat) @parent
   (tuple_struct_pattern type: (_) (_) @pat) @parent
 ] {
-  let @pat.defs = @parent.defs
+  let @pat.def_values = @parent.def_values
 }
 
 ;; Identifier-patterns are definitions.
@@ -193,7 +194,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   node @ident.def
   attr (@ident.def) node_definition = @ident
-  edge @ident.defs -> @ident.def
+  edge @ident.def_values -> @ident.def
 }
 
 ;; ## Generic parameters
@@ -217,6 +218,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     edge @parent.inner_scope -> @parent.scope
 
     node @params.const_param_defs
+    attr (@params.const_param_defs) pop_symbol = "%value"
     edge @parent.inner_scope -> @params.const_param_defs
     attr (@parent.inner_scope -> @params.const_param_defs) precedence = 1
 
@@ -307,6 +309,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @block.item_scope
   edge @block.item_scope -> @block.scope
 
+  node @block.item_values
+  attr (@block.item_values) pop_symbol = "%value"
+  edge @block.item_scope -> @block.item_values
+  attr (@block.item_scope -> @block.item_values) precedence = 1
+
   node @block.item_types
   attr (@block.item_types) pop_symbol = "%type"
   edge @block.item_scope -> @block.item_types
@@ -326,8 +333,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 (let_declaration pattern: (_)? @pat) @stmt {
   if some @pat {
     node @stmt.block_scope_after
-    edge @stmt.block_scope_after -> @pat.defs
-    attr (@stmt.block_scope_after -> @pat.defs) precedence = 1
+    edge @stmt.block_scope_after -> @pat.def_values
+    attr (@stmt.block_scope_after -> @pat.def_values) precedence = 1
     edge @stmt.block_scope_after -> @stmt.scope
   } else {
     let @stmt.block_scope_after = @stmt.scope
@@ -599,7 +606,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   node @ident.use
   attr (@ident.use) node_reference = @ident
-  edge @ident.use -> @ident.scope
+  node v
+  attr (v) push_symbol = "%value"
+  edge @ident.use -> v
+  edge v -> @ident.scope
 }
 
 ;; ## Type context
@@ -688,21 +698,36 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ; # Item definitions
 
 [
-  (declaration_list (_) @child) @parent
-  (source_file (_) @child) @parent
+  (source_file) @root
+  (declaration_list) @root
 ] {
-  let @child.item_def_scope = @parent.scope
+  node @root.def_types
+  attr (@root.def_types) pop_symbol = "%type"
+  edge @root.scope -> @root.def_types
+  attr (@root.scope -> @root.def_types) precedence = 1
+
+  node @root.def_values
+  attr (@root.def_values) pop_symbol = "%value"
+  edge @root.scope -> @root.def_values
+  attr (@root.scope -> @root.def_values) precedence = 1
+}
+
+[
+  (source_file (_) @child) @parent
+  (declaration_list (_) @child) @parent
+] {
+  let @child.item_def_values = @parent.def_values
   let @child.item_def_types = @parent.def_types
 }
 
 ;; Tell block-scoped items which node they should hang definitions on.
 ;;
-;; (The two scoped variables `.item_def_scope` and `item_scope` look like they
-;; ought to have the same name, but that wouldn't work. The selector here does
-;; not select only item children but all children; one of those children might
-;; be another block, and then there'd be a conflict.)
+;; (The two scoped variables `.item_def_values` and `item_values` look like
+;; they ought to have the same name, but that wouldn't work. The selector here
+;; does not select only item children but all children; one of those children
+;; might be another block, and then there'd be a conflict.)
 (block (_) @child) @parent {
-  let @child.item_def_scope = @parent.item_scope
+  let @child.item_def_values = @parent.item_values
   let @child.item_def_types = @parent.item_types
 }
 
@@ -727,8 +752,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (struct_item name: (_) @name)
   (function_item name: (_) @name)
 ] @item {
-  edge @item.item_def_scope -> @name.def
-  attr (@item.item_def_scope -> @name.def) precedence = 1
+  edge @item.item_def_values -> @name.def
+  attr (@item.item_def_values -> @name.def) precedence = 1
 }
 
 ; Bind items in the type namespace.
@@ -752,11 +777,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; TODO - See if this can be made any tidier.
 
 [(parameters) (closure_parameters)] @parameters {
-  node @parameters.defs
+  node @parameters.def_values
 }
 
 [(parameter) (self_parameter)] @parameter {
-  node @parameter.defs
+  node @parameter.def_values
+  attr (@parameter.def_values) pop_symbol = "%value"
 }
 
 [
@@ -764,30 +790,30 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (parameters (self_parameter) @child)
   (closure_parameters (_) @child)
 ] @parameters {
-  edge @parameters.defs -> @child.defs
+  edge @parameters.def_values -> @child.def_values
 }
 
 (parameter pattern: (_) @pat) @param {
-  let @pat.defs = @param.defs
+  let @pat.def_values = @param.def_values
 }
 
 (self_parameter (self) @self) @param {
   node @self.def
   attr (@self.def) node_definition = @self
-  edge @param.defs -> @self.def
+  edge @param.def_values -> @self.def
 }
 
 (closure_expression parameters: (_) @parameters body: (_) @body) @parent {
   node @body.scope
-  edge @body.scope -> @parameters.defs
-  attr (@body.scope -> @parameters.defs) precedence = 1
+  edge @body.scope -> @parameters.def_values
+  attr (@body.scope -> @parameters.def_values) precedence = 1
   edge @body.scope -> @parent.scope
 }
 
 (function_item parameters: (_) @parameters body: (_) @body) @parent {
   node @body.scope
-  edge @body.scope -> @parameters.defs
-  attr (@body.scope -> @parameters.defs) precedence = 1
+  edge @body.scope -> @parameters.def_values
+  attr (@body.scope -> @parameters.def_values) precedence = 1
   edge @body.scope -> @parent.inner_scope
 }
 
@@ -797,6 +823,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; Install a path from a module definition to the types defined inside it.
 (mod_item body: (declaration_list) @body ) @mod {
+  edge @mod.def -> @body.def_values
   edge @mod.def -> @body.def_types
 }
 
@@ -1086,8 +1113,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 (struct_pattern
-  type: (type_identifier) @ty
-  (field_pattern name: (_) @field_name)
+  type: [(type_identifier) (scoped_type_identifier)] @ty
+  [
+    (field_pattern name: (_) @field_name)
+    (shorthand_field_identifier) @field_name
+  ]
 ) {
   node push_fields
   attr (push_fields) push_symbol = "%fields"
