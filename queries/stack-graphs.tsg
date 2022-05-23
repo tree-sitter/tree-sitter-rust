@@ -173,6 +173,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 ;; Identifier-patterns are definitions.
+;;
+;; (This isn't entirely true. In Rust, if the identifier resolves to a constant
+;; or enum variant, it's not a shadowing definition; instead it's a pattern
+;; that matches that exact value. But it's not clear how such a rule can be
+;; implemented.)
 [
   (for_expression pattern: (identifier) @ident)
   (if_let_expression pattern: (identifier) @ident)
