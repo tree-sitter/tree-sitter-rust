@@ -741,6 +741,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (enum_item name: (_) @name)
   (function_item name: (_) @name)
   (mod_item name: (_) @name)
+  (static_item name: (_) @name)
   (struct_item name: (_) @name)
   (union_item name: (_) @name)
 ] @item {
@@ -754,6 +755,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ; named-field structs in the value namespace? XXX TODO find out
 [
   (const_item name: (_) @name)
+  (static_item name: (_) @name)
   (struct_item name: (_) @name)
   (function_item name: (_) @name)
 ] @item {
