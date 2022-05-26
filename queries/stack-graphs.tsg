@@ -99,10 +99,17 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     node @parent.inner_scope
     edge @parent.inner_scope -> @parent.scope
     if some @pat {
+      ;; Create the "definitions" node to which the pattern contributes bindings.
+      ;;
+      ;; A similar node is created everywhere patterns are used (let-declarations
+      ;; and parameters).
+      ;;
       ;; Here and throughout, an edge from a scope node to definition nodes has
       ;; precedence 1, higher than scope-inheritance edges (precedence 0), so that
       ;; inner bindings are preferred over (i.e. they shadow) outer bindings.
-      edge @parent.inner_scope -> @pat.def_values ;; TODO parents should provide this node
+      node @pat.def_values
+      attr (@pat.def_values) pop_symbol = "%value"
+      edge @parent.inner_scope -> @pat.def_values
       attr (@parent.inner_scope -> @pat.def_values) precedence = 1
     }
 
@@ -119,39 +126,15 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     if some @pat {
       node @parent.inner_scope
       edge @parent.inner_scope -> @parent.scope
+
+      node @pat.def_values
+      attr (@pat.def_values) pop_symbol = "%value"
       edge @parent.inner_scope -> @pat.def_values
       attr (@parent.inner_scope -> @pat.def_values) precedence = 1
     } else {
       let @parent.inner_scope = @parent.scope
     }
   }
-}
-
-;; Assign the children of these expressions the inner_scope of their parents.
-[
-  (for_expression body: (_) @child) @parent
-  (if_let_expression alternative: (_) @child) @parent
-  (loop_expression body: (_) @child) @parent
-  (match_arm pattern: (match_pattern condition: (_) @child)) @parent
-  (match_arm value: (_) @child) @parent
-  (while_expression body: (_) @child) @parent
-  (while_let_expression body: (_) @child) @parent
-] {
-  let @child.scope = @parent.inner_scope
-}
-
-;; Create the "definitions" node for each pattern. This query matches only the
-;; outermost node of each pattern. Parameters are awkward so they're dealt with
-;; elsewhere.
-[
-  (for_expression pattern: (_) @pat)
-  (if_let_expression pattern: (_) @pat)
-  (match_arm pattern: (_) @pat)
-  (while_let_expression pattern: (_) @pat)
-  (let_declaration pattern: (_) @pat)
-] {
-  node @pat.def_values ;; TODO parent should provide this instead of creating it here
-  attr (@pat.def_values) pop_symbol = "%value"
 }
 
 ;; Subpatterns inherit the parent's defs node.
@@ -171,6 +154,19 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (tuple_struct_pattern type: (_) (_) @pat) @parent
 ] {
   let @pat.def_values = @parent.def_values
+}
+
+;; Assign the children of these expressions the inner_scope of their parents.
+[
+  (for_expression body: (_) @child) @parent
+  (if_let_expression alternative: (_) @child) @parent
+  (loop_expression body: (_) @child) @parent
+  (match_arm pattern: (match_pattern condition: (_) @child)) @parent
+  (match_arm value: (_) @child) @parent
+  (while_expression body: (_) @child) @parent
+  (while_let_expression body: (_) @child) @parent
+] {
+  let @child.scope = @parent.inner_scope
 }
 
 ;; Identifier-patterns are definitions.
@@ -338,6 +334,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; The next two rules define `.block_scope_after` for each statement child.
 (let_declaration pattern: (_)? @pat) @stmt {
   if some @pat {
+    ;; Create the "definitions" node for let-bindings.
+    node @pat.def_values
+    attr (@pat.def_values) pop_symbol = "%value"
     node @stmt.block_scope_after
     edge @stmt.block_scope_after -> @pat.def_values
     attr (@stmt.block_scope_after -> @pat.def_values) precedence = 1
