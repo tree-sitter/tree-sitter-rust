@@ -701,6 +701,29 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 
 
+; # Uses of `self`, `super`, and `crate`
+
+[
+  (scoped_identifier path: [(self) (super) (crate)] @keyword)
+  (scoped_type_identifier path: [(self) (super) (crate)] @keyword)
+  (scoped_use_list path: [(self) (super) (crate)] @keyword)
+  (use_as_clause path: [(self) (super) (crate)] @keyword)
+  (use_list [(self) (super)] @keyword)
+  (use_wildcard . [(self) (super) (crate)] @keyword)
+  (visibility_modifier [(self) (super) (crate)] @keyword)
+  ;; bogus if it happens, but accepted by the parser:
+  (range_pattern [(self) (super) (crate)] @keyword)
+] {
+  node @keyword.use
+  attr (@keyword.use) node_reference = @keyword
+
+  let t = (node)
+  attr (t) push_symbol = "%type"
+  edge @keyword.use -> t
+  edge t -> @keyword.scope
+}
+
+
 ; # Item definitions
 
 [
@@ -1077,9 +1100,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 (scoped_identifier path: [
-  (self)
-  (super)
-  (crate)
   (bracketed_type)
   (generic_type)
 ] @parent) {
