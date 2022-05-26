@@ -667,6 +667,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (static_item type: (type_identifier) @ident)
   (trait_bounds (type_identifier) @ident)
   (where_predicate left: (type_identifier) @ident)
+
+  ;; ### Statements
+  (let_declaration type: (type_identifier) @ident)
 ] {
   node @ident.use
   attr (@ident.use) node_reference = @ident
@@ -983,6 +986,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (static_item type: (_) @here)
   (trait_bounds (_) @here)
   (where_predicate left: (_) @here)
+
+  ;; ### Statements
+  (let_declaration type: (_) @here)
 ] {
   let @here.context = "%type"
 }
