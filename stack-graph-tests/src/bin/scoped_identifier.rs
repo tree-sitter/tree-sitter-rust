@@ -25,4 +25,13 @@ fn main() {
     //            ^ defined: 1
     //               ^ defined: 8
     assert!(ok);
+
+    let _a: crate::a::b::C =
+    //      ^ defined: 1
+    //             ^ defined: 1
+    //                   ^ defined: 3
+        self::a::b::C { d: 8 };
+    //  ^ defined: 1
+    //        ^ defined: 1
+    //              ^ defined: 3
 }
