@@ -47,8 +47,10 @@
 ;         edges. These are necessary when we can't match the full path from a
 ;         scope to a binding with a single pattern.
 ;
-; TODO - make this always be a single node, not a tree of nodes the way it
-; currently is for parameters.
+; Children of scope nodes have:
+;
+;     .item_def_values, .item_def_types - The nodes to which this syntax-node
+;         contributes items and imports.
 ;
 ; Note: Tree-sitter's Rust parser tries to distinguish various uses of
 ; identifiers and give them different syntax-node names (like
@@ -147,7 +149,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (match_arm pattern: (_) @pat)
   (while_let_expression pattern: (_) @pat)
   (let_declaration pattern: (_) @pat)
-  (closure_parameters (_) @pat)
 ] {
   node @pat.def_values ;; TODO parent should provide this instead of creating it here
   attr (@pat.def_values) pop_symbol = "%value"
@@ -785,11 +786,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 [(parameters) (closure_parameters)] @parameters {
   node @parameters.def_values
-}
-
-[(parameter) (self_parameter)] @parameter {
-  node @parameter.def_values
-  attr (@parameter.def_values) pop_symbol = "%value"
+  attr (@parameters.def_values) pop_symbol = "%value"
 }
 
 [
@@ -797,7 +794,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (parameters (self_parameter) @child)
   (closure_parameters (_) @child)
 ] @parameters {
-  edge @parameters.def_values -> @child.def_values
+  let @child.def_values = @parameters.def_values
 }
 
 (parameter pattern: (_) @pat) @param {
@@ -810,14 +807,15 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @param.def_values -> @self.def
 }
 
-(closure_expression parameters: (_) @parameters body: (_) @body) @parent {
-  node @body.scope
-  edge @body.scope -> @parameters.def_values
-  attr (@body.scope -> @parameters.def_values) precedence = 1
-  edge @body.scope -> @parent.scope
+(closure_expression) @closure {
+  ;; Used below. Just an alias, because closures don't have type parameters.
+  let @closure.inner_scope = @closure.scope
 }
 
-(function_item parameters: (_) @parameters body: (_) @body) @parent {
+[
+  (closure_expression parameters: (_) @parameters body: (_) @body)
+  (function_item parameters: (_) @parameters body: (_) @body)
+] @parent {
   node @body.scope
   edge @body.scope -> @parameters.def_values
   attr (@body.scope -> @parameters.def_values) precedence = 1
