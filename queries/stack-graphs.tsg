@@ -1155,9 +1155,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge t -> @lifetime.scope
 }
 
+
+
 ;; # Loop labels
-;; These look like lifetimes.
-;; TODO - are they in the same namespace as lifetimes?
+;; These look like lifetimes but inhabit a separate namespace.
 
 ;; Uses of loop labels.
 [
