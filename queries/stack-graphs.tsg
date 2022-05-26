@@ -29,23 +29,21 @@
 ; toward the root. These trees stop at module nodes, because in Rust, modules
 ; do not inherit access to the enclosing block or module's bindings.
 ;
-; The identifier syntax-node of an item's name or a binding name in a pattern
-; has:
+; The syntax-node of an item, type parameter, lifetime parameter, or binding name
+; in a pattern has:
 ;
 ;     .def - The node that pops the item's name.
 ;
-; TODO - change this so the actual whole declaration has `.def`, a node that
-; is tagged with the position of the identifier; we do that for enum variants
-; already.
-;
-; Items also have a `.def` that aliases this node.
-;
-; Some nodes have:
+; Scope nodes have:
 ;
 ;     .def_values, .def_types - A static-environment rib: has paths to all
-;         variables / types *defined* in this scope, without any inheritance
-;         edges. These are necessary when we can't match the full path from a
-;         scope to a binding with a single pattern.
+;         values/types defined in this scope, and not inherited from an
+;         enclosing scope.
+;
+; These are sometimes stitched together with rules that walk "down" the
+; syntax-tree, toward the leaves, which is necessary (e.g. in pattern syntax)
+; when we can't match the full path from a scope to a binding with a single
+; pattern.
 ;
 ; Children of scope nodes have:
 ;
@@ -55,7 +53,7 @@
 ; Note: Tree-sitter's Rust parser tries to distinguish various uses of
 ; identifiers and give them different syntax-node names (like
 ; `type_identifier`), but it's imprecise, and there are ambiguous cases built
-; into the Rust language. We therefore often have to make a long list of
+; into the Rust language. We therefore often have to make long lists of
 ; exactly what nodes or contexts we're talking about.
 
 ; Magic invocations copied from tree-sitter-typescript.
@@ -745,33 +743,30 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (struct_item name: (_) @name)
   (union_item name: (_) @name)
 ] @item {
-  node @name.def
-  attr (@name.def) node_definition = @name
-  let @item.def = @name.def
+  node @item.def
+  attr (@item.def) node_definition = @name
 }
 
 ; Bind items in the value namespace. Note: We bind structs in both namespaces.
 ; This is definitely correct for unit structs and tuple structs. Does Rust bind
 ; named-field structs in the value namespace? XXX TODO find out
 [
-  (const_item name: (_) @name)
-  (static_item name: (_) @name)
-  (struct_item name: (_) @name)
-  (function_item name: (_) @name)
+  (const_item)
+  (static_item)
+  (struct_item)
+  (function_item)
 ] @item {
-  edge @item.item_def_values -> @name.def
-  attr (@item.item_def_values -> @name.def) precedence = 1
+  edge @item.item_def_values -> @item.def
 }
 
 ; Bind items in the type namespace.
 [
-  (enum_item name: (_) @name)
-  (mod_item name: (_) @name)
-  (struct_item name: (_) @name)
-  (union_item name: (_) @name)
+  (enum_item)
+  (mod_item)
+  (struct_item)
+  (union_item)
 ] @item {
-  edge @item.item_def_types -> @name.def
-  attr (@item.item_def_types -> @name.def) precedence = 1
+  edge @item.item_def_types -> @item.def
 }
 
 
@@ -1057,7 +1052,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   if some @parent {
     edge s -> @parent.use
   } else {
-    ;; this is a crate name, will eventually connect s to the extern crates
+    ;; `::foo` syntax. This is a crate name. TODO - connect s to the extern crates.
   }
 }
 
