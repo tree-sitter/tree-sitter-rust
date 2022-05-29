@@ -394,10 +394,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (array_type element: (_) @child) @parent
   (array_type length: (_) @child) @parent
   (bounded_type (_) @child) @parent
+  (bracketed_type (_) @child) @parent
   (dynamic_type trait: (_) @child) @parent
   (generic_type type: (_) @child) @parent
   (generic_type type_arguments: (_) @child) @parent
   (pointer_type type: (_) @child) @parent
+  (qualified_type type: (_) @child) @parent
+  (qualified_type alias: (_) @child) @parent
   (reference_type (lifetime) @child) @parent
   (reference_type type: (_) @child) @parent
   (scoped_type_identifier path: (_) @child) @parent
@@ -635,6 +638,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (generic_type type: (type_identifier) @ident)
   (generic_type_with_turbofish type: (type_identifier) @ident)
   (pointer_type type: (type_identifier) @ident)
+  (qualified_type type: (type_identifier) @ident)
+  (qualified_type alias: (type_identifier) @ident)
   (reference_type type: (type_identifier) @ident)
   (tuple_type (type_identifier) @ident)
   (type_arguments (type_identifier) @ident) ;; ambiguous, but treat as a type for now
@@ -1036,6 +1041,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (generic_type type: (_) @here)
   (generic_type_with_turbofish type: (_) @here)
   (pointer_type type: (_) @here)
+  (qualified_type type: (_) @here)
+  (qualified_type alias: (_) @here)
   (reference_type type: (_) @here)
   (scoped_type_identifier path: (_) @here)
   (tuple_type (_) @here)
