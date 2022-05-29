@@ -769,6 +769,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (mod_item name: (_) @name)
   (static_item name: (_) @name)
   (struct_item name: (_) @name)
+  (trait_item name: (_) @name)
+  (type_item name: (_) @name)
   (union_item name: (_) @name)
 ] @item {
   node @item.def
@@ -798,6 +800,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (enum_item)
   (mod_item)
   (struct_item)
+  (trait_item)
+  (type_item)
   (union_item)
 ] @item {
   edge @item.item_def_types -> @item.def
