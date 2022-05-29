@@ -235,15 +235,19 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ; Generic parameters are definitions.
 [
-  (type_parameters (lifetime) @lifetime) @params
-  (for_lifetimes (lifetime) @lifetime) @params
-] {
+  (type_parameters (lifetime) @lifetime)
+  (type_parameters (constrained_type_parameter left: (lifetime) @lifetime))
+  (for_lifetimes (lifetime) @lifetime)
+] @params {
   node @lifetime.def
   attr (@lifetime.def) node_definition = @lifetime
   edge @params.type_param_defs -> @lifetime.def
 }
 
-(type_parameters (type_identifier) @ident) @params {
+[
+  (type_parameters (type_identifier) @ident)
+  (type_parameters (constrained_type_parameter left: (type_identifier) @ident))
+] @params {
   node @ident.def
   attr (@ident.def) node_definition = @ident
   edge @params.type_param_defs -> @ident.def
@@ -655,7 +659,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
   ;; ### Items
   (const_item type: (type_identifier) @ident)
-  (constrained_type_parameter left: (type_identifier) @ident)
   (field_declaration type: (type_identifier) @ident)
   (function_item return_type: (type_identifier) @ident)
   (impl_item trait: (type_identifier) @ident)
@@ -1059,7 +1062,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
   ;; ### Items
   (const_item type: (_) @here)
-  (constrained_type_parameter left: (_) @here)
   (field_declaration type: (_) @here)
   (function_item return_type: (_) @here)
   (impl_item trait: (_) @here)
@@ -1221,7 +1223,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 [
   (where_predicate left: (lifetime) @lifetime)
   (trait_bounds (lifetime) @lifetime)
-  (constrained_type_parameter left: (lifetime) @lifetime)
   (self_parameter (lifetime) @lifetime)
   (bounded_type (lifetime) @lifetime)
   (type_arguments (lifetime) @lifetime)
