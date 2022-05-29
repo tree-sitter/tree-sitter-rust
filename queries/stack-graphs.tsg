@@ -667,6 +667,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (ordered_field_declaration_list type: (type_identifier) @ident)
   (parameter type: (type_identifier) @ident)
   (static_item type: (type_identifier) @ident)
+  (type_item type: (type_identifier) @ident)
   (trait_bounds (type_identifier) @ident)
   (where_predicate left: (type_identifier) @ident)
 
@@ -1082,6 +1083,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (parameter type: (_) @here)
   (static_item type: (_) @here)
   (trait_bounds (_) @here)
+  (type_item type: (_) @here)
   (where_predicate left: (_) @here)
 
   ;; ### Statements
