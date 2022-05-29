@@ -918,6 +918,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge crate_2 -> @mod.scope
 }
 
+;; Trait members are not in scope for unqualified access, but they can be
+;; accessed by paths via the trait.
+(trait_item body: (declaration_list) @decls) @trait {
+  edge @trait.def -> @decls.def_values
+  edge @trait.def -> @decls.def_types
+}
+
 ;; Install a path from a struct definition to its fields.
 (struct_item body: (field_declaration_list) @fields) @struct {
   edge @struct.def -> @fields.fields
@@ -979,7 +986,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; - scoped_identifier
 ;; - bracketed_type
 ;; - generic_type
-;; So far we only handle `identifier` and `scoped_identifier`.
+;; So far we do not handle generic_type at all.
 
 ;; Note: This is a complete copy of the huge list under "Marking unqualified
 ;; references". Obviously the duplication is very bad. I don't know how else to
@@ -1168,10 +1175,15 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge t -> @name.scope
 }
 
-(scoped_identifier path: [
-  (bracketed_type)
-  (generic_type)
-] @parent) {
+(bracketed_type (_) @child) @parent {
+  let @parent.use = @child.use
+}
+
+(qualified_type alias: (_) @trait) @parent {
+  let @parent.use = @trait.use
+}
+
+(scoped_identifier path: (generic_type) @parent) {
   ;; Dummy node to avoid "undefined scoped variable". Not hooked up yet.
   node @parent.use
 }
