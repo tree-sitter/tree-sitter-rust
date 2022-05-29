@@ -1117,6 +1117,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (use_list (_) @here)
   (use_wildcard (_) @here "::" "*")
 ] {
+  ;; BUG - This causes the last segment of paths not to resolve in all these
+  ;; contexts. Need both.
   let @here.context = "%other"
 }
 
@@ -1243,4 +1245,37 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (t) push_symbol = "%loop"
   edge @label.use -> t
   edge t -> @expr.scope
+}
+
+
+
+;; # Imports
+(use_declaration
+  (scoped_identifier path: (_) @parent name: (identifier) @name)
+) @import {
+  ;; When looking for a name in the type namespace, and finding an import, go
+  ;; find whatever `@parent` points to, then look up the name in that thing's
+  ;; type namespace.
+  node type_relay
+  attr (type_relay) type = "pop_symbol", node_symbol = @name
+  node type_relay1
+  attr (type_relay1) type = "push_symbol", node_symbol = @name
+  node type_relay2
+  attr (type_relay2) push_symbol = "%type"
+  edge @import.item_def_types -> type_relay
+  edge type_relay -> type_relay1
+  edge type_relay1 -> type_relay2
+  edge type_relay2 -> @parent.use
+
+  ;; Same deal for the value namespace.
+  node value_relay
+  attr (value_relay) type = "pop_symbol", node_symbol = @name
+  node value_relay1
+  attr (value_relay1) type = "push_symbol", node_symbol = @name
+  node value_relay2
+  attr (value_relay2) push_symbol = "%value"
+  edge @import.item_def_values -> value_relay
+  edge value_relay -> value_relay1
+  edge value_relay1 -> value_relay2
+  edge value_relay2 -> @parent.use
 }

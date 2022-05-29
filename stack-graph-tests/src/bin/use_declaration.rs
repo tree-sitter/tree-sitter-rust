@@ -1,18 +1,6 @@
-// Don't crash when imports are present.
-
 #![allow(dead_code, unused_imports)]
 
 use std::path::Path;
-
-fn test() {
-    // examples from the Rust reference
-    { use a::b::{c, d, e::f, g::h::i}; }
-    { use a::b::{self, c, d::e}; }
-    { use p::q::r as x; }
-    { use a::b::{self as ab, c as abc}; }
-    { use a::b::*; }
-    { use a::b::{self as ab, c, d::{*, e::f}}; }
-}
 
 mod a {
     pub mod b {
@@ -37,6 +25,26 @@ pub mod p {
     pub mod q {
         pub fn r() {}
     }
+}
+
+fn working() {
+    use a::b::c;
+    //  ^ defined: 5
+    //     ^ defined: 6
+    // TODO - the last part of the path is not yet resolved
+    c();
+//  ^ defined: 7
+}
+
+fn unsupported() {
+    // Don't crash when unsupported imports are present.
+    // examples from the Rust reference
+    { use a::b::{c, d, e::f, g::h::i}; }
+    { use a::b::{self, c, d::e}; }
+    { use p::q::r as x; }
+    { use a::b::{self as ab, c as abc}; }
+    { use a::b::*; }
+    { use a::b::{self as ab, c, d::{*, e::f}}; }
 }
 
 fn main() {}
