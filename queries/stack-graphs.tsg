@@ -526,6 +526,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (where_predicate left: (_) @child) @parent
   (where_predicate bounds: (_) @child) @parent
   (trait_bounds (_) @child) @parent
+  (type_parameters (constrained_type_parameter bounds: (_) @child)) @parent
   (removed_trait_bound (_) @child) @parent
 
   ;; ### Imports
