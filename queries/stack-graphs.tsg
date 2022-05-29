@@ -766,19 +766,25 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@item.def) node_definition = @name
 }
 
-; Bind items in the value namespace. Note: We bind structs in both namespaces.
-; This is definitely correct for unit structs and tuple structs. Does Rust bind
-; named-field structs in the value namespace? XXX TODO find out
+;; Bind items in the value namespace. Note: We bind tuple structs in both
+;; namespaces. Same for unit structs (the next rule below). Structs with named
+;; fields are bound only in the type namespace.
 [
   (const_item)
   (static_item)
-  (struct_item)
+  (struct_item body: (ordered_field_declaration_list))
   (function_item)
 ] @item {
   edge @item.item_def_values -> @item.def
 }
 
-; Bind items in the type namespace.
+(struct_item body: (_)? @body) @item {
+  if none @body {
+    edge @item.item_def_values -> @item.def
+  }
+}
+
+;; Bind items in the type namespace.
 [
   (enum_item)
   (mod_item)
