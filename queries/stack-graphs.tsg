@@ -499,11 +499,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   ;; Modules are not present because they reset the scope. `foreign_mod_item`
   ;; is what the Rust reference calls an `ExternBlock` or "external block".
   ;; It's not a module and it does propagate scope.
-  (const_item name: (_) @child) @parent
   (const_item type: (_) @child) @parent
   (const_item value: (_) @child) @parent
   (declaration_list (_) @child) @parent
-  (enum_item name: (_) @child) @parent
   (enum_variant_list (_) @child) @parent
   (enum_variant body: (_) @child) @parent
   (enum_variant value: (_) @child) @parent
@@ -511,17 +509,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (field_declaration_list (_) @child) @parent
   (ordered_field_declaration_list (_) @child) @parent
   (foreign_mod_item body: (_) @child) @parent
-  (function_item name: (_) @child) @parent
   (parameter pattern: (_) @child) @parent
   (parameter type: (_) @child) @parent
   (self_parameter (lifetime) @child) @parent
   (parameters (_) @child) @parent
   (static_item type: (_) @child) @parent
   (static_item value: (_) @child) @parent
-  (struct_item name: (_) @child) @parent
-  (trait_item name: (_) @child) @parent
-  (type_item name: (_) @child) @parent
-  (union_item name: (_) @child) @parent
   (where_clause (where_predicate) @child) @parent
   (where_predicate left: (_) @child) @parent
   (where_predicate bounds: (_) @child) @parent
