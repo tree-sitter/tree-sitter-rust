@@ -21,7 +21,8 @@
   },
   "scripts": {
     "test": "tree-sitter test && script/parse-examples",
-    "test-windows": "tree-sitter test"
+    "test-windows": "tree-sitter test",
+    "build:wasm": "npx tree-sitter build-wasm ."
   },
   "tree-sitter": [
     {
