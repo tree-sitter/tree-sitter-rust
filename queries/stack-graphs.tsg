@@ -56,6 +56,9 @@
 ; into the Rust language. We therefore often have to make long lists of
 ; exactly what nodes or contexts we're talking about.
 
+global FILE_PATH
+global ROOT_NODE
+
 ; Magic invocations copied from tree-sitter-typescript.
 attribute node_reference = node         => type = "push_symbol", symbol = (source-text node), is_reference, source_node = node
 attribute node_symbol = node            => symbol = (source-text node), source_node = node
@@ -707,15 +710,15 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ; # Uses of `self`, `super`, and `crate`
 
 [
-  (scoped_identifier path: [(self) (super) (crate)] @keyword)
-  (scoped_type_identifier path: [(self) (super) (crate)] @keyword)
-  (scoped_use_list path: [(self) (super) (crate)] @keyword)
-  (use_as_clause path: [(self) (super) (crate)] @keyword)
+  (scoped_identifier path: [(self) (super)] @keyword)
+  (scoped_type_identifier path: [(self) (super)] @keyword)
+  (scoped_use_list path: [(self) (super)] @keyword)
+  (use_as_clause path: [(self) (super)] @keyword)
   (use_list [(self) (super)] @keyword)
-  (use_wildcard . [(self) (super) (crate)] @keyword)
-  (visibility_modifier [(self) (super) (crate)] @keyword)
+  (use_wildcard . [(self) (super)] @keyword)
+  (visibility_modifier [(self) (super)] @keyword)
   ;; bogus if it happens, but accepted by the parser:
-  (range_pattern [(self) (super) (crate)] @keyword)
+  (range_pattern [(self) (super)] @keyword)
 ] {
   node @keyword.use
   attr (@keyword.use) node_reference = @keyword
@@ -724,6 +727,24 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (t) push_symbol = "%type"
   edge @keyword.use -> t
   edge t -> @keyword.scope
+}
+
+[
+  (scoped_identifier path: (crate) @keyword)
+  (scoped_type_identifier path: (crate) @keyword)
+  (scoped_use_list path: (crate) @keyword)
+  (use_as_clause path: (crate) @keyword)
+  (use_list (crate) @keyword)
+  (use_wildcard . (crate) @keyword)
+  (visibility_modifier (crate) @keyword)
+  ;; bogus if it happens, but accepted by the parser:
+  (range_pattern (crate) @keyword)
+] {
+  ;; All uses of `crate` are threaded through the root node,
+  ;; so they can cross file boundaries.
+  node @keyword.use
+  attr (@keyword.use) type = "push_symbol", symbol = "%crate", is_reference, source_node = @keyword
+  edge @keyword.use -> ROOT_NODE
 }
 
 
@@ -856,28 +877,77 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 
+;; # Binding the file module
+;;
+;; In which we help folks coming in from the root node to tell if the path
+;; they're looking for is really located in this file.
+(source_file) @root {
+  node crate_node
+  attr (crate_node) source_node = @root, pop_symbol = "%crate", is_definition
+  edge ROOT_NODE -> crate_node
+
+  var new_node = #null
+  var current_node = (node)
+
+  ;; Doing this properly will involve understanding Cargo package layout in
+  ;; detail :-P
+  scan FILE_PATH {
+    "([^/]+\.rs|src/main\.rs|src/lib\.rs)$" {
+      ;; Treat this as a standalone binary in a single file.
+      ;; Hook up `crate` and `self` for file-level modules.
+
+      ;; Bind `crate` to the definition node representing the entire crate.
+      let @root.def = crate_node
+      edge crate_node -> @root.def_types
+      edge crate_node -> @root.def_values
+
+      ;; Bind `self` to a node with identical out-edges. (Can't use the same
+      ;; node because TSG doesn't really support aliases: only nodes with
+      ;; type = "pop_symbol" can be definitions.)
+      node self
+      attr (self) source_node = @root, pop_symbol = "self", is_definition
+      edge @root.def_types -> self
+      edge self -> @root.def_types
+      edge self -> @root.def_values
+    }
+
+    "^src/([^/]+)\.rs$" {
+      node crate_def_types
+      attr (crate_def_types) pop_symbol = "%type"
+      edge crate_node -> crate_def_types
+      attr (crate_node -> crate_def_types) precedence = 1
+
+      node mod_def
+      attr (mod_def) source_node = @root, pop_symbol = $1, is_definition
+      edge crate_def_types -> mod_def
+
+      ;; The rest of this is copied from the code that handles a mod_item.
+      edge mod_def -> @root.def_values
+      edge mod_def -> @root.def_types
+
+      ;; Define `self` as a node effectively identical to `mod_def`. (Can't use
+      ;; the same node because TSG doesn't support aliases.)
+      node self
+      attr (self) source_node = @root, pop_symbol = "self", is_definition
+      edge @root.def_types -> self
+      edge self -> @root.def_values
+      edge self -> @root.def_types
+
+      ;; Bind `super` in the implicit module as an alias for `crate`.
+      node super
+      attr (super) pop_symbol = "super"
+      node super_1
+      attr (super_1) push_symbol = "self"
+      edge @root.def_types -> super
+      edge super -> super_1
+      edge super_1 -> @root.def_types
+    }
+  }
+}
+
 ;; # Qualified access
 ;; In which we set up paths from definitions to their members, `self`, `super`,
 ;; and `crate`.
-
-;; Hook up `crate` and `super` for file-level modules.
-(source_file) @root {
-  ;; Bind `crate` to a definition node representing the entire crate.
-  node @root.def
-  attr (@root.def) source_node = @root, pop_symbol = "crate", is_definition
-  edge @root.def_types -> @root.def
-  edge @root.def -> @root.def_types
-  edge @root.def -> @root.def_values
-
-  ;; Bind `self` to an identical node. (Can't use the same node because TSG
-  ;; doesn't really support aliases: only nodes with type = "pop_symbol" can be
-  ;; definitions.)
-  node self
-  attr (self) source_node = @root, pop_symbol = "self", is_definition
-  edge @root.def_types -> self
-  edge self -> @root.def_types
-  edge self -> @root.def_values
-}
 
 ;; Install a path from a module definition to the types defined inside it.
 ;; Also hook up `self`, `super`, and `crate` for declared modules.
@@ -905,18 +975,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge super -> super_1
   edge super_1 -> super_2
   edge super_2 -> @mod.scope
-
-  ;; Bind `crate` in a declared module as an alias for `crate` in the enclosing module.
-  node crate
-  attr (crate) pop_symbol = "crate"
-  node crate_1
-  attr (crate_1) push_symbol = "crate"
-  node crate_2
-  attr (crate_2) push_symbol = "%type"
-  edge @body.def_types -> crate
-  edge crate -> crate_1
-  edge crate_1 -> crate_2
-  edge crate_2 -> @mod.scope
 }
 
 ;; Trait members are not in scope for unqualified access, but they can be

@@ -12,3 +12,11 @@ cd "$ROOT_DIR"
     --grammar . \
     --tsg queries/stack-graphs.tsg \
     stack-graph-tests/src/bin/*.rs
+
+./bin/tree-sitter-stack-graphs test \
+    --save-paths=%r/%n.paths.json \
+    --save-visualization=%r/%n.html \
+    --output-mode always \
+    --grammar . \
+    --tsg queries/stack-graphs.tsg \
+    stack-graph-tests/multifile/*.rs
