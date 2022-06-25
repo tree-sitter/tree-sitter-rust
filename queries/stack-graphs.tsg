@@ -937,10 +937,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
       node super
       attr (super) pop_symbol = "super"
       node super_1
-      attr (super_1) push_symbol = "self"
+      attr (super_1) push_symbol = "%crate"
       edge @root.def_types -> super
       edge super -> super_1
-      edge super_1 -> @root.def_types
+      edge super_1 -> ROOT_NODE
     }
   }
 }
