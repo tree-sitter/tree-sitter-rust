@@ -560,7 +560,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; -   before `!` it refers to a macro
 ;; -   between `.` and `(` it refers to a method
 ;; -   otherwise after `.` it refers to a field
-;; -   and of course, if it's the `name:` of an item or binding,
+;; -   and of course, if it's the name of an item or binding,
 ;;     it isn't a reference at all.
 ;;
 ;; The grammar parses many of these as `identifier` syntax nodes, so it's
@@ -765,6 +765,21 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@root.def_values) pop_symbol = "%value"
   edge @root.scope -> @root.def_values
   attr (@root.scope -> @root.def_values) precedence = 1
+
+  ;; This `%any` namespace is the union of `%type` and `%value`. The .scope
+  ;; does not have an edge to this, because all ordinary lexical-scope lookups
+  ;; are for either a type or a value. Imports use it, because the `use` syntax
+  ;; is the same whether importing types or values.
+  node @root.def_any
+  attr (@root.def_any) pop_symbol = "%any"
+  node to_types
+  attr (to_types) push_symbol = "%type"
+  node to_values
+  attr (to_values) push_symbol = "%value"
+  edge @root.def_any -> to_types
+  edge to_types -> @root.def_types
+  edge @root.def_any -> to_values
+  edge to_values -> @root.def_values
 }
 
 [
@@ -1009,6 +1024,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @root.def = from_root
   edge from_root -> @root.def_types
   edge from_root -> @root.def_values
+  edge from_root -> @root.def_any
 
   ;; Bind `self` to a node with the same out-edges as @root.def. (Can't use the
   ;; same node because TSG doesn't really support aliases: only nodes with type
@@ -1018,6 +1034,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @root.def_types -> self
   edge self -> @root.def_types
   edge self -> @root.def_values
+  edge self -> @root.def_any
 
   ;; Bind `super` to the to_super path.
   node pop_super
@@ -1044,6 +1061,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 (mod_item name: (identifier) @name body: (declaration_list) @body) @mod {
   edge @mod.def -> @body.def_values
   edge @mod.def -> @body.def_types
+  edge @mod.def -> @body.def_any
 
   ;; Define `self` as a node effectively identical to `@mod.def`. (Can't use
   ;; the same node because TSG doesn't support aliases.)
@@ -1052,6 +1070,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @body.def_types -> self
   edge self -> @body.def_values
   edge self -> @body.def_types
+  edge self -> @body.def_any
 
   ;; Bind `super` in a declared module as an alias for `self` in the enclosing
   ;; module.
@@ -1104,6 +1123,20 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (v) pop_symbol = "%value"
   edge @enum.def -> v
   edge v -> @enum.variants_values
+
+  ;; The `%any` namespace supports looking up the identifier that's the last
+  ;; component of a use-declaration that imports from an enum.
+  node any
+  attr (any) pop_symbol = "%any"
+  node to_types
+  attr (to_types) push_symbol = "%type"
+  node to_values
+  attr (to_values) push_symbol = "%value"
+  edge @enum.def -> any
+  edge any -> to_types
+  edge to_types -> t
+  edge any -> to_values
+  edge to_values -> v
 }
 
 (enum_item
@@ -1287,9 +1320,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (use_list (_) @here)
   (use_wildcard (_) @here "::" "*")
 ] {
-  ;; BUG - This causes the last segment of paths not to resolve in all these
-  ;; contexts. Need both.
-  let @here.context = "%other"
+  ;; Here we may be importing either a type or a value, or both. We can't
+  ;; locally tell which, so importable scopes must provide that `%any` reaches
+  ;; both the `%value` namespace and the `%type` namespace.
+  let @here.context = "%any"
 }
 
 [

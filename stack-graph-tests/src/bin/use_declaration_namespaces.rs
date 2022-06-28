@@ -13,7 +13,7 @@ pub mod b {
     #[allow(non_camel_case_types)]
     pub struct VALUE_ONLY {}  // a type named VALUE_ONLY
     use crate::a::VALUE_ONLY;  // does not conflict with this import
-
+    //            ^ defined: 5
     pub fn test(_v: VALUE_ONLY) -> i32 { VALUE_ONLY }
     //              ^ defined: 14
     //                                   ^ defined: 5
@@ -21,12 +21,13 @@ pub mod b {
     #[allow(non_upper_case_globals)]
     static TypeOnly: [u8; 40] = [0; 40];  // a value named TypeOnly
     use crate::a::TypeOnly; // does not conflict with this import
-
+    //            ^ defined: 6
     pub fn test2(_v: TypeOnly) -> usize { TypeOnly.len() }
     //               ^ defined: 6
     //                                    ^ defined: 22
 
     use crate::a::Both;  // imports both definitions
+    //            ^ defined: 7,9
     pub fn test3() -> Both { Both }
     //                ^ defined: 7
     //                       ^ defined: 9

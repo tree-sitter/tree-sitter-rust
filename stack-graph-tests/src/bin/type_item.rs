@@ -7,6 +7,8 @@ pub mod a {
 }
 
 use a::S;
+//  ^ defined: 1
+//     ^ defined: 2
 
 fn main() {
     let _ = S::new();

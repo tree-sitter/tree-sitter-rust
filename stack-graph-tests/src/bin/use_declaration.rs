@@ -31,7 +31,7 @@ fn working() {
     use a::b::c;
     //  ^ defined: 5
     //     ^ defined: 6
-    // TODO - the last part of the path is not yet resolved
+    //        ^ defined: 7
     c();
 //  ^ defined: 7
 }

@@ -9,6 +9,7 @@ pub fn f() -> MyResult<(), String> {
 }
 
 use MyResult::Fine;
+//            ^ defined: 2
 const ANOTHER: MyResult<&str, &str> = Fine("mess");
 //                                    ^ defined: 2
 
