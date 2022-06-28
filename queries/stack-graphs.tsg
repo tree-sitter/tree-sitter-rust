@@ -4,22 +4,24 @@
 ;
 ; All nodes that can contain uses must have:
 ;
-;     .scope - The value namespace of the lexical scope in which the
-;         syntax-node appears--that is, the *enclosing* lexical scope. This
-;         namespace is used for looking up functions, local variables,
-;         arguments, consts, statics, and constructors.
+;     .scope - The lexical scope in which the syntax-node appears--that is, the
+;         *enclosing* lexical scope.
 ;
 ; Rust has separate value and type namespaces. That is, every lexical scope can
 ; contain both value bindings and type bindings, and they're distinct, as
-; though the things in the type namespace (types, modules, crates) always had
-; names that started with a special invisible sigil. For now we represent the
-; type namespace as a separate node. There's an edge from every `.scope` that
-; can contain type bindings to the corresponding type-namespace node, which
-; pops a special symbol `"%type"`.
+; though the things in the value namespace (functions, local variables,
+; arguments, consts, statics, constructors) and the things in the type
+; namespace (types, modules, crates) always had names that started with
+; distinct invisible sigils. For now we represent these namespaces as two
+; separate nodes. There's an edge from every `.scope` that can contain type
+; bindings to the corresponding type-namespace node, which pops a special
+; symbol `"%type"`; and from every `.scope` that has value bindings to a
+; value-namespace node, which pops `"%value"`.
 ;
-; Thus references to values can just push the identifier and go to the scope;
-; but references to types must push the type-identifier, then push `"%type"`,
-; then go to the scope.
+; Thus references can't just push the identifier and go to the scope.
+; References to values must push the identifier, then push `"%value"`, then go
+; to the scope. References to types must push the type-identifier, then push
+; `"%type"`, then go to the scope.
 ;
 ; Lifetimes have their own separate namespace in Rust, but we put them in the
 ; type-namespace nodes. Since lifetimes always start with an apostrophe, there
@@ -43,7 +45,7 @@
 ; These are sometimes stitched together with rules that walk "down" the
 ; syntax-tree, toward the leaves, which is necessary (e.g. in pattern syntax)
 ; when we can't match the full path from a scope to a binding with a single
-; pattern.
+; tree-sitter query.
 ;
 ; Children of scope nodes have:
 ;
