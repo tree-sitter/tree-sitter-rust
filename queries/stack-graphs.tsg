@@ -788,7 +788,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (const_item name: (_) @name)
   (enum_item name: (_) @name)
   (function_item name: (_) @name)
-  (mod_item name: (_) @name)
   (static_item name: (_) @name)
   (struct_item name: (_) @name)
   (trait_item name: (_) @name)
@@ -797,6 +796,38 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] @item {
   node @item.def
   attr (@item.def) node_definition = @name
+}
+
+(mod_item name: (_) @name body: (_)? @body) @item {
+  if some @body {
+    node @item.def
+    attr (@item.def) node_definition = @name
+  } else {
+    ;; The difficult case: find the node for this module in another file.
+    node @item.def
+    attr (@item.def) pop_symbol = (source-text @name)
+    ;; We're looking for this module item's name...
+    node relay1
+    attr (relay1) push_symbol = (source-text @name)
+    ;; in the type namespace...
+    node relay2
+    attr (relay2) push_symbol = "%type"
+    ;; of the node in another file...
+    node relay3
+    attr (relay3) push_symbol = "%anyfile"
+    ;; that represents the current enclosing module (`self`).
+    node relay4
+    attr (relay4) push_symbol = "self"
+    node relay5
+    attr (relay5) push_symbol = "%type"
+
+    edge @item.def -> relay1
+    edge relay1 -> relay2
+    edge relay2 -> relay3
+    edge relay3 -> relay4
+    edge relay4 -> relay5
+    edge relay5 -> @item.scope
+  }
 }
 
 ;; Bind items in the value namespace. Note: We bind tuple structs in both
@@ -886,63 +917,120 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (crate_node) source_node = @root, pop_symbol = "%crate", is_definition
   edge ROOT_NODE -> crate_node
 
-  var new_node = #null
-  var current_node = (node)
+  node to_crate
+  attr (to_crate) push_symbol = "%crate"
+  edge to_crate -> ROOT_NODE
+
+  ;; As we process the path, we're building two graph-paths: to_super and
+  ;; from_root.
+  ;;
+  ;; to_super: Graph path that pushes the enclosing module's canonical path and
+  ;; then jumps to the root node, for implementing `super` in this module.
+  var to_super = to_crate
+
+  ;; from_root: Graph path from ROOT_NODE to the scope node for this module,
+  ;; popping names as we go, so that when another file wants to resolve
+  ;; `crate::a::b::c::X`, that can resolve to something in the file
+  ;; `src/a/b/c.rs`.
+  var from_root = crate_node
+
+  ;; To implement `mod child;` so that `child` refers to a module defined in
+  ;; another file, we need a gadget to reach the nodes representing this
+  ;; module, in all other files. We call this gadget `to_anyfile`. It works by
+  ;; pushing the canonical path, then exiting to ROOT_NODE. Other files then
+  ;; define paths from ROOT_NODE that pop that exact stack of symbols.
+  var to_anyfile = #null
 
   ;; Doing this properly will involve understanding Cargo package layout in
   ;; detail :-P
   scan FILE_PATH {
-    "([^/]+\.rs|src/main\.rs|src/lib\.rs)$" {
-      ;; Treat this as a standalone binary in a single file.
-      ;; Hook up `crate` and `self` for file-level modules.
-
-      ;; Bind `crate` to the definition node representing the entire crate.
-      let @root.def = crate_node
-      edge crate_node -> @root.def_types
-      edge crate_node -> @root.def_values
-
-      ;; Bind `self` to a node with identical out-edges. (Can't use the same
-      ;; node because TSG doesn't really support aliases: only nodes with
-      ;; type = "pop_symbol" can be definitions.)
-      node self
-      attr (self) source_node = @root, pop_symbol = "self", is_definition
-      edge @root.def_types -> self
-      edge self -> @root.def_types
-      edge self -> @root.def_values
+    "(main|lib|mod|src/bin/[^/]+)\.rs$" {
+      ;; Do not push this filename onto either from_root or to_super.
+      set to_anyfile = to_crate
     }
 
-    "^src/([^/]+)\.rs$" {
-      node crate_def_types
-      attr (crate_def_types) pop_symbol = "%type"
-      edge crate_node -> crate_def_types
-      attr (crate_node -> crate_def_types) precedence = 1
+    "([^/]+)\.rs$" {
+      ;; Extend `from_root` to pop this module name; but don't change `to_super`.
+      node pop_types
+      attr (pop_types) pop_symbol = "%type"
+      edge from_root -> pop_types
+      attr (from_root -> pop_types) precedence = 1
+      node pop_name
+      attr (pop_name) pop_symbol = $1
+      edge pop_types -> pop_name
+      set from_root = pop_name
 
-      node mod_def
-      attr (mod_def) source_node = @root, pop_symbol = $1, is_definition
-      edge crate_def_types -> mod_def
+      ;; To reach this module but in another file, we have to push this
+      ;; module's canonical path (in reverse order, as usual), then go to
+      ;; ROOT_NODE. We push the canonical path by pushing this module's name
+      ;; and `%type`, then pushing the parent module's canonical path in reverse
+      ;; order (using `to_super`).
+      node anyfile1
+      attr (anyfile1) push_symbol = $1
+      node anyfile2
+      attr (anyfile2) push_symbol = "%type"
+      edge anyfile1 -> anyfile2
+      edge anyfile2 -> to_super
+      set to_anyfile = anyfile1
+    }
 
-      ;; The rest of this is copied from the code that handles a mod_item.
-      edge mod_def -> @root.def_values
-      edge mod_def -> @root.def_types
+    "src/" {
+      ;; Reset.
+      set to_super = to_crate
+      set to_anyfile = to_crate
+      set from_root = crate_node
+    }
 
-      ;; Define `self` as a node effectively identical to `mod_def`. (Can't use
-      ;; the same node because TSG doesn't support aliases.)
-      node self
-      attr (self) source_node = @root, pop_symbol = "self", is_definition
-      edge @root.def_types -> self
-      edge self -> @root.def_values
-      edge self -> @root.def_types
+    "([^/]+)/" {
+      ;; Extend `from_root` to pop this module name.
+      node pop_types
+      attr (pop_types) pop_symbol = "%type"
+      edge from_root -> pop_types
+      attr (from_root -> pop_types) precedence = 1
+      node pop_name
+      attr (pop_name) pop_symbol = $1
+      edge pop_types -> pop_name
+      set from_root = pop_name
 
-      ;; Bind `super` in the implicit module as an alias for `crate`.
-      node super
-      attr (super) pop_symbol = "super"
-      node super_1
-      attr (super_1) push_symbol = "%crate"
-      edge @root.def_types -> super
-      edge super -> super_1
-      edge super_1 -> ROOT_NODE
+      ;; Extend `to_super` to push this module name.
+      node push_types
+      attr (push_types) push_symbol = "%type"
+      edge push_types -> to_super
+      node push_name
+      attr (push_name) push_symbol = $1
+      edge push_name -> push_types
+      set to_super = push_name
     }
   }
+
+  ;; Use from_root as the definition node for this source file.
+  let @root.def = from_root
+  edge from_root -> @root.def_types
+  edge from_root -> @root.def_values
+
+  ;; Bind `self` to a node with the same out-edges as @root.def. (Can't use the
+  ;; same node because TSG doesn't really support aliases: only nodes with type
+  ;; = "pop_symbol" can be definitions.)
+  node self
+  attr (self) source_node = @root, pop_symbol = "self", is_definition
+  edge @root.def_types -> self
+  edge self -> @root.def_types
+  edge self -> @root.def_values
+
+  ;; Bind `super` to the to_super path.
+  node pop_super
+  attr (pop_super) pop_symbol = "super"
+  edge @root.def_types -> pop_super
+  edge pop_super -> to_super
+
+  ;; Bind `%anyfile` to a graph path that pushes this module's canonical name,
+  ;; then goes to the shared ROOT_NODE. This enables finding nodes that
+  ;; represent this module in other files.
+  node pop_anyfile
+  attr (pop_anyfile) pop_symbol = "%anyfile"
+  edge @root.def -> pop_anyfile
+  edge self -> pop_anyfile ;; keep self's out-edges the same as the module's out-edges
+  edge pop_anyfile -> to_anyfile
 }
 
 ;; # Qualified access
