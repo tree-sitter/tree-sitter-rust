@@ -1,62 +1,88 @@
-; ####
-; Rust
-; ####
-;
-; All nodes that can contain uses must have:
-;
-;     .scope - The lexical scope in which the syntax-node appears--that is, the
-;         *enclosing* lexical scope.
-;
-; Rust has separate value and type namespaces. That is, every lexical scope can
-; contain both value bindings and type bindings, and they're distinct, as
-; though the things in the value namespace (functions, local variables,
-; arguments, consts, statics, constructors) and the things in the type
-; namespace (types, modules, crates) always had names that started with
-; distinct invisible sigils. For now we represent these namespaces as two
-; separate nodes. There's an edge from every `.scope` that can contain type
-; bindings to the corresponding type-namespace node, which pops a special
-; symbol `"%type"`; and from every `.scope` that has value bindings to a
-; value-namespace node, which pops `"%value"`.
-;
-; Thus references can't just push the identifier and go to the scope.
-; References to values must push the identifier, then push `"%value"`, then go
-; to the scope. References to types must push the type-identifier, then push
-; `"%type"`, then go to the scope.
-;
-; Lifetimes have their own separate namespace in Rust, but we put them in the
-; type-namespace nodes. Since lifetimes always start with an apostrophe, there
-; can't be any confusion.
-;
-; The .scope tree is stitched together with edges that point "up" the tree,
-; toward the root. These trees stop at module nodes, because in Rust, modules
-; do not inherit access to the enclosing block or module's bindings.
-;
-; The syntax-node of an item, type parameter, lifetime parameter, or binding name
-; in a pattern has:
-;
-;     .def - The node that pops the item's name.
-;
-; Scope nodes have:
-;
-;     .def_values, .def_types - A static-environment rib: has paths to all
-;         values/types defined in this scope, and not inherited from an
-;         enclosing scope.
-;
-; These are sometimes stitched together with rules that walk "down" the
-; syntax-tree, toward the leaves, which is necessary (e.g. in pattern syntax)
-; when we can't match the full path from a scope to a binding with a single
-; tree-sitter query.
-;
-; Children of scope nodes have:
-;
-;     .item_def_values, .item_def_types - The nodes to which this syntax-node
-;         contributes items and imports.
-;
-; Note: Tree-sitter's Rust parser tries to distinguish various uses of
-; identifiers and give them different syntax-node names (like
-; `type_identifier`), but it's imprecise, and there are ambiguous cases built
-; into the Rust language. We therefore often have to make long lists of
-; exactly what nodes or contexts we're talking about.
+;; ####
+;; Rust
+;; ####
+;;
+;; # Unqualified name lookups
+;;
+;; This file is about finding our way from identifiers to their definitions.
+;; Not all name lookups work exactly the same way; an identifier that appears
+;; after `expr.` or `ty::`, or in a few other syntactic contexts, is qualified.
+;; The others, unqualified names, are simply ("simply"!) looked up in the
+;; enclosing lexical scope.
+;;
+;; All nodes that can contain unqualified uses must have:
+;;
+;;     .scope - The lexical scope in which the syntax-node appears--that is, the
+;;         *enclosing* lexical scope.
+;;
+;; Rust has separate value and type namespaces. That is, every lexical scope
+;; can contain both value bindings and type bindings, and they're distinct, as
+;; though the things in the value namespace (functions, local variables,
+;; arguments, consts, statics, constructors) and the things in the type
+;; namespace (types, modules, crates) always had names that started with
+;; distinct invisible sigils. For now we represent these namespaces as two
+;; separate nodes. There's an edge from every `.scope` that can contain type
+;; bindings to the corresponding type-namespace node, which pops a special
+;; symbol `"%type"`; and from every `.scope` that has value bindings to a
+;; value-namespace node, which pops `"%value"`.
+;;
+;; Thus references can't just push the identifier and go to the scope.
+;; References to values must push the identifier, then push `"%value"`, then go
+;; to the scope. References to types must push the type-identifier, then push
+;; `"%type"`, then go to the scope.
+;;
+;; Lifetimes have their own separate namespace in Rust, but we put them in the
+;; type-namespace nodes. Since lifetimes always start with an apostrophe, there
+;; can't be any confusion.
+;;
+;; ## Inheritance
+;;
+;; The .scope tree is stitched together with edges that point "up" the tree,
+;; toward the root. These trees stop at module nodes, because in Rust, modules
+;; do not inherit access to the enclosing block or module's bindings.
+;;
+;; ## Definitions
+;;
+;; The syntax-node of an item, type parameter, lifetime parameter, or binding name
+;; in a pattern has:
+;;
+;;     .def - The node that pops the item's name.
+;;
+;; Scope nodes have:
+;;
+;;     .def_values, .def_types - A static-environment rib: has paths to all
+;;         values/types defined in this scope, and not inherited from an
+;;         enclosing scope.
+;;
+;; These are sometimes stitched together with edges that point "down" the
+;; syntax-tree, toward the leaves, which is necessary (e.g. in pattern syntax
+;; and in imports) when we can't match the full path from a scope to a binding
+;; with a single tree-sitter query.
+;;
+;; Children of scope nodes have:
+;;
+;;     .item_def_values, .item_def_types - The nodes to which this syntax-node
+;;         contributes items and imports.
+;;
+;; Note: Tree-sitter's Rust parser tries to distinguish various uses of
+;; identifiers and give them different syntax-node names (like
+;; `type_identifier`), but it's imprecise, and there are ambiguous cases built
+;; into the Rust language. We therefore often have to make long lists of
+;; exactly what nodes or contexts we're talking about.
+;;
+;;
+;; # Qualified name lookups
+;;
+;; We support some name lookups on identifiers qualified by `::`, what the Rust
+;; reference calls "paths". These appear in `(scoped_identifier)`,
+;; `(scoped_type_identifier)`, and `(scoped_use_list)` nodes.
+;;
+;; These receive `.scope` from the context, but then it gets complicated,
+;; because the unqualified identifier at the start of a path is not resolved
+;; using the same rules as other unqualified identifiers; it may refer to a
+;; crate from the extern prelude rather than a type, trait, or module in the
+;; current lexical scope. Also, paths that start with `crate::`, `self::`,
+;; `super::`, or `::` must be treated differently.
 
 global FILE_PATH
 global ROOT_NODE
