@@ -415,7 +415,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 
-;; Default scope propagation
+;; ## Default scope propagation
 ;;
 ;; Propagate scope for all syntax that does not introduce bindings.
 [
@@ -438,7 +438,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (qualified_type alias: (_) @child) @parent
   (reference_type (lifetime) @child) @parent
   (reference_type type: (_) @child) @parent
-  (scoped_type_identifier path: (_) @child) @parent
   (tuple_type (_) @child) @parent
   (type_arguments (_) @child) @parent
   ;;(type_binding type_arguments: (_) @child) @parent  ;; bogus grammar
@@ -489,7 +488,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (range_expression (_) @child) @parent
   (reference_expression value: (_) @child) @parent
   (return_expression (_) @child) @parent
-  (scoped_identifier path: (_) @child) @parent
   (shorthand_field_initializer (_) @child) @parent
   (struct_expression name: (_) @child) @parent
   (struct_expression body: (_) @child) @parent
@@ -660,8 +658,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; None of these should match here, so it's necessary to use a huge pattern to
 ;; get only type-expression contexts.
 ;;
-;; Identifiers immediately before `::` in a `scoped_identifier` are also likely
-;; just a bit different (I don't actually know) and are handled elsewhere for
+;; Identifiers immediately before `::` in a `scoped_identifier` can sometimes
+;; be the name of a type, but not always, so that too is handled elsewhere for
 ;; now.
 [
   ;; ### Types
@@ -733,47 +731,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @ident.use -> @ident.scope
 }
 
-
-
-; # Uses of `self`, `super`, and `crate`
-
-[
-  (scoped_identifier path: [(self) (super)] @keyword)
-  (scoped_type_identifier path: [(self) (super)] @keyword)
-  (scoped_use_list path: [(self) (super)] @keyword)
-  (use_as_clause path: [(self) (super)] @keyword)
-  (use_list [(self) (super)] @keyword)
-  (use_wildcard . [(self) (super)] @keyword)
-  (visibility_modifier [(self) (super)] @keyword)
-  ;; bogus if it happens, but accepted by the parser:
-  (range_pattern [(self) (super)] @keyword)
-] {
-  node @keyword.use
-  attr (@keyword.use) node_reference = @keyword
-
-  let t = (node)
-  attr (t) push_symbol = "%type"
-  edge @keyword.use -> t
-  edge t -> @keyword.scope
-}
-
-[
-  (scoped_identifier path: (crate) @keyword)
-  (scoped_type_identifier path: (crate) @keyword)
-  (scoped_use_list path: (crate) @keyword)
-  (use_as_clause path: (crate) @keyword)
-  (use_list (crate) @keyword)
-  (use_wildcard . (crate) @keyword)
-  (visibility_modifier (crate) @keyword)
-  ;; bogus if it happens, but accepted by the parser:
-  (range_pattern (crate) @keyword)
-] {
-  ;; All uses of `crate` are threaded through the root node,
-  ;; so they can cross file boundaries.
-  node @keyword.use
-  attr (@keyword.use) type = "push_symbol", symbol = "%crate", is_reference, source_node = @keyword
-  edge @keyword.use -> ROOT_NODE
-}
 
 
 ; # Item definitions
@@ -1078,9 +1035,28 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge pop_anyfile -> to_anyfile
 }
 
+
+
 ;; # Qualified access
+;;
+;; What tree-sitter-rust calls a `scoped_identifier` is what the rest of the
+;; Rust world calls a path. Of course "path" is a bit overloaded with
+;; stack-graphs.
+
+;; ## Namespaces for qualified access
+;;
 ;; In which we set up paths from definitions to their members, `self`, `super`,
 ;; and `crate`.
+;;
+;; In `a::b`, the `a` refers to a type, trait, or module. To resolve `b`, we
+;; follow a path that leads first to the definition of `a`, then from there
+;; must be able to match `"%type" "b"` or `"%value" "b"`. Note that when `::`
+;; is used, there's no inheritance: we want a binding that is a member of `a`
+;; in particular and not some enclosing block scope.
+;;
+;; Therefore, nodes that represent the contents of a type aren't lexical
+;; scopes. They have no inheritance edge. But they do have `"%type"` and
+;; `"%value"` edges and thus can serve as an AST node's `.scope`.
 
 ;; Install a path from a module definition to the types defined inside it.
 ;; Also hook up `self`, `super`, and `crate` for declared modules.
@@ -1183,18 +1159,132 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 }
 
 
-;; # Paths
-;;
-;; What tree-sitter-rust calls a `scoped_identifier` is what the rest of the
-;; Rust world calls a path.
+;; ## Starting scope for a path
 
-;; The `path:` of a `scoped_identifier` or `scoped_type_identifier` is one of
-;; - `self` / `super` / `crate`
-;; - identifier
-;; - scoped_identifier
-;; - bracketed_type
-;; - generic_type
-;; So far we do not handle generic_type at all.
+;; This rule threads the current lexical scope down the left edge of a path
+;; AST.
+[
+  (scoped_identifier path: (_) @child) @parent
+  (scoped_type_identifier path: (_) @child) @parent
+] {
+  ;; TODO - consider a node that *includes* enclosing scope rather than being
+  ;; identical with it, because it can also be something in the extern prelude
+  let @child.scope = @parent.scope
+}
+
+;; ## Qualifiers
+;;
+;; The `path:` named child of a `(scoped_identifier)`,
+;; `(scoped_type_identifier)`, or `(scoped_use_list)` is called the qualifier,
+;; and can be one of:
+;;
+;; -   `(self)`
+;; -   `(super)`.
+;; -   `(crate)`
+;; -   A nested `(scoped_identifier)`.
+;; -   An `(identifier)`. I think the grammar treats `Self` as an identifier
+;;     and we just resolve it lexically.
+;; -   `(bracketed_type)`, as in `<T>::`, `<Vec<T>>::`, or `<T as ToString>::`.
+;;     We currently support only the simplest case.
+;; -   `(generic_type)`, as in `Vec::<T>::`. We don't support generics at all.
+;; -   Nothing, as in `::std`. This isn't supported yet; it means the
+;;     extern prelude.
+;;
+;; Below are the rules implementing each of these cases (the ones we support,
+;; anyway) by setting the `.use` variable of the qualifier to a node that
+;; leads to the appropriate scope. The name to the right of `::` is resolved
+;; in that scope.
+
+;; `(self)` and `(super)` are, so far, resolved lexically.
+;;
+;; Rust probably handles these as special cases, but I think this gives the
+;; correct result for all cases Rust allows.
+[
+  (scoped_identifier path: [(self) (super)] @keyword)
+  (scoped_type_identifier path: [(self) (super)] @keyword)
+  (scoped_use_list path: [(self) (super)] @keyword)
+  (use_as_clause path: [(self) (super)] @keyword)
+  (use_list [(self) (super)] @keyword)
+  (use_wildcard . [(self) (super)] @keyword)
+  (visibility_modifier [(self) (super)] @keyword)
+  ;; bogus if it happens, but accepted by the parser:
+  (range_pattern [(self) (super)] @keyword)
+] {
+  node @keyword.use
+  attr (@keyword.use) node_reference = @keyword
+
+  let t = (node)
+  attr (t) push_symbol = "%type"
+  edge @keyword.use -> t
+  edge t -> @keyword.scope
+}
+
+;; `(crate)` resolves to the root.
+[
+  (scoped_identifier path: (crate) @keyword)
+  (scoped_type_identifier path: (crate) @keyword)
+  (scoped_use_list path: (crate) @keyword)
+  (use_as_clause path: (crate) @keyword)
+  (use_list (crate) @keyword)
+  (use_wildcard . (crate) @keyword)
+  (visibility_modifier (crate) @keyword)
+  ;; bogus if it happens, but accepted by the parser:
+  (range_pattern (crate) @keyword)
+] {
+  ;; All uses of `crate` are threaded through the root node,
+  ;; so they can cross file boundaries.
+  node @keyword.use
+  attr (@keyword.use) type = "push_symbol", symbol = "%crate", is_reference, source_node = @keyword
+  edge @keyword.use -> ROOT_NODE
+}
+
+;; An identifier at the start of a path is resolved relative to the `.scope`.
+;; This means that in expression or type-expression context, it can resolve to
+;; a module, type, or trait in the current lexical scope. (It could refer to a
+;; crate in the extern prelude, but we don't support that yet.)
+;;
+;; (If that whole path is inside the braces of a `(scoped_use_list)`, as for
+;; the path `io::Error` in `use std::{io::Error};`, then the curret lexical
+;; scope would be the wrong place to start. Therefore the `.scope` must be
+;; determined by its qualifier instead, in this case `std::`. This isn't
+;; implemented yet.)
+[
+  (scoped_identifier path: (identifier) @name)
+  (scoped_type_identifier path: (identifier) @name)
+  (scoped_use_list path: (identifier) @name)
+  (use_as_clause path: (identifier) @name)
+  (use_list (identifier) @name)
+  (use_wildcard . (identifier) @name)
+  (visibility_modifier (identifier) @name)
+  ;; bogus if it happens, but accepted by the parser:
+  (range_pattern (identifier) @name)
+] {
+  ;; For now, a copy of the code for resolving `(type_identifier)`.
+  node @name.use
+  attr (@name.use) node_reference = @name
+
+  let t = (node)
+  attr (t) push_symbol = "%type"
+  edge @name.use -> t
+  edge t -> @name.scope
+}
+
+(bracketed_type (_) @child) @parent {
+  let @parent.use = @child.use
+}
+
+(qualified_type alias: (_) @trait) @parent {
+  let @parent.use = @trait.use
+}
+
+(scoped_identifier path: (generic_type) @parent) {
+  ;; Dummy node to avoid "undefined scoped variable". Not hooked up yet.
+  node @parent.use
+}
+
+;; ## Marking the context of scoped identifiers
+;;
+;; The context of a path determines which namespace to search.
 
 ;; Note: This is a complete copy of the huge list under "Marking unqualified
 ;; references". Obviously the duplication is very bad. I don't know how else to
@@ -1307,7 +1397,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 (tuple_struct_pattern type: (_) @here) {
   ;; type or value, whichever comes first
-  let @here.context = "%value" ;; bug
+  let @here.context = "%value" ;; BUG - try "%any"
 }
 
 ;; Pattern context
@@ -1369,33 +1459,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   } else {
     ;; `::foo` syntax. This is a crate name. TODO - connect s to the extern crates.
   }
-}
-
-[
-  (scoped_identifier path: (identifier) @name)
-  (scoped_type_identifier path: (identifier) @name)
-] {
-  ;; For now, just treat this as a type_identifier.
-  node @name.use
-  attr (@name.use) node_reference = @name
-
-  let t = (node)
-  attr (t) push_symbol = "%type"
-  edge @name.use -> t
-  edge t -> @name.scope
-}
-
-(bracketed_type (_) @child) @parent {
-  let @parent.use = @child.use
-}
-
-(qualified_type alias: (_) @trait) @parent {
-  let @parent.use = @trait.use
-}
-
-(scoped_identifier path: (generic_type) @parent) {
-  ;; Dummy node to avoid "undefined scoped variable". Not hooked up yet.
-  node @parent.use
 }
 
 
