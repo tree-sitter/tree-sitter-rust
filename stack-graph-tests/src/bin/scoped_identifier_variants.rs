@@ -1,4 +1,4 @@
-enum MyResult<T, E> {
+pub enum MyResult<T, E> {
     Fine(T),
     Nope(E),
 }
@@ -10,6 +10,8 @@ pub fn f() -> MyResult<(), String> {
 
 use MyResult::Fine;
 //            ^ defined: 2
+
+#[allow(dead_code)]
 const ANOTHER: MyResult<&str, &str> = Fine("mess");
 //                                    ^ defined: 2
 

@@ -1,4 +1,4 @@
-fn read_int() -> i32 { todo!() }
+fn read_int() -> Option<i32> { todo!() }
 
 fn main() {
     'outer: while let Some(x) = read_int() {
