@@ -94,8 +94,8 @@ attribute node_definition = node        => type = "pop_symbol", node_symbol = no
 attribute push_symbol = symbol          => type = "push_symbol", symbol = symbol
 attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
-;; # Scope nodes
-
+;; # Lexical scopes
+;;
 ;; In which we attach `.scope` nodes to every syntax node that needs them, and
 ;; connect these nodes in a scope tree.
 ;;
@@ -330,7 +330,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @child.scope = @parent.inner_scope
 }
 
-;; ## Block scopes.
+;; ## Block scopes
 ;;
 ;; Items in a block are visible throughout the block. Let-declaration bindings
 ;; in a block are visible starting with the next statement or expression.
@@ -558,21 +558,16 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (type_parameters (constrained_type_parameter bounds: (_) @child)) @parent
   (removed_trait_bound (_) @child) @parent
 
-  ;; ### Imports
-  (scoped_use_list path: (_) @child) @parent
-  (use_as_clause path: (_) @child) @parent
-  (use_declaration argument: (_) @child) @parent
-  (use_list (_) @child) @parent
-  (use_wildcard (_) @child "::" "*") @parent
+  ;; For import syntax, see the "Imports" section below.
 ] {
   let @child.scope = @parent.scope
 }
 
 
 
-;; # Marking unqualified references
+;; # Unqualified identifiers
 
-;; ## Expression context
+;; ## Identifiers in expression context
 ;;
 ;; List all contexts where an identifier is a reference to a binding in the
 ;; "values" namespace.
@@ -645,7 +640,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge v -> @ident.scope
 }
 
-;; ## Type context
+;; ## Identifiers in type context
 ;;
 ;; List all contexts where an identifier is a reference to a binding in the
 ;; "types" namespace of the current scope.
@@ -1161,14 +1156,11 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; ## Starting scope for a path
 
-;; This rule threads the current lexical scope down the left edge of a path
-;; AST.
+;; Thread the current lexical scope down the left edge of a path AST.
 [
   (scoped_identifier path: (_) @child) @parent
   (scoped_type_identifier path: (_) @child) @parent
 ] {
-  ;; TODO - consider a node that *includes* enclosing scope rather than being
-  ;; identical with it, because it can also be something in the extern prelude
   let @child.scope = @parent.scope
 }
 
@@ -1252,9 +1244,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (scoped_identifier path: (identifier) @name)
   (scoped_type_identifier path: (identifier) @name)
   (scoped_use_list path: (identifier) @name)
-  (use_as_clause path: (identifier) @name)
-  (use_list (identifier) @name)
-  (use_wildcard . (identifier) @name)
   (visibility_modifier (identifier) @name)
   ;; bogus if it happens, but accepted by the parser:
   (range_pattern (identifier) @name)
@@ -1282,9 +1271,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @parent.use
 }
 
-;; ## Marking the context of scoped identifiers
+;; ## Marking the context of expressions
 ;;
-;; The context of a path determines which namespace to search.
+;; This is for scoped identifiers. The context of a path determines which
+;; namespace to search.
 
 ;; Note: This is a complete copy of the huge list under "Marking unqualified
 ;; references". Obviously the duplication is very bad. I don't know how else to
@@ -1442,9 +1432,19 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @here.context = "%any"
 }
 
+
+;; ## Resolving qualified identifiers in paths
+;;
+;; In a path like `a::b::c::d`, each segment except the initial `a` is qualified.
+;; For the initial segment, see the section on "Qualifiers".
+;;
+;; (scoped_identifier) appears in some very different contexts,
+;; including (use_list), as in `use some_crate::{self, std::io};` where
+;; `std::io` ends up having an unusual meaning.
+
 [
   (scoped_identifier path: (_)? @parent name: (identifier) @name) @path
-  (scoped_type_identifier path: (_)? @parent name: [(type_identifier) @type] @name) @path
+  (scoped_type_identifier path: (_)? @parent name: (type_identifier) @name) @path
 ] {
   node @name.use
   attr (@name.use) node_reference = @name
@@ -1455,10 +1455,19 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
   edge @name.use -> s
   if some @parent {
-    edge s -> @parent.use
+    let @name.scope = @parent.use
   } else {
-    ;; `::foo` syntax. This is a crate name. TODO - connect s to the extern crates.
+    ;; `::foo` syntax. This is a crate name. TODO - connect s to the extern
+    ;; crates. For now, we bogusly treat this like unqualified `foo` to avoid
+    ;; stack-graph errors in files that use this syntax.
+    let @name.scope = @path.scope
   }
+  edge s -> @name.scope
+}
+
+;; Set scope of scoped-use-list qualified children.
+(scoped_use_list path: (_) @parent (use_list (_) @child)) {
+  let @child.scope = @parent.use
 }
 
 
@@ -1547,14 +1556,110 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 
 ;; # Imports
-(use_declaration
-  (scoped_identifier path: (_) @parent name: (identifier) @name)
-) @import {
-  ;; When looking for a name in the type namespace, and finding an import, go
-  ;; find whatever `@parent` points to, then look up the name in that thing's
-  ;; type namespace.
+;;
+;; The code in this section has two goals:
+;;
+;; -   Support references that appear within `use` declarations, like the
+;;     `Error` in `use anyhow::Error;`
+;;
+;; -   Add `use`-bindings to the lexical scope, so that throughout your code, the
+;;     way we handle identifiers is import-aware. If on line 1234 of a file you
+;;     have `let map = HashMap::new();`, we want `HashMap` to be linked to the
+;;     right definition via the `use hashbrown::HashMap;` on line 12.
+;;
+;; The bit of syntax between `use` and `;` is called a *UseTree*. It can have
+;; several forms:
+;;
+;;     use w::x::y::z;
+;;     use x::memory_management as mm;
+;;     use { std::io, tokio::runtime::Runtime };
+;;     use std::io::{self, Read};
+;;     use std::{io, thread::{self, spawn}};
+;;     use hms_pinafore::prelude::*;
+;;     use crate as my_root;
+;;
+;; At the beginning of a UseTree, `self::`, `super::`, `crate::`, and bare `::`
+;; can be used to specify where to start the search for items to import.
+;;
+;; So the full grammar is like this:
+;;
+;;     UseTree :
+;;         UseTreePrefix? UseTreeTail
+;;
+;;     UseTreePrefix :
+;;         `self` `::`
+;;         (`super` `::`)+
+;;         `crate` `::`
+;;         `::`
+;;
+;;     UseTreeTail :
+;;         UseTreeLeaf Alias?
+;;         Identifier `::` UseTreeTail
+;;         `{` (UseTreeTail (`,` UseTreeTail)* `,`?)? `}`
+;;         `*`
+;;
+;;     UseTreeLeaf :
+;;         Identifier
+;;         `self`  // only within a {} list with non-empty prefix
+;;         `crate`  // only without any prefix and with alias
+;;
+;;     Alias :
+;;         `as` Identifier
+;;         `as` `_`
+;;
+;; Unfortunately the way grammar.js renders these is backwards for processing
+;; them. Ideally we'd treat `::` as right-associative here, so that `x::y::z`
+;; is rendered as `(:: x (:: y (identifier z)))`. This is the opposite of how
+;; the syntax tree is constructed for everything else in the language, though.
+;; So what we actually get is `(:: (:: (identifier x) y) z)`.
+;;
+;;    use_clause:
+;;        (self)  // we accept it but this isn't actually legal Rust syntax
+;;        (super) // same
+;;        (crate) // same
+;;        (identifier)
+;;        (scoped_identifier)
+;;        (use_as_clause)
+;;        (use_list)
+;;        (scoped_use_list)
+;;        (use_wildcard)
+;;
+;; Also unfortunately, the same node type `(scoped_identifier)` is used in
+;; imports as in expressions, despite the meaning being quite different,
+;; especially in the case of the `bar::baz` in `use foo::{bar::baz};`.
+;;
+;; We assume that the identifier at the beginning of a path in expression
+;; context searches exactly the same places as an identifier at the beginning
+;; of a path in `use_clause` context.
+
+;; Add `use-bindings` to the lexical scope.
+[
+  (use_declaration [
+    (identifier) @name
+    (scoped_identifier name: (identifier) @name)
+  ])
+  (use_list [
+    (identifier) @name
+    (scoped_identifier name: (identifier) @name)
+  ])
+  (use_as_clause
+    path: [
+      (identifier) @name
+      (scoped_identifier name: (identifier) @name)
+    ]
+    alias: (_) @alias
+  )
+] @import {
+  ;; Make a binding for @name in the type namespace. This gadget pops `"type"
+  ;; @name` (or @alias instead, if present), then forwards to the imported item
+  ;; by re-pushing `"%type" @name` and exiting to @name.scope, which is selected
+  ;; by other rules.
   node type_relay
-  attr (type_relay) type = "pop_symbol", node_symbol = @name
+  if some @alias {
+    attr (type_relay) type = "pop_symbol", node_symbol = @alias
+  } else {
+    attr (type_relay) type = "pop_symbol", node_symbol = @name
+  }
   node type_relay1
   attr (type_relay1) type = "push_symbol", node_symbol = @name
   node type_relay2
@@ -1562,11 +1667,15 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @import.item_def_types -> type_relay
   edge type_relay -> type_relay1
   edge type_relay1 -> type_relay2
-  edge type_relay2 -> @parent.use
+  edge type_relay2 -> @name.scope
 
   ;; Same deal for the value namespace.
   node value_relay
-  attr (value_relay) type = "pop_symbol", node_symbol = @name
+  if some @alias {
+    attr (value_relay) type = "pop_symbol", node_symbol = @alias
+  } else {
+    attr (value_relay) type = "pop_symbol", node_symbol = @name
+  }
   node value_relay1
   attr (value_relay1) type = "push_symbol", node_symbol = @name
   node value_relay2
@@ -1574,5 +1683,49 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @import.item_def_values -> value_relay
   edge value_relay -> value_relay1
   edge value_relay1 -> value_relay2
-  edge value_relay2 -> @parent.use
+  edge value_relay2 -> @name.scope
+
+  ;; TODO - need %any propagation here as well? test case would be import of an
+  ;; import
+}
+
+;; Identifiers in import context, qualified by a scoped_use_list.
+;;
+;; There is different code for the identifier at the start of a path.
+;; Awkwardly, with use-lists it is possible for the same identifier to be both
+;; the start and the end of a path, and it's hard to tell when that's happening
+;; using only tree-sitter queries. Consider `use {{foo}};`.
+[
+  (scoped_use_list (use_list (identifier) @ident))
+  (scoped_use_list (use_list (use_as_clause path: (identifier) @ident)))
+] {
+  ;; Implementation note: Compare with the code in sections "Identifiers in
+  ;; expression context" and "Identifiers in type context".
+  node @ident.use
+  attr (@ident.use) node_reference = @ident
+
+  let a = (node)
+  attr (a) push_symbol = "%any"
+  edge @ident.use -> a
+  edge a -> @ident.scope
+}
+
+;; Scope inheritance in `use` syntax.
+[
+  (scoped_use_list path: (_) @child) @parent
+  (use_declaration argument: (_) @child) @parent
+  (use_as_clause path: (_) @child) @parent
+  (use_wildcard (_) @child "::" "*") @parent
+] {
+  let @child.scope = @parent.scope
+}
+
+;; Propagate the binding scopes to the leaves of imports.
+[
+  (_ (use_list) @child)
+  (_ (scoped_use_list) @child)
+  (_ (use_as_clause) @child)
+] @parent {
+  let @child.item_def_types = @parent.item_def_types
+  let @child.item_def_values = @parent.item_def_values
 }
