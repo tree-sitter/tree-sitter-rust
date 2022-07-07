@@ -1716,6 +1716,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (use_declaration argument: (_) @child) @parent
   (use_as_clause path: (_) @child) @parent
   (use_wildcard (_) @child "::" "*") @parent
+  (use_declaration argument: (use_list (_) @child) @parent)
 ] {
   let @child.scope = @parent.scope
 }
