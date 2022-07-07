@@ -1646,6 +1646,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     path: [
       (identifier) @name
       (scoped_identifier name: (identifier) @name)
+      (crate) @crate_root
     ]
     alias: (_) @alias
   )
@@ -1654,8 +1655,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     path: [
       (identifier) @name
       (scoped_identifier name: (identifier) @name)
+      (crate) @crate_root
     ]
-    (use_list (self))
+    (use_list [
+      (self)
+      (use_as_clause path: (self) alias: (_) @alias)
+    ])
   )
 ] @import {
   ;; Make a binding for @name in the type namespace. This gadget pops `"type"
@@ -1668,30 +1673,36 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   } else {
     attr (type_relay) type = "pop_symbol", node_symbol = @name
   }
-  node type_relay1
-  attr (type_relay1) type = "push_symbol", node_symbol = @name
-  node type_relay2
-  attr (type_relay2) push_symbol = "%type"
   edge @import.item_def_types -> type_relay
-  edge type_relay -> type_relay1
-  edge type_relay1 -> type_relay2
-  edge type_relay2 -> @name.scope
+  if some @crate_root {
+    edge type_relay -> @crate_root.use
+  } else {
+    node type_relay1
+    attr (type_relay1) type = "push_symbol", node_symbol = @name
+    node type_relay2
+    attr (type_relay2) push_symbol = "%type"
+    edge type_relay -> type_relay1
+    edge type_relay1 -> type_relay2
+    edge type_relay2 -> @name.scope
+  }
 
   ;; Same deal for the value namespace.
-  node value_relay
-  if some @alias {
-    attr (value_relay) type = "pop_symbol", node_symbol = @alias
-  } else {
-    attr (value_relay) type = "pop_symbol", node_symbol = @name
+  if none @crate_root {
+    node value_relay
+    if some @alias {
+      attr (value_relay) type = "pop_symbol", node_symbol = @alias
+    } else {
+      attr (value_relay) type = "pop_symbol", node_symbol = @name
+    }
+    node value_relay1
+    attr (value_relay1) type = "push_symbol", node_symbol = @name
+    node value_relay2
+    attr (value_relay2) push_symbol = "%value"
+    edge @import.item_def_values -> value_relay
+    edge value_relay -> value_relay1
+    edge value_relay1 -> value_relay2
+    edge value_relay2 -> @name.scope
   }
-  node value_relay1
-  attr (value_relay1) type = "push_symbol", node_symbol = @name
-  node value_relay2
-  attr (value_relay2) push_symbol = "%value"
-  edge @import.item_def_values -> value_relay
-  edge value_relay -> value_relay1
-  edge value_relay1 -> value_relay2
-  edge value_relay2 -> @name.scope
 
   ;; TODO - need %any propagation here as well? test case would be import of an
   ;; import
