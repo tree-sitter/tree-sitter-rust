@@ -1649,6 +1649,14 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     ]
     alias: (_) @alias
   )
+  ;; In `use a::b::{self, ...}`, bind `b`.
+  (scoped_use_list
+    path: [
+      (identifier) @name
+      (scoped_identifier name: (identifier) @name)
+    ]
+    (use_list (self))
+  )
 ] @import {
   ;; Make a binding for @name in the type namespace. This gadget pops `"type"
   ;; @name` (or @alias instead, if present), then forwards to the imported item
