@@ -1,3 +1,6 @@
+/* --- path: src/bin/use_self.rs --- */
+// The full path matters because this test uses `crate::`.
+
 #![allow(dead_code, unused_imports)]
 
 mod a {
@@ -7,22 +10,43 @@ mod a {
     }
 }
 
+mod e {
+    pub fn f() {
+        use crate::a::{self, b, c::{self, d}};
+        //         ^ defined: 6
+        //             ^ defined: 6
+        //                   ^ defined: 7
+        //                      ^ defined: 8
+        //                          ^ defined: 8
+        //                                ^ defined: 9
+
+        a::b();
+    //  ^ defined: 6
+        b();
+    //  ^ defined: 7
+        c::d();
+    //  ^ defined: 8
+        d();
+    //  ^ defined: 9
+    }
+}
+
 fn main() {
     use a::{self, b, c::{self, d}};
-    //  ^ defined: 3
-    //      ^ defined: 3
-    //            ^ defined: 4
-    //               ^ defined: 5
-    //                   ^ defined: 5
-    //                         ^ defined: 6
+    //  ^ defined: 6
+    //      ^ defined: 6
+    //            ^ defined: 7
+    //               ^ defined: 8
+    //                   ^ defined: 8
+    //                         ^ defined: 9
 
     a::b();
-//  ^ defined: 3
-    b();
-//  ^ defined: 4
-    c::d();
-//  ^ defined: 5
-    d();
 //  ^ defined: 6
+    b();
+//  ^ defined: 7
+    c::d();
+//  ^ defined: 8
+    d();
+//  ^ defined: 9
 
 }
