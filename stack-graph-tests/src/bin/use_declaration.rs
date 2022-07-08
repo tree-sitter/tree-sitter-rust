@@ -128,4 +128,11 @@ fn rust_reference_examples() {
     }
 }
 
+fn unsupported() {
+    // Don't crash on syntax we don't support yet.
+    { use ::std; }
+    { use ::{anyhow, anyhow::Result}; }
+    { use ::anyhow::{Error, Result, Context}; }
+}
+
 fn main() {}

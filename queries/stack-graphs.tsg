@@ -1458,16 +1458,23 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     let @name.scope = @parent.use
   } else {
     ;; `::foo` syntax. This is a crate name. TODO - connect s to the extern
-    ;; crates. For now, we bogusly treat this like unqualified `foo` to avoid
-    ;; stack-graph errors in files that use this syntax.
+    ;; crates. For now, we bogusly treat this like unqualified `foo` rather
+    ;; than leave @name.scope unset and fail the whole file.
     let @name.scope = @path.scope
   }
   edge s -> @name.scope
 }
 
 ;; Set scope of scoped-use-list qualified children.
-(scoped_use_list path: (_) @parent (use_list (_) @child)) {
-  let @child.scope = @parent.use
+(scoped_use_list path: (_)? @parent (use_list (_) @child)) @context {
+  if some @parent {
+    let @child.scope = @parent.use
+  } else {
+    ;; `use ::{foo};` syntax. TODO - connect this scope to the extern crates.
+    ;; For now, we bogusly treat this like unqualified `foo` rather than leave
+    ;; @child.scope unset and fail the whole file.
+    let @child.scope = @context.scope
+  }
 }
 
 
