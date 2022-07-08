@@ -6,6 +6,7 @@ package-lock.json
 examples
 !examples/ast.rs
 /target/
+.build/
 /stack-graph-tests/target/
 /stack-graph-tests/src/bin/**/*.html
 /stack-graph-tests/src/bin/**/*.paths.json
