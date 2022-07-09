@@ -108,7 +108,10 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (source_file) @root
   (mod_item body: (declaration_list) @root)
 ] {
-  ;; New nodes, no inheritance.
+  ;; Modules, including nested modules, have fresh scopes. No inheritance.
+  ;; (Ideally, these should inherit from the standard prelude and the extern
+  ;; prelude, but we currently have no information about what to put in those
+  ;; namespaces.)
   node @root.scope
 }
 
@@ -408,11 +411,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @stmt.block_scope_after = @stmt.scope
 }
 
-(scoped_use_list list: (_) @child) @parent {
-  ;; XXX This is completely bogus but there has to be a node here
-  ;; because this can contain paths.
-  node @child.scope ;; bug
-}
 
 
 ;; ## Default scope propagation
@@ -1465,8 +1463,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge s -> @name.scope
 }
 
-;; Set scope of scoped-use-list qualified children.
-(scoped_use_list path: (_)? @parent (use_list (_) @child)) @context {
+;; Set the scope of the `list:` child of a `(scoped_use_list)`.
+(scoped_use_list path: (_)? @parent list: (use_list) @child) @context {
   if some @parent {
     let @child.scope = @parent.use
   } else {
@@ -1738,12 +1736,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; Scope inheritance in `use` syntax.
 [
-  (scoped_use_list path: (_) @child) @parent
-  (use_declaration argument: (_) @child) @parent
-  (use_as_clause path: (_) @child) @parent
-  (use_wildcard (_) @child "::" "*") @parent
-  (use_declaration argument: (use_list (_) @child) @parent)
-] {
+  (scoped_use_list path: (_) @child)
+  (use_as_clause path: (_) @child)
+  (use_declaration argument: (_) @child)
+  (use_list (_) @child)
+  (use_wildcard (_) @child "::" "*")
+] @parent {
   let @child.scope = @parent.scope
 }
 
