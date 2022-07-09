@@ -23,13 +23,13 @@
 ;; distinct invisible sigils. For now we represent these namespaces as two
 ;; separate nodes. There's an edge from every `.scope` that can contain type
 ;; bindings to the corresponding type-namespace node, which pops a special
-;; symbol `"%type"`; and from every `.scope` that has value bindings to a
-;; value-namespace node, which pops `"%value"`.
+;; symbol `"%types"`; and from every `.scope` that has value bindings to a
+;; value-namespace node, which pops `"%values"`.
 ;;
 ;; Thus references can't just push the identifier and go to the scope.
-;; References to values must push the identifier, then push `"%value"`, then go
-;; to the scope. References to types must push the type-identifier, then push
-;; `"%type"`, then go to the scope.
+;; References to values must push the identifier, then push `"%values"`, then
+;; go to the scope. References to types must push the type-identifier, then
+;; push `"%types"`, then go to the scope.
 ;;
 ;; Lifetimes have their own separate namespace in Rust, but we put them in the
 ;; type-namespace nodes. Since lifetimes always start with an apostrophe, there
@@ -140,7 +140,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
       ;; precedence 1, higher than scope-inheritance edges (precedence 0), so that
       ;; inner bindings are preferred over (i.e. they shadow) outer bindings.
       node @pat.def_values
-      attr (@pat.def_values) pop_symbol = "%value"
+      attr (@pat.def_values) pop_symbol = "%values"
       edge @parent.inner_scope -> @pat.def_values
       attr (@parent.inner_scope -> @pat.def_values) precedence = 1
     }
@@ -160,7 +160,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
       edge @parent.inner_scope -> @parent.scope
 
       node @pat.def_values
-      attr (@pat.def_values) pop_symbol = "%value"
+      attr (@pat.def_values) pop_symbol = "%values"
       edge @parent.inner_scope -> @pat.def_values
       attr (@parent.inner_scope -> @pat.def_values) precedence = 1
     } else {
@@ -252,12 +252,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     edge @parent.inner_scope -> @parent.scope
 
     node @params.const_param_defs
-    attr (@params.const_param_defs) pop_symbol = "%value"
+    attr (@params.const_param_defs) pop_symbol = "%values"
     edge @parent.inner_scope -> @params.const_param_defs
     attr (@parent.inner_scope -> @params.const_param_defs) precedence = 1
 
     node @params.type_param_defs
-    attr (@params.type_param_defs) pop_symbol = "%type"
+    attr (@params.type_param_defs) pop_symbol = "%types"
     edge @parent.inner_scope -> @params.type_param_defs
     attr (@parent.inner_scope -> @params.type_param_defs) precedence = 1
   } else {
@@ -348,12 +348,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   edge @block.item_scope -> @block.scope
 
   node @block.item_values
-  attr (@block.item_values) pop_symbol = "%value"
+  attr (@block.item_values) pop_symbol = "%values"
   edge @block.item_scope -> @block.item_values
   attr (@block.item_scope -> @block.item_values) precedence = 1
 
   node @block.item_types
-  attr (@block.item_types) pop_symbol = "%type"
+  attr (@block.item_types) pop_symbol = "%types"
   edge @block.item_scope -> @block.item_types
   attr (@block.item_scope -> @block.item_types) precedence = 1
 }
@@ -372,7 +372,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   if some @pat {
     ;; Create the "definitions" node for let-bindings.
     node @pat.def_values
-    attr (@pat.def_values) pop_symbol = "%value"
+    attr (@pat.def_values) pop_symbol = "%values"
     node @stmt.block_scope_after
     edge @stmt.block_scope_after -> @pat.def_values
     attr (@stmt.block_scope_after -> @pat.def_values) precedence = 1
@@ -633,7 +633,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @ident.use
   attr (@ident.use) node_reference = @ident
   node v
-  attr (v) push_symbol = "%value"
+  attr (v) push_symbol = "%values"
   edge @ident.use -> v
   edge v -> @ident.scope
 }
@@ -700,7 +700,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@ident.use) node_reference = @ident
 
   let t = (node)
-  attr (t) push_symbol = "%type"
+  attr (t) push_symbol = "%types"
   edge @ident.use -> t
   edge t -> @ident.scope
 }
@@ -715,9 +715,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @ident.use
   attr (@ident.use) node_reference = @ident
 
-  ;; Optional "%type" node!
+  ;; Optional "%types" node!
   let t = (node)
-  attr (t) push_symbol = "%type"
+  attr (t) push_symbol = "%types"
   edge @ident.use -> t
   attr (@ident.use -> t) precedence = 1
   edge t -> @ident.scope
@@ -733,25 +733,25 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (declaration_list) @root
 ] {
   node @root.def_types
-  attr (@root.def_types) pop_symbol = "%type"
+  attr (@root.def_types) pop_symbol = "%types"
   edge @root.scope -> @root.def_types
   attr (@root.scope -> @root.def_types) precedence = 1
 
   node @root.def_values
-  attr (@root.def_values) pop_symbol = "%value"
+  attr (@root.def_values) pop_symbol = "%values"
   edge @root.scope -> @root.def_values
   attr (@root.scope -> @root.def_values) precedence = 1
 
-  ;; This `%any` namespace is the union of `%type` and `%value`. The .scope
+  ;; This `%any` namespace is the union of `%types` and `%values`. The .scope
   ;; does not have an edge to this, because all ordinary lexical-scope lookups
   ;; are for either a type or a value. Imports use it, because the `use` syntax
   ;; is the same whether importing types or values.
   node @root.def_any
   attr (@root.def_any) pop_symbol = "%any"
   node to_types
-  attr (to_types) push_symbol = "%type"
+  attr (to_types) push_symbol = "%types"
   node to_values
-  attr (to_values) push_symbol = "%value"
+  attr (to_values) push_symbol = "%values"
   edge @root.def_any -> to_types
   edge to_types -> @root.def_types
   edge @root.def_any -> to_values
@@ -804,7 +804,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     attr (relay1) push_symbol = (source-text @name)
     ;; in the type namespace...
     node relay2
-    attr (relay2) push_symbol = "%type"
+    attr (relay2) push_symbol = "%types"
     ;; of the node in another file...
     node relay3
     attr (relay3) push_symbol = "%anyfile"
@@ -812,7 +812,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     node relay4
     attr (relay4) push_symbol = "self"
     node relay5
-    attr (relay5) push_symbol = "%type"
+    attr (relay5) push_symbol = "%types"
 
     edge @item.def -> relay1
     edge relay1 -> relay2
@@ -864,7 +864,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 [(parameters) (closure_parameters)] @parameters {
   node @parameters.def_values
-  attr (@parameters.def_values) pop_symbol = "%value"
+  attr (@parameters.def_values) pop_symbol = "%values"
 }
 
 [
@@ -945,7 +945,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     "([^/]+)\.rs$" {
       ;; Extend `from_root` to pop this module name; but don't change `to_super`.
       node pop_types
-      attr (pop_types) pop_symbol = "%type"
+      attr (pop_types) pop_symbol = "%types"
       edge from_root -> pop_types
       attr (from_root -> pop_types) precedence = 1
       node pop_name
@@ -956,12 +956,12 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
       ;; To reach this module but in another file, we have to push this
       ;; module's canonical path (in reverse order, as usual), then go to
       ;; ROOT_NODE. We push the canonical path by pushing this module's name
-      ;; and `%type`, then pushing the parent module's canonical path in reverse
-      ;; order (using `to_super`).
+      ;; and `%types`, then pushing the parent module's canonical path in
+      ;; reverse order (using `to_super`).
       node anyfile1
       attr (anyfile1) push_symbol = $1
       node anyfile2
-      attr (anyfile2) push_symbol = "%type"
+      attr (anyfile2) push_symbol = "%types"
       edge anyfile1 -> anyfile2
       edge anyfile2 -> to_super
       set to_anyfile = anyfile1
@@ -977,7 +977,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     "([^/]+)/" {
       ;; Extend `from_root` to pop this module name.
       node pop_types
-      attr (pop_types) pop_symbol = "%type"
+      attr (pop_types) pop_symbol = "%types"
       edge from_root -> pop_types
       attr (from_root -> pop_types) precedence = 1
       node pop_name
@@ -987,7 +987,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
       ;; Extend `to_super` to push this module name.
       node push_types
-      attr (push_types) push_symbol = "%type"
+      attr (push_types) push_symbol = "%types"
       edge push_types -> to_super
       node push_name
       attr (push_name) push_symbol = $1
@@ -1043,13 +1043,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;;
 ;; In `a::b`, the `a` refers to a type, trait, or module. To resolve `b`, we
 ;; follow a path that leads first to the definition of `a`, then from there
-;; must be able to match `"%type" "b"` or `"%value" "b"`. Note that when `::`
+;; must be able to match `"%types" "b"` or `"%values" "b"`. Note that when `::`
 ;; is used, there's no inheritance: we want a binding that is a member of `a`
 ;; in particular and not some enclosing block scope.
 ;;
 ;; Therefore, nodes that represent the contents of a type aren't lexical
-;; scopes. They have no inheritance edge. But they do have `"%type"` and
-;; `"%value"` edges and thus can serve as an AST node's `.scope`.
+;; scopes. They have no inheritance edge. But they do have `"%types"` and
+;; `"%values"` edges and thus can serve as an AST node's `.scope`.
 
 ;; Install a path from a module definition to the types defined inside it.
 ;; Also hook up `self`, `super`, and `crate` for declared modules.
@@ -1074,7 +1074,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node super_1
   attr (super_1) push_symbol = "self"
   node super_2
-  attr (super_2) push_symbol = "%type"
+  attr (super_2) push_symbol = "%types"
   edge @body.def_types -> super
   edge super -> super_1
   edge super_1 -> super_2
@@ -1109,13 +1109,13 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 (enum_item name: (type_identifier) @name ) @enum {
   node @enum.variants_types
   node t
-  attr (t) pop_symbol = "%type"
+  attr (t) pop_symbol = "%types"
   edge @enum.def -> t
   edge t -> @enum.variants_types
 
   node @enum.variants_values
   node v
-  attr (v) pop_symbol = "%value"
+  attr (v) pop_symbol = "%values"
   edge @enum.def -> v
   edge v -> @enum.variants_values
 
@@ -1124,9 +1124,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node any
   attr (any) pop_symbol = "%any"
   node to_types
-  attr (to_types) push_symbol = "%type"
+  attr (to_types) push_symbol = "%types"
   node to_values
-  attr (to_values) push_symbol = "%value"
+  attr (to_values) push_symbol = "%values"
   edge @enum.def -> any
   edge any -> to_types
   edge to_types -> t
@@ -1204,7 +1204,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@keyword.use) node_reference = @keyword
 
   let t = (node)
-  attr (t) push_symbol = "%type"
+  attr (t) push_symbol = "%types"
   edge @keyword.use -> t
   edge t -> @keyword.scope
 }
@@ -1251,7 +1251,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@name.use) node_reference = @name
 
   let t = (node)
-  attr (t) push_symbol = "%type"
+  attr (t) push_symbol = "%types"
   edge @name.use -> t
   edge t -> @name.scope
 }
@@ -1326,7 +1326,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (const_item value: (_) @here)
   (static_item value: (_) @here)
 ] {
-  let @here.context = "%value"
+  let @here.context = "%values"
 }
 
 ;; Note: This is a complete copy of the second huge list under "Marking
@@ -1374,18 +1374,18 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   ;; ### Statements
   (let_declaration type: (_) @here)
 ] {
-  let @here.context = "%type"
+  let @here.context = "%types"
 }
 
 ;; Ambiguous contexts
 (type_arguments (_) @here) {
   ;; type or value depending on the generic, I think
-  let @here.context = "%type" ;; bug
+  let @here.context = "%types" ;; bug
 }
 
 (tuple_struct_pattern type: (_) @here) {
   ;; type or value, whichever comes first
-  let @here.context = "%value" ;; BUG - try "%any"
+  let @here.context = "%values" ;; BUG - try "%any"
 }
 
 ;; Pattern context
@@ -1426,7 +1426,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   ;; Here we may be importing either a type or a value, or both. We can't
   ;; locally tell which, so importable scopes must provide that `%any` reaches
-  ;; both the `%value` namespace and the `%type` namespace.
+  ;; both the `%values` namespace and the `%types` namespace.
   let @here.context = "%any"
 }
 
@@ -1449,7 +1449,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   let @path.use = @name.use
 
   node s
-  attr (s) push_symbol = (replace @path.context "%pattern" "%value")
+  attr (s) push_symbol = (replace @path.context "%pattern" "%values")
 
   edge @name.use -> s
   if some @parent {
@@ -1535,7 +1535,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   node @lifetime.use
   attr (@lifetime.use) node_reference = @lifetime
   node t
-  attr (t) push_symbol = "%type"
+  attr (t) push_symbol = "%types"
   edge @lifetime.use -> t
   edge t -> @lifetime.scope
 }
@@ -1670,8 +1670,8 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] @import {
   ;; Make a binding for @name in the type namespace. This gadget pops `"type"
   ;; @name` (or @alias instead, if present), then forwards to the imported item
-  ;; by re-pushing `"%type" @name` and exiting to @name.scope, which is selected
-  ;; by other rules.
+  ;; by re-pushing `"%types" @name` and exiting to @name.scope, which is
+  ;; selected by other rules.
   node type_relay
   if some @alias {
     attr (type_relay) type = "pop_symbol", node_symbol = @alias
@@ -1685,7 +1685,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     node type_relay1
     attr (type_relay1) type = "push_symbol", node_symbol = @name
     node type_relay2
-    attr (type_relay2) push_symbol = "%type"
+    attr (type_relay2) push_symbol = "%types"
     edge type_relay -> type_relay1
     edge type_relay1 -> type_relay2
     edge type_relay2 -> @name.scope
@@ -1702,7 +1702,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
     node value_relay1
     attr (value_relay1) type = "push_symbol", node_symbol = @name
     node value_relay2
-    attr (value_relay2) push_symbol = "%value"
+    attr (value_relay2) push_symbol = "%values"
     edge @import.item_def_values -> value_relay
     edge value_relay -> value_relay1
     edge value_relay1 -> value_relay2
