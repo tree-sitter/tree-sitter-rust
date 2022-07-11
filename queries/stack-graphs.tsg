@@ -1096,7 +1096,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ;; Note this is used by struct-like enum variants too.
 (field_declaration_list) @fields {
   node @fields.fields
-  attr (@fields.fields) pop_symbol = "%field"
+  attr (@fields.fields) pop_symbol = "%fields"
 }
 
 (field_declaration_list (field_declaration name: (_) @field)) @fields {
@@ -1500,7 +1500,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   ])
 ) {
   node push_fields
-  attr (push_fields) push_symbol = "%field"
+  attr (push_fields) push_symbol = "%fields"
   edge @field_name.use -> push_fields
   edge push_fields -> @ty.use
 }
@@ -1513,7 +1513,7 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   ]
 ) {
   node push_fields
-  attr (push_fields) push_symbol = "%field"
+  attr (push_fields) push_symbol = "%fields"
   edge @field_name.use -> push_fields
   edge push_fields -> @ty.use
 }
