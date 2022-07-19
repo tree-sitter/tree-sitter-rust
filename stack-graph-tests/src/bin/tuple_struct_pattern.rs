@@ -15,6 +15,7 @@ pub fn handle(r: std::io::Result<Point>) {
         Err(err) => { let _ = err; }
         //                    ^ defined: 15
         Ok(Point(x, y)) => { let _ = Point(x, y); }
+        // ^ defined: 1
         //                           ^ defined: 1
         //                                 ^ defined: 17
         //                                    ^ defined: 17

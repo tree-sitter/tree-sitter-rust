@@ -625,6 +625,9 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   (while_let_expression value: [(identifier) (self)] @ident)
   (yield_expression [(identifier) (self)] @ident)
 
+  ;; ### Patterns
+  (tuple_struct_pattern type: [(identifier) (self)] @ident)
+
   ;; ### Types
   (array_type length: [(identifier) (self)] @ident)
 
@@ -710,25 +713,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (t) push_symbol = "%types"
   edge @ident.use -> t
   edge t -> @ident.scope
-}
-
-;; The type-tag in a tuple_struct_pattern is a gruesome special case in rustc.
-;; It looks in both namespaces, preferring inner scopes to outer scopes, and
-;; when it finds both a value and a type in the same lexical scope, picking the
-;; type.
-;;
-;; Our graph can't implement this exactly, but we can get pretty close.
-(tuple_struct_pattern type: (identifier) @ident) {
-  node @ident.use
-  attr (@ident.use) node_reference = @ident
-
-  ;; Optional "%types" node!
-  let t = (node)
-  attr (t) push_symbol = "%types"
-  edge @ident.use -> t
-  attr (@ident.use -> t) precedence = 1
-  edge t -> @ident.scope
-  edge @ident.use -> @ident.scope
 }
 
 
