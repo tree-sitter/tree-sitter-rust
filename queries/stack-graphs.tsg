@@ -340,10 +340,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 
 ;; Create the item scope.
 (block) @block {
-  ;; TODO: Figure out how to create these nodes conditionally. They're only
-  ;; needed if the block contains items; otherwise these can just be aliases.
-  ;; The reason it isn't done is I don't know how to use the query language
-  ;; to distinguish blocks that have items from those that don't.
   node @block.item_scope
   edge @block.item_scope -> @block.scope
 
@@ -356,6 +352,17 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
   attr (@block.item_types) pop_symbol = "%types"
   edge @block.item_scope -> @block.item_types
   attr (@block.item_scope -> @block.item_types) precedence = 1
+}
+
+;; Tell block-scoped items where to add definitions.
+;;
+;; (The two scoped variables `.item_def_values` and `item_values` look like
+;; they ought to have the same name, but that wouldn't work. The selector here
+;; does not select only item children but all children; one of those children
+;; might be another block, and then there'd be a conflict.)
+(block (_) @child) @parent {
+  let @child.item_def_values = @parent.item_values
+  let @child.item_def_types = @parent.item_types
 }
 
 ;; The next two rules define each child's `.scope`.
@@ -764,17 +771,6 @@ attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
 ] {
   let @child.item_def_values = @parent.def_values
   let @child.item_def_types = @parent.def_types
-}
-
-;; Tell block-scoped items which node they should hang definitions on.
-;;
-;; (The two scoped variables `.item_def_values` and `item_values` look like
-;; they ought to have the same name, but that wouldn't work. The selector here
-;; does not select only item children but all children; one of those children
-;; might be another block, and then there'd be a conflict.)
-(block (_) @child) @parent {
-  let @child.item_def_values = @parent.item_values
-  let @child.item_def_types = @parent.item_types
 }
 
 [
