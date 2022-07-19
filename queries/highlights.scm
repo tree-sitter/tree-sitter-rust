@@ -150,7 +150,6 @@
 (attribute_item) @attribute
 (inner_attribute_item) @attribute
 
-"as" @operator
 "*" @operator
 "&" @operator
 "'" @operator
