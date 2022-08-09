@@ -1,0 +1,1736 @@
+;; ####
+;; Rust
+;; ####
+;;
+;; # Unqualified name lookups
+;;
+;; This file is about finding our way from identifiers to their definitions.
+;; Not all name lookups work exactly the same way; an identifier that appears
+;; after `expr.` or `ty::`, or in a few other syntactic contexts, is qualified.
+;; The others, unqualified names, are simply ("simply"!) looked up in the
+;; enclosing lexical scope.
+;;
+;; All nodes that can contain unqualified uses must have:
+;;
+;;     .scope - The lexical scope in which the syntax-node appears--that is, the
+;;         *enclosing* lexical scope.
+;;
+;; Rust has separate value and type namespaces. That is, every lexical scope
+;; can contain both value bindings and type bindings, and they're distinct, as
+;; though the things in the value namespace (functions, local variables,
+;; arguments, consts, statics, constructors) and the things in the type
+;; namespace (types, modules, crates) always had names that started with
+;; distinct invisible sigils. For now we represent these namespaces as two
+;; separate nodes. There's an edge from every `.scope` that can contain type
+;; bindings to the corresponding type-namespace node, which pops a special
+;; symbol `"%types"`; and from every `.scope` that has value bindings to a
+;; value-namespace node, which pops `"%values"`.
+;;
+;; Thus references can't just push the identifier and go to the scope.
+;; References to values must push the identifier, then push `"%values"`, then
+;; go to the scope. References to types must push the type-identifier, then
+;; push `"%types"`, then go to the scope.
+;;
+;; Lifetimes have their own separate namespace in Rust, but we put them in the
+;; type-namespace nodes. Since lifetimes always start with an apostrophe, there
+;; can't be any confusion.
+;;
+;; ## Inheritance
+;;
+;; The .scope tree is stitched together with edges that point "up" the tree,
+;; toward the root. These trees stop at module nodes, because in Rust, modules
+;; do not inherit access to the enclosing block or module's bindings.
+;;
+;; ## Definitions
+;;
+;; The syntax-node of an item, type parameter, lifetime parameter, or binding name
+;; in a pattern has:
+;;
+;;     .def - The node that pops the item's name.
+;;
+;; Scope nodes have:
+;;
+;;     .def_values, .def_types - A static-environment rib: has paths to all
+;;         values/types defined in this scope, and not inherited from an
+;;         enclosing scope.
+;;
+;; These are sometimes stitched together with edges that point "down" the
+;; syntax-tree, toward the leaves, which is necessary (e.g. in pattern syntax
+;; and in imports) when we can't match the full path from a scope to a binding
+;; with a single tree-sitter query.
+;;
+;; Children of scope nodes have:
+;;
+;;     .item_def_values, .item_def_types - The nodes to which this syntax-node
+;;         contributes items and imports.
+;;
+;; Note: Tree-sitter's Rust parser tries to distinguish various uses of
+;; identifiers and give them different syntax-node names (like
+;; `type_identifier`), but it's imprecise, and there are ambiguous cases built
+;; into the Rust language. We therefore often have to make long lists of
+;; exactly what nodes or contexts we're talking about.
+;;
+;;
+;; # Qualified name lookups
+;;
+;; We support some name lookups on identifiers qualified by `::`, what the Rust
+;; reference calls "paths". These appear in `(scoped_identifier)`,
+;; `(scoped_type_identifier)`, and `(scoped_use_list)` nodes.
+;;
+;; These receive `.scope` from the context, but then it gets complicated,
+;; because the unqualified identifier at the start of a path is not resolved
+;; using the same rules as other unqualified identifiers; it may refer to a
+;; crate from the extern prelude rather than a type, trait, or module in the
+;; current lexical scope. Also, paths that start with `crate::`, `self::`,
+;; `super::`, or `::` must be treated differently.
+
+global FILE_PATH
+global ROOT_NODE
+
+; Magic invocations copied from tree-sitter-typescript.
+attribute node_reference = node         => type = "push_symbol", symbol = (source-text node), is_reference, source_node = node
+attribute node_symbol = node            => symbol = (source-text node), source_node = node
+attribute node_definition = node        => type = "pop_symbol", node_symbol = node, is_definition
+attribute push_symbol = symbol          => type = "push_symbol", symbol = symbol
+attribute pop_symbol = symbol           => type = "pop_symbol", symbol = symbol
+
+;; # Lexical scopes
+;;
+;; In which we attach `.scope` nodes to every syntax node that needs them, and
+;; connect these nodes in a scope tree.
+;;
+;; Most nodes simply inherit these scopes from their parent. The last rule of
+;; this section is a massive query listing every one of these trivial cases.
+;; The rest of the section covers the special cases.
+
+;; ## Root scopes
+[
+  (source_file) @root
+  (mod_item body: (declaration_list) @root)
+] {
+  ;; Modules, including nested modules, have fresh scopes. No inheritance.
+  ;; (Ideally, these should inherit from the standard prelude and the extern
+  ;; prelude, but we currently have no information about what to put in those
+  ;; namespaces.)
+  node @root.scope
+}
+
+;; ## Expression scopes
+
+;; Expressions that introduce local bindings, either with patterns or loop
+;; labels.
+[
+  (for_expression (loop_label)? @label pattern: (_) @pat) @parent
+  (if_let_expression pattern: (_) @pat) @parent
+  (loop_expression (loop_label)? @label) @parent
+  (match_arm pattern: (_) @pat) @parent
+  (while_expression (loop_label)? @label) @parent
+  (while_let_expression (loop_label)? @label pattern: (_) @pat) @parent
+] {
+  if some @label {
+    node @parent.inner_scope
+    edge @parent.inner_scope -> @parent.scope
+    if some @pat {
+      ;; Create the "definitions" node to which the pattern contributes bindings.
+      ;;
+      ;; A similar node is created everywhere patterns are used (let-declarations
+      ;; and parameters).
+      ;;
+      ;; Here and throughout, an edge from a scope node to definition nodes has
+      ;; precedence 1, higher than scope-inheritance edges (precedence 0), so that
+      ;; inner bindings are preferred over (i.e. they shadow) outer bindings.
+      node @pat.def_values
+      attr (@pat.def_values) pop_symbol = "%values"
+      edge @parent.inner_scope -> @pat.def_values
+      attr (@parent.inner_scope -> @pat.def_values) precedence = 1
+    }
+
+    node def_loops
+    attr (def_loops) pop_symbol = "%loop"
+    edge @parent.inner_scope -> def_loops
+    attr (@parent.inner_scope -> def_loops) precedence = 1
+
+    ; Bind the label in the loop namespace
+    node @label.def
+    attr (@label.def) node_definition = @label
+    edge def_loops -> @label.def
+  } else {
+    if some @pat {
+      node @parent.inner_scope
+      edge @parent.inner_scope -> @parent.scope
+
+      node @pat.def_values
+      attr (@pat.def_values) pop_symbol = "%values"
+      edge @parent.inner_scope -> @pat.def_values
+      attr (@parent.inner_scope -> @pat.def_values) precedence = 1
+    } else {
+      let @parent.inner_scope = @parent.scope
+    }
+  }
+}
+
+;; Subpatterns inherit the parent's defs node.
+[
+  (captured_pattern (identifier) "@" (_) @pat) @parent
+  (captured_pattern (identifier) @pat "@" (_)) @parent
+  (field_pattern name: (shorthand_field_identifier) @pat) @parent
+  (field_pattern pattern: (_) @pat) @parent
+  (match_pattern . (_) @pat) @parent
+  (mut_pattern (mutable_specifier) (_) @pat) @parent
+  (or_pattern (_) @pat) @parent
+  (ref_pattern (_) @pat) @parent
+  (reference_pattern "&" (mutable_specifier)? (_) @pat) @parent
+  (slice_pattern (_) @pat) @parent
+  (struct_pattern (field_pattern) @pat) @parent
+  (tuple_pattern (_) @pat) @parent
+  (tuple_struct_pattern type: (_) (_) @pat) @parent
+] {
+  let @pat.def_values = @parent.def_values
+}
+
+;; Assign the children of these expressions the inner_scope of their parents.
+[
+  (for_expression body: (_) @child) @parent
+  (if_let_expression alternative: (_) @child) @parent
+  (loop_expression body: (_) @child) @parent
+  (match_arm pattern: (match_pattern condition: (_) @child)) @parent
+  (match_arm value: (_) @child) @parent
+  (while_expression body: (_) @child) @parent
+  (while_let_expression body: (_) @child) @parent
+] {
+  let @child.scope = @parent.inner_scope
+}
+
+;; Identifier-patterns are definitions.
+;;
+;; (This isn't entirely true. In Rust, if the identifier resolves to a constant
+;; or enum variant, it's not a shadowing definition; instead it's a pattern
+;; that matches that exact value. But it's not clear how such a rule can be
+;; implemented.)
+[
+  (for_expression pattern: (identifier) @ident)
+  (if_let_expression pattern: (identifier) @ident)
+  (while_let_expression pattern: (identifier) @ident)
+  (let_declaration pattern: (identifier) @ident)
+  (parameter pattern: (identifier) @ident)
+  (closure_parameters (identifier) @ident)
+  (match_pattern . (identifier) @ident)
+  (tuple_pattern (identifier) @ident)
+  (tuple_struct_pattern type: (_) (identifier) @ident)
+  (slice_pattern (identifier) @ident)
+  (field_pattern name: (shorthand_field_identifier) @ident)
+  (field_pattern pattern: (identifier) @ident)
+  (mut_pattern (mutable_specifier) (identifier) @ident)
+  (ref_pattern (identifier) @ident)
+  (captured_pattern (identifier) @ident "@" (_))
+  (reference_pattern "&" (mutable_specifier)? (identifier) @ident)
+  (or_pattern (identifier) @ident)
+] {
+  node @ident.def
+  attr (@ident.def) node_definition = @ident
+  edge @ident.def_values -> @ident.def
+}
+
+;; ## Generic parameters
+
+;; Items that have a `type_parameters` child have an `.inner_types` node
+;; that is the type namespace presented to their children.
+[
+  (associated_type type_parameters: (type_parameters)? @params) @parent
+  (enum_item type_parameters: (type_parameters)? @params) @parent
+  (function_item type_parameters: (type_parameters)? @params) @parent
+  (function_signature_item type_parameters: (type_parameters)? @params) @parent
+  (impl_item type_parameters: (type_parameters)? @params) @parent
+  (struct_item type_parameters: (type_parameters)? @params) @parent
+  (trait_item type_parameters: (type_parameters)? @params) @parent
+  (type_item type_parameters: (type_parameters)? @params) @parent
+  (union_item type_parameters: (type_parameters)? @params) @parent
+  (function_type (for_lifetimes)? @params) @parent
+] {
+  if some @params {
+    node @parent.inner_scope
+    edge @parent.inner_scope -> @parent.scope
+
+    node @params.const_param_defs
+    attr (@params.const_param_defs) pop_symbol = "%values"
+    edge @parent.inner_scope -> @params.const_param_defs
+    attr (@parent.inner_scope -> @params.const_param_defs) precedence = 1
+
+    node @params.type_param_defs
+    attr (@params.type_param_defs) pop_symbol = "%types"
+    edge @parent.inner_scope -> @params.type_param_defs
+    attr (@parent.inner_scope -> @params.type_param_defs) precedence = 1
+  } else {
+    ;; Items that could have type parameters, but in fact don't, also need
+    ;; `inner` nodes, but they're just the same node as the enclosing ones.
+    let @parent.inner_scope = @parent.scope
+  }
+}
+
+; Generic parameters are definitions.
+[
+  (type_parameters (lifetime) @lifetime)
+  (type_parameters (constrained_type_parameter left: (lifetime) @lifetime))
+  (for_lifetimes (lifetime) @lifetime)
+] @params {
+  node @lifetime.def
+  attr (@lifetime.def) node_definition = @lifetime
+  edge @params.type_param_defs -> @lifetime.def
+}
+
+[
+  (type_parameters (type_identifier) @ident)
+  (type_parameters (constrained_type_parameter left: (type_identifier) @ident))
+] @params {
+  node @ident.def
+  attr (@ident.def) node_definition = @ident
+  edge @params.type_param_defs -> @ident.def
+}
+
+(type_parameters (const_parameter name: (_) @ident)) @params {
+  node @ident.def
+  attr (@ident.def) node_definition = @ident
+  edge @params.const_param_defs -> @ident.def
+}
+
+;; Direct children of generics get the inner scope.
+;;
+;; This lists all contexts in most items, except the name,
+;; and all contexts within a function except the name and the body;
+;; the body is special because it also sees the function parameter bindings.
+[
+  (associated_type type_parameters: (_) @child) @parent
+  (associated_type bounds: (_) @child) @parent
+  (enum_item type_parameters: (_) @child) @parent
+  (enum_item (where_clause) @child) @parent
+  (enum_item body: (_) @child) @parent
+  (function_item type_parameters: (_) @child) @parent
+  (function_item parameters: (_) @child) @parent
+  (function_item return_type: (_) @child) @parent
+  (function_item (where_clause) @child) @parent
+  (function_signature_item (_) @child) @parent
+  (impl_item type_parameters: (_) @child) @parent
+  (impl_item trait: (_) @child) @parent
+  (impl_item type: (_) @child) @parent
+  (impl_item (where_clause) @child) @parent
+  (impl_item body: (_) @child) @parent
+  (struct_item type_parameters: (_) @child) @parent
+  (struct_item (where_clause) @child) @parent
+  (struct_item body: (_) @child) @parent
+  (trait_item type_parameters: (_) @child) @parent
+  (trait_item bounds: (_) @child) @parent
+  (trait_item (where_clause) @child) @parent
+  (trait_item body: (_) @child) @parent
+  (type_item type_parameters: (_) @child) @parent
+  (type_item type: (_) @child) @parent
+  (union_item type_parameters: (_) @child) @parent
+  (union_item body: (_) @child) @parent
+
+  (function_type trait: (_) @child) @parent  ;; only for Fn, FnMut, FnOnce
+  (function_type parameters: (_) @child) @parent
+  (function_type return_type: (_) @child) @parent
+] {
+  let @child.scope = @parent.inner_scope
+}
+
+;; ## Block scopes
+;;
+;; Items in a block are visible throughout the block. Let-declaration bindings
+;; in a block are visible starting with the next statement or expression.
+
+;; Create the item scope.
+(block) @block {
+  node @block.item_scope
+  edge @block.item_scope -> @block.scope
+
+  node @block.item_values
+  attr (@block.item_values) pop_symbol = "%values"
+  edge @block.item_scope -> @block.item_values
+  attr (@block.item_scope -> @block.item_values) precedence = 1
+
+  node @block.item_types
+  attr (@block.item_types) pop_symbol = "%types"
+  edge @block.item_scope -> @block.item_types
+  attr (@block.item_scope -> @block.item_types) precedence = 1
+}
+
+;; Tell block-scoped items where to add definitions.
+;;
+;; (The two scoped variables `.item_def_values` and `item_values` look like
+;; they ought to have the same name, but that wouldn't work. The selector here
+;; does not select only item children but all children; one of those children
+;; might be another block, and then there'd be a conflict.)
+(block (_) @child) @parent {
+  let @child.item_def_values = @parent.item_values
+  let @child.item_def_types = @parent.item_types
+}
+
+;; The next two rules define each child's `.scope`.
+(block . (_) @first_child) @block {
+  let @first_child.scope = @block.item_scope
+}
+
+(block (_) @prev . (_) @next) {
+  let @next.scope = @prev.block_scope_after
+}
+
+;; The next two rules define `.block_scope_after` for each statement child.
+(let_declaration pattern: (_)? @pat) @stmt {
+  if some @pat {
+    ;; Create the "definitions" node for let-bindings.
+    node @pat.def_values
+    attr (@pat.def_values) pop_symbol = "%values"
+    node @stmt.block_scope_after
+    edge @stmt.block_scope_after -> @pat.def_values
+    attr (@stmt.block_scope_after -> @pat.def_values) precedence = 1
+    edge @stmt.block_scope_after -> @stmt.scope
+  } else {
+    let @stmt.block_scope_after = @stmt.scope
+  }
+}
+
+(block [
+  ;; This is every node type that can appear in a block as a statement, except
+  ;; `let_declaration`. Awkward but I don't know how else to write this.
+  (empty_statement)
+  (expression_statement)
+  (line_comment)
+  (macro_definition)
+  (attribute_item)
+  (inner_attribute_item)
+
+  (associated_type)
+  (enum_item)
+  (extern_crate_declaration)
+  (foreign_mod_item)
+  (function_item)
+  (function_signature_item)
+  (impl_item)
+  (mod_item)
+  (static_item)
+  (struct_item)
+  (trait_item)
+  (type_item)
+  (union_item)
+  (use_declaration)
+  (const_item)
+] @stmt) {
+  let @stmt.block_scope_after = @stmt.scope
+}
+
+
+
+;; ## Default scope propagation
+;;
+;; Propagate scope for all syntax that does not introduce bindings.
+[
+  ;; Items in the file-level module scope
+  (source_file (_) @child) @parent
+
+  ;; ### Types
+  ;; function_type is not listed because it can have `for_lifetimes`,
+  ;; which affect the scope of its children.
+  (abstract_type trait: (_) @child) @parent
+  (array_type element: (_) @child) @parent
+  (array_type length: (_) @child) @parent
+  (bounded_type (_) @child) @parent
+  (bracketed_type (_) @child) @parent
+  (dynamic_type trait: (_) @child) @parent
+  (generic_type type: (_) @child) @parent
+  (generic_type type_arguments: (_) @child) @parent
+  (pointer_type type: (_) @child) @parent
+  (qualified_type type: (_) @child) @parent
+  (qualified_type alias: (_) @child) @parent
+  (reference_type (lifetime) @child) @parent
+  (reference_type type: (_) @child) @parent
+  (tuple_type (_) @child) @parent
+  (type_arguments (_) @child) @parent
+  ;;(type_binding type_arguments: (_) @child) @parent  ;; bogus grammar
+  (type_binding type: (_) @child) @parent
+
+  ;; ### Expressions
+  (arguments (_) @child) @parent
+  (array_expression (_) @child) @parent
+  (array_expression length: (_) @child) @parent
+  (assignment_expression left: (_) @child) @parent
+  (assignment_expression right: (_) @child) @parent
+  (async_block (_) @child) @parent
+  (await_expression (_) @child) @parent
+  (base_field_initializer (_) @child) @parent
+  (binary_expression left: (_) @child) @parent
+  (binary_expression right: (_) @child) @parent
+  (break_expression (_) @child) @parent
+  (call_expression function: (_) @child) @parent
+  (call_expression arguments: (_) @child) @parent
+  (closure_expression parameters: (_) @child) @parent
+  (closure_expression return_type: (_) @child) @parent
+  (compound_assignment_expr left: (_) @child) @parent
+  (compound_assignment_expr right: (_) @child) @parent
+  (const_block body: (_) @child) @parent
+  (continue_expression (_) @child) @parent
+  (else_clause (_) @child) @parent
+  (field_expression value: (_) @child) @parent
+  (field_initializer_list (_) @child) @parent
+  (field_initializer value: (_) @child) @parent
+  (for_expression pattern: (_) @child) @parent
+  (for_expression value: (_) @child) @parent
+  (generic_function function: (_) @child) @parent
+  (generic_function type_arguments: (_) @child) @parent
+  (if_expression condition: (_) @child) @parent
+  (if_expression alternative: (_) @child) @parent
+  (if_expression consequence: (_) @child) @parent
+  (if_let_expression pattern: (_) @child) @parent
+  (if_let_expression value: (_) @child) @parent
+  (if_let_expression alternative: (_) @child) @parent
+  (index_expression (_) @child) @parent
+  (macro_invocation macro: (_) @child) @parent
+  (match_arm pattern: (_) @child) @parent
+  (match_block (_) @child) @parent
+  (match_expression value: (_) @child) @parent
+  (match_expression body: (_) @child) @parent
+  (match_pattern . (_) @child) @parent
+  (parenthesized_expression (_) @child) @parent
+  (range_expression (_) @child) @parent
+  (reference_expression value: (_) @child) @parent
+  (return_expression (_) @child) @parent
+  (shorthand_field_initializer (_) @child) @parent
+  (struct_expression name: (_) @child) @parent
+  (struct_expression body: (_) @child) @parent
+  (try_expression (_) @child) @parent
+  (tuple_expression (_) @child) @parent
+  (type_cast_expression value: (_) @child) @parent
+  (type_cast_expression type: (_) @child) @parent
+  (unary_expression (_) @child) @parent
+  (unsafe_block (_) @child) @parent
+  (while_expression condition: (_) @child) @parent
+  (while_let_expression pattern: (_) @child) @parent
+  (while_let_expression value: (_) @child) @parent
+  (yield_expression (_) @child) @parent
+
+  ;; ### Statements
+  (let_declaration pattern: (_) @child) @parent
+  (let_declaration type: (_) @child) @parent
+  (let_declaration value: (_) @child) @parent
+  (expression_statement (_) @child) @parent
+
+  ;; ### Patterns
+  (captured_pattern (identifier) "@" (_) @child) @parent
+  (captured_pattern (identifier) @child "@" (_)) @parent
+  (field_pattern (_) @child) @parent
+  (mut_pattern (mutable_specifier) (_) @child) @parent
+  (or_pattern (_) @child) @parent
+  (range_pattern (_) @child) @parent
+  (ref_pattern (_) @child) @parent
+  (reference_pattern (_) @child) @parent
+  (slice_pattern (_) @child) @parent
+  (struct_pattern (_) @child) @parent
+  (tuple_pattern (_) @child) @parent
+  (tuple_struct_pattern (_) @child) @parent
+
+  ;; ### Items
+  ;; Of course all items are declarations and introduce bindings into the
+  ;; enclosing scope. But the real reason fn/impl/struct/enum/union/type/trait
+  ;; are not here is that they can have type parameters, which affect the scope
+  ;; of everything in them. (Functions, of course, can even have regular old
+  ;; function parameters. Worse and worse!)
+  ;;
+  ;; The names of all these items, though, are in the enclosing scope (so that
+  ;; you can look them up and they'll find themselves).
+  ;;
+  ;; Modules are not present because they reset the scope. `foreign_mod_item`
+  ;; is what the Rust reference calls an `ExternBlock` or "external block".
+  ;; It's not a module and it does propagate scope.
+  (const_item type: (_) @child) @parent
+  (const_item value: (_) @child) @parent
+  (declaration_list (_) @child) @parent
+  (enum_variant_list (_) @child) @parent
+  (enum_variant body: (_) @child) @parent
+  (enum_variant value: (_) @child) @parent
+  (field_declaration type: (_) @child) @parent
+  (field_declaration_list (_) @child) @parent
+  (ordered_field_declaration_list (_) @child) @parent
+  (foreign_mod_item body: (_) @child) @parent
+  (parameter pattern: (_) @child) @parent
+  (parameter type: (_) @child) @parent
+  (self_parameter (lifetime) @child) @parent
+  (parameters (_) @child) @parent
+  (static_item type: (_) @child) @parent
+  (static_item value: (_) @child) @parent
+  (where_clause (where_predicate) @child) @parent
+  (where_predicate left: (_) @child) @parent
+  (where_predicate bounds: (_) @child) @parent
+  (trait_bounds (_) @child) @parent
+  (type_parameters (constrained_type_parameter bounds: (_) @child)) @parent
+  (removed_trait_bound (_) @child) @parent
+
+  ;; For import syntax, see the "Imports" section below.
+] {
+  let @child.scope = @parent.scope
+}
+
+
+
+;; # Unqualified identifiers
+
+;; ## Identifiers in expression context
+;;
+;; List all contexts where an identifier is a reference to a binding in the
+;; "values" namespace.
+;;
+;; In many contexts, it is not:
+;; -   after `let x:`, or before `::`, or inside `<...>`, or after `as`,
+;;     it refers to something in the type namespace
+;; -   in `#[...]` it refers to an attribute, or something
+;; -   before `!` it refers to a macro
+;; -   between `.` and `(` it refers to a method
+;; -   otherwise after `.` it refers to a field
+;; -   and of course, if it's the name of an item or binding,
+;;     it isn't a reference at all.
+;;
+;; The grammar parses many of these as `identifier` syntax nodes, so it's
+;; necessary to use a giant pattern to get only expression contexts.
+[
+  ;; ### Expressions
+  (arguments [(identifier) (self)] @ident)
+  (array_expression [(identifier) (self)] @ident)
+  (assignment_expression left: [(identifier) (self)] @ident)
+  (assignment_expression right: [(identifier) (self)] @ident)
+  (await_expression [(identifier) (self)] @ident)
+  (base_field_initializer [(identifier) (self)] @ident)
+  (binary_expression left: [(identifier) (self)] @ident)
+  (binary_expression right: [(identifier) (self)] @ident)
+  (break_expression [(identifier) (self)] @ident)
+  (call_expression function: [(identifier) (self)] @ident)
+  (compound_assignment_expr left: [(identifier) (self)] @ident)
+  (compound_assignment_expr right: [(identifier) (self)] @ident)
+  (field_expression value: [(identifier) (self)] @ident)
+  (field_initializer value: [(identifier) (self)] @ident)
+  (for_expression value: [(identifier) (self)] @ident)
+  (generic_function function: [(identifier) (self)] @ident)
+  (if_expression condition: [(identifier) (self)] @ident)
+  (if_let_expression value: [(identifier) (self)] @ident)
+  (index_expression [(identifier) (self)] @ident)
+  (match_expression value: [(identifier) (self)] @ident)
+  (match_pattern condition: [(identifier) (self)] @ident)
+  (parenthesized_expression [(identifier) (self)] @ident)
+  (range_expression [(identifier) (self)] @ident)
+  (reference_expression value: [(identifier) (self)] @ident)
+  (return_expression [(identifier) (self)] @ident)
+  (shorthand_field_initializer [(identifier) (self)] @ident)
+  (try_expression [(identifier) (self)] @ident)
+  (tuple_expression [(identifier) (self)] @ident)
+  (type_cast_expression value: [(identifier) (self)] @ident)
+  (unary_expression [(identifier) (self)] @ident)
+  (while_expression condition: [(identifier) (self)] @ident)
+  (while_let_expression value: [(identifier) (self)] @ident)
+  (yield_expression [(identifier) (self)] @ident)
+
+  ;; ### Patterns
+  (tuple_struct_pattern type: [(identifier) (self)] @ident)
+
+  ;; ### Types
+  (array_type length: [(identifier) (self)] @ident)
+
+  ;; ### Statements
+  (block (_)* [(identifier) (self)] @ident)
+  (expression_statement [(identifier) (self)] @ident)
+  (let_declaration value: [(identifier) (self)] @ident)
+
+  ;; ### Items
+  (const_item value: [(identifier) (self)] @ident)
+  (static_item value: [(identifier) (self)] @ident)
+] {
+  node @ident.use
+  attr (@ident.use) node_reference = @ident
+  node v
+  attr (v) push_symbol = "%values"
+  edge @ident.use -> v
+  edge v -> @ident.scope
+}
+
+;; ## Identifiers in type context
+;;
+;; List all contexts where an identifier is a reference to a binding in the
+;; "types" namespace of the current scope.
+;;
+;; The grammar also parses the following as `type_identifier`:
+;; - names of many items, like the `X` in `struct X {}`
+;; - type parameters, like the `T` in `fn f<T>() {}`
+;; - the `Item` in `Iterator<Item=T>`
+;; - identifiers after `::` when they refer to types
+;; None of these should match here, so it's necessary to use a huge pattern to
+;; get only type-expression contexts.
+;;
+;; Identifiers immediately before `::` in a `scoped_identifier` can sometimes
+;; be the name of a type, but not always, so that too is handled elsewhere for
+;; now.
+[
+  ;; ### Types
+  (abstract_type trait: (type_identifier) @ident)
+  (array_type element: (type_identifier) @ident)
+  (bounded_type (type_identifier) @ident)
+  (dynamic_type trait: (type_identifier) @ident)
+  (function_type trait: (type_identifier) @ident)  ;; only for Fn, FnMut, FnOnce
+  (function_type return_type: (type_identifier) @ident)
+  (generic_type type: (type_identifier) @ident)
+  (generic_type_with_turbofish type: (type_identifier) @ident)
+  (pointer_type type: (type_identifier) @ident)
+  (qualified_type type: (type_identifier) @ident)
+  (qualified_type alias: (type_identifier) @ident)
+  (reference_type type: (type_identifier) @ident)
+  (tuple_type (type_identifier) @ident)
+  (type_arguments (type_identifier) @ident) ;; ambiguous, but treat as a type for now
+  (type_binding type: (type_identifier) @ident)
+
+  ;; ### Expressions
+  (type_cast_expression type: (type_identifier) @ident)
+  (bracketed_type (type_identifier) @ident)
+  (struct_expression name: (type_identifier) @ident)
+
+  ;; ### Patterns
+  (struct_pattern type: (type_identifier) @ident)
+
+  ;; ### Items
+  (const_item type: (type_identifier) @ident)
+  (field_declaration type: (type_identifier) @ident)
+  (function_item return_type: (type_identifier) @ident)
+  (impl_item trait: (type_identifier) @ident)
+  (impl_item type: (type_identifier) @ident)
+  (ordered_field_declaration_list type: (type_identifier) @ident)
+  (parameter type: (type_identifier) @ident)
+  (static_item type: (type_identifier) @ident)
+  (type_item type: (type_identifier) @ident)
+  (trait_bounds (type_identifier) @ident)
+  (where_predicate left: (type_identifier) @ident)
+
+  ;; ### Statements
+  (let_declaration type: (type_identifier) @ident)
+] {
+  node @ident.use
+  attr (@ident.use) node_reference = @ident
+
+  let t = (node)
+  attr (t) push_symbol = "%types"
+  edge @ident.use -> t
+  edge t -> @ident.scope
+}
+
+
+
+; # Item definitions
+
+[
+  (source_file) @root
+  (declaration_list) @root
+] {
+  node @root.def_types
+  attr (@root.def_types) pop_symbol = "%types"
+  edge @root.scope -> @root.def_types
+  attr (@root.scope -> @root.def_types) precedence = 1
+
+  node @root.def_values
+  attr (@root.def_values) pop_symbol = "%values"
+  edge @root.scope -> @root.def_values
+  attr (@root.scope -> @root.def_values) precedence = 1
+
+  ;; This `%any` namespace is the union of `%types` and `%values`. The .scope
+  ;; does not have an edge to this, because all ordinary lexical-scope lookups
+  ;; are for either a type or a value. Imports use it, because the `use` syntax
+  ;; is the same whether importing types or values.
+  node @root.def_any
+  attr (@root.def_any) pop_symbol = "%any"
+  node to_types
+  attr (to_types) push_symbol = "%types"
+  node to_values
+  attr (to_values) push_symbol = "%values"
+  edge @root.def_any -> to_types
+  edge to_types -> @root.def_types
+  edge @root.def_any -> to_values
+  edge to_values -> @root.def_values
+}
+
+[
+  (source_file (_) @child) @parent
+  (declaration_list (_) @child) @parent
+] {
+  let @child.item_def_values = @parent.def_values
+  let @child.item_def_types = @parent.def_types
+}
+
+[
+  (const_item name: (_) @name)
+  (enum_item name: (_) @name)
+  (function_item name: (_) @name)
+  (static_item name: (_) @name)
+  (struct_item name: (_) @name)
+  (trait_item name: (_) @name)
+  (type_item name: (_) @name)
+  (union_item name: (_) @name)
+] @item {
+  node @item.def
+  attr (@item.def) node_definition = @name
+}
+
+(mod_item name: (_) @name body: (_)? @body) @item {
+  if some @body {
+    node @item.def
+    attr (@item.def) node_definition = @name
+  } else {
+    ;; The difficult case: find the node for this module in another file.
+    node @item.def
+    attr (@item.def) pop_symbol = (source-text @name)
+    ;; We're looking for this module item's name...
+    node relay1
+    attr (relay1) push_symbol = (source-text @name)
+    ;; in the type namespace...
+    node relay2
+    attr (relay2) push_symbol = "%types"
+    ;; of the node in another file...
+    node relay3
+    attr (relay3) push_symbol = "%anyfile"
+    ;; that represents the current enclosing module (`self`).
+    node relay4
+    attr (relay4) push_symbol = "self"
+    node relay5
+    attr (relay5) push_symbol = "%types"
+
+    edge @item.def -> relay1
+    edge relay1 -> relay2
+    edge relay2 -> relay3
+    edge relay3 -> relay4
+    edge relay4 -> relay5
+    edge relay5 -> @item.scope
+  }
+}
+
+;; Bind items in the value namespace. Note: We bind tuple structs in both
+;; namespaces. Same for unit structs (the next rule below). Structs with named
+;; fields are bound only in the type namespace.
+[
+  (const_item)
+  (static_item)
+  (struct_item body: (ordered_field_declaration_list))
+  (function_item)
+] @item {
+  edge @item.item_def_values -> @item.def
+}
+
+(struct_item body: (_)? @body) @item {
+  if none @body {
+    edge @item.item_def_values -> @item.def
+  }
+}
+
+;; Bind items in the type namespace.
+[
+  (enum_item)
+  (mod_item)
+  (struct_item)
+  (trait_item)
+  (type_item)
+  (union_item)
+] @item {
+  edge @item.item_def_types -> @item.def
+}
+
+
+
+;; # Function and closure parameters
+
+;; This is awkward because `closure_parameters` have two different structures
+;; only one of which (`parameter`) can be easily distinguished with a query.
+;;
+;; TODO - See if this can be made any tidier.
+
+[(parameters) (closure_parameters)] @parameters {
+  node @parameters.def_values
+  attr (@parameters.def_values) pop_symbol = "%values"
+}
+
+[
+  (parameters (parameter) @child)
+  (parameters (self_parameter) @child)
+  (closure_parameters (_) @child)
+] @parameters {
+  let @child.def_values = @parameters.def_values
+}
+
+(parameter pattern: (_) @pat) @param {
+  let @pat.def_values = @param.def_values
+}
+
+(self_parameter (self) @self) @param {
+  node @self.def
+  attr (@self.def) node_definition = @self
+  edge @param.def_values -> @self.def
+}
+
+(closure_expression) @closure {
+  ;; Used below. Just an alias, because closures don't have type parameters.
+  let @closure.inner_scope = @closure.scope
+}
+
+[
+  (closure_expression parameters: (_) @parameters body: (_) @body)
+  (function_item parameters: (_) @parameters body: (_) @body)
+] @parent {
+  node @body.scope
+  edge @body.scope -> @parameters.def_values
+  attr (@body.scope -> @parameters.def_values) precedence = 1
+  edge @body.scope -> @parent.inner_scope
+}
+
+
+;; # Binding the file module
+;;
+;; In which we help folks coming in from the root node to tell if the path
+;; they're looking for is really located in this file.
+(source_file) @root {
+  node crate_node
+  attr (crate_node) source_node = @root, pop_symbol = "%crate", is_definition
+  edge ROOT_NODE -> crate_node
+
+  node to_crate
+  attr (to_crate) push_symbol = "%crate"
+  edge to_crate -> ROOT_NODE
+
+  ;; As we process the path, we're building two graph-paths: to_super and
+  ;; from_root.
+  ;;
+  ;; to_super: Graph path that pushes the enclosing module's canonical path and
+  ;; then jumps to the root node, for implementing `super` in this module.
+  var to_super = to_crate
+
+  ;; from_root: Graph path from ROOT_NODE to the scope node for this module,
+  ;; popping names as we go, so that when another file wants to resolve
+  ;; `crate::a::b::c::X`, that can resolve to something in the file
+  ;; `src/a/b/c.rs`.
+  var from_root = crate_node
+
+  ;; To implement `mod child;` so that `child` refers to a module defined in
+  ;; another file, we need a gadget to reach the nodes representing this
+  ;; module, in all other files. We call this gadget `to_anyfile`. It works by
+  ;; pushing the canonical path, then exiting to ROOT_NODE. Other files then
+  ;; define paths from ROOT_NODE that pop that exact stack of symbols.
+  var to_anyfile = #null
+
+  ;; Doing this properly will involve understanding Cargo package layout in
+  ;; detail :-P
+  scan FILE_PATH {
+    "(main|lib|mod|src/bin/[^/]+)\.rs$" {
+      ;; Do not push this filename onto either from_root or to_super.
+      set to_anyfile = to_crate
+    }
+
+    "([^/]+)\.rs$" {
+      ;; Extend `from_root` to pop this module name; but don't change `to_super`.
+      node pop_types
+      attr (pop_types) pop_symbol = "%types"
+      edge from_root -> pop_types
+      attr (from_root -> pop_types) precedence = 1
+      node pop_name
+      attr (pop_name) pop_symbol = $1
+      edge pop_types -> pop_name
+      set from_root = pop_name
+
+      ;; To reach this module but in another file, we have to push this
+      ;; module's canonical path (in reverse order, as usual), then go to
+      ;; ROOT_NODE. We push the canonical path by pushing this module's name
+      ;; and `%types`, then pushing the parent module's canonical path in
+      ;; reverse order (using `to_super`).
+      node anyfile1
+      attr (anyfile1) push_symbol = $1
+      node anyfile2
+      attr (anyfile2) push_symbol = "%types"
+      edge anyfile1 -> anyfile2
+      edge anyfile2 -> to_super
+      set to_anyfile = anyfile1
+    }
+
+    "src/" {
+      ;; Reset.
+      set to_super = to_crate
+      set to_anyfile = to_crate
+      set from_root = crate_node
+    }
+
+    "([^/]+)/" {
+      ;; Extend `from_root` to pop this module name.
+      node pop_types
+      attr (pop_types) pop_symbol = "%types"
+      edge from_root -> pop_types
+      attr (from_root -> pop_types) precedence = 1
+      node pop_name
+      attr (pop_name) pop_symbol = $1
+      edge pop_types -> pop_name
+      set from_root = pop_name
+
+      ;; Extend `to_super` to push this module name.
+      node push_types
+      attr (push_types) push_symbol = "%types"
+      edge push_types -> to_super
+      node push_name
+      attr (push_name) push_symbol = $1
+      edge push_name -> push_types
+      set to_super = push_name
+    }
+  }
+
+  ;; Use from_root as the definition node for this source file.
+  let @root.def = from_root
+  edge from_root -> @root.def_types
+  edge from_root -> @root.def_values
+  edge from_root -> @root.def_any
+
+  ;; Bind `self` to a node with the same out-edges as @root.def. (Can't use the
+  ;; same node because TSG doesn't really support aliases: only nodes with type
+  ;; = "pop_symbol" can be definitions.)
+  node self
+  attr (self) source_node = @root, pop_symbol = "self", is_definition
+  edge @root.def_types -> self
+  edge self -> @root.def_types
+  edge self -> @root.def_values
+  edge self -> @root.def_any
+
+  ;; Bind `super` to the to_super path.
+  node pop_super
+  attr (pop_super) pop_symbol = "super"
+  edge @root.def_types -> pop_super
+  edge pop_super -> to_super
+
+  ;; Bind `%anyfile` to a graph path that pushes this module's canonical name,
+  ;; then goes to the shared ROOT_NODE. This enables finding nodes that
+  ;; represent this module in other files.
+  node pop_anyfile
+  attr (pop_anyfile) pop_symbol = "%anyfile"
+  edge @root.def -> pop_anyfile
+  edge self -> pop_anyfile ;; keep self's out-edges the same as the module's out-edges
+  edge pop_anyfile -> to_anyfile
+}
+
+
+
+;; # Qualified access
+;;
+;; What tree-sitter-rust calls a `scoped_identifier` is what the rest of the
+;; Rust world calls a path. Of course "path" is a bit overloaded with
+;; stack-graphs.
+
+;; ## Namespaces for qualified access
+;;
+;; In which we set up paths from definitions to their members, `self`, `super`,
+;; and `crate`.
+;;
+;; In `a::b`, the `a` refers to a type, trait, or module. To resolve `b`, we
+;; follow a path that leads first to the definition of `a`, then from there
+;; must be able to match `"%types" "b"` or `"%values" "b"`. Note that when `::`
+;; is used, there's no inheritance: we want a binding that is a member of `a`
+;; in particular and not some enclosing block scope.
+;;
+;; Therefore, nodes that represent the contents of a type aren't lexical
+;; scopes. They have no inheritance edge. But they do have `"%types"` and
+;; `"%values"` edges and thus can serve as an AST node's `.scope`.
+
+;; Install a path from a module definition to the types defined inside it.
+;; Also hook up `self`, `super`, and `crate` for declared modules.
+(mod_item name: (identifier) @name body: (declaration_list) @body) @mod {
+  edge @mod.def -> @body.def_values
+  edge @mod.def -> @body.def_types
+  edge @mod.def -> @body.def_any
+
+  ;; Define `self` as a node effectively identical to `@mod.def`. (Can't use
+  ;; the same node because TSG doesn't support aliases.)
+  node self
+  attr (self) source_node = @name, pop_symbol = "self", is_definition
+  edge @body.def_types -> self
+  edge self -> @body.def_values
+  edge self -> @body.def_types
+  edge self -> @body.def_any
+
+  ;; Bind `super` in a declared module as an alias for `self` in the enclosing
+  ;; module.
+  node super
+  attr (super) pop_symbol = "super"
+  node super_1
+  attr (super_1) push_symbol = "self"
+  node super_2
+  attr (super_2) push_symbol = "%types"
+  edge @body.def_types -> super
+  edge super -> super_1
+  edge super_1 -> super_2
+  edge super_2 -> @mod.scope
+}
+
+;; Trait members are not in scope for unqualified access, but they can be
+;; accessed by paths via the trait.
+(trait_item body: (declaration_list) @decls) @trait {
+  edge @trait.def -> @decls.def_values
+  edge @trait.def -> @decls.def_types
+}
+
+;; Install a path from a struct definition to its fields.
+(struct_item body: (field_declaration_list) @fields) @struct {
+  edge @struct.def -> @fields.fields
+}
+
+;; Note this is used by struct-like enum variants too.
+(field_declaration_list) @fields {
+  node @fields.fields
+  attr (@fields.fields) pop_symbol = "%fields"
+}
+
+(field_declaration_list (field_declaration name: (_) @field)) @fields {
+  node @field.def
+  attr (@field.def) node_definition = @field
+  edge @fields.fields -> @field.def
+}
+
+;; Install paths from an enum to its variants.
+(enum_item name: (type_identifier) @name ) @enum {
+  node @enum.variants_types
+  node t
+  attr (t) pop_symbol = "%types"
+  edge @enum.def -> t
+  edge t -> @enum.variants_types
+
+  node @enum.variants_values
+  node v
+  attr (v) pop_symbol = "%values"
+  edge @enum.def -> v
+  edge v -> @enum.variants_values
+
+  ;; The `%any` namespace supports looking up the identifier that's the last
+  ;; component of a use-declaration that imports from an enum.
+  node any
+  attr (any) pop_symbol = "%any"
+  node to_types
+  attr (to_types) push_symbol = "%types"
+  node to_values
+  attr (to_values) push_symbol = "%values"
+  edge @enum.def -> any
+  edge any -> to_types
+  edge to_types -> t
+  edge any -> to_values
+  edge to_values -> v
+}
+
+(enum_item
+  body: (enum_variant_list
+    (enum_variant
+      name: (identifier) @name
+      (field_declaration_list)? @fields
+    ) @variant
+  )
+) @enum {
+  node @variant.def
+  attr (@variant.def) node_definition = @name
+  if some @fields {
+    edge @enum.variants_types -> @variant.def
+    edge @variant.def -> @fields.fields
+  }
+  edge @enum.variants_values -> @variant.def
+}
+
+
+;; ## Starting scope for a path
+
+;; Thread the current lexical scope down the left edge of a path AST.
+[
+  (scoped_identifier path: (_) @child) @parent
+  (scoped_type_identifier path: (_) @child) @parent
+] {
+  let @child.scope = @parent.scope
+}
+
+;; ## Qualifiers
+;;
+;; The `path:` named child of a `(scoped_identifier)`,
+;; `(scoped_type_identifier)`, or `(scoped_use_list)` is called the qualifier,
+;; and can be one of:
+;;
+;; -   `(self)`
+;; -   `(super)`.
+;; -   `(crate)`
+;; -   A nested `(scoped_identifier)`.
+;; -   An `(identifier)`. I think the grammar treats `Self` as an identifier
+;;     and we just resolve it lexically.
+;; -   `(bracketed_type)`, as in `<T>::`, `<Vec<T>>::`, or `<T as ToString>::`.
+;;     We currently support only the simplest case.
+;; -   `(generic_type)`, as in `Vec::<T>::`. We don't support generics at all.
+;; -   Nothing, as in `::std`. This isn't supported yet; it means the
+;;     extern prelude.
+;;
+;; Below are the rules implementing each of these cases (the ones we support,
+;; anyway) by setting the `.use` variable of the qualifier to a node that
+;; leads to the appropriate scope. The name to the right of `::` is resolved
+;; in that scope.
+
+;; `(self)` and `(super)` are, so far, resolved lexically.
+;;
+;; Rust probably handles these as special cases, but I think this gives the
+;; correct result for all cases Rust allows.
+[
+  (scoped_identifier path: [(self) (super)] @keyword)
+  (scoped_type_identifier path: [(self) (super)] @keyword)
+  (scoped_use_list path: [(self) (super)] @keyword)
+  (use_as_clause path: [(self) (super)] @keyword)
+  (use_list [(self) (super)] @keyword)
+  (use_wildcard . [(self) (super)] @keyword)
+  (visibility_modifier [(self) (super)] @keyword)
+  ;; bogus if it happens, but accepted by the parser:
+  (range_pattern [(self) (super)] @keyword)
+] {
+  node @keyword.use
+  attr (@keyword.use) node_reference = @keyword
+
+  let t = (node)
+  attr (t) push_symbol = "%types"
+  edge @keyword.use -> t
+  edge t -> @keyword.scope
+}
+
+;; `(crate)` resolves to the root.
+[
+  (scoped_identifier path: (crate) @keyword)
+  (scoped_type_identifier path: (crate) @keyword)
+  (scoped_use_list path: (crate) @keyword)
+  (use_as_clause path: (crate) @keyword)
+  (use_list (crate) @keyword)
+  (use_wildcard . (crate) @keyword)
+  (visibility_modifier (crate) @keyword)
+  ;; bogus if it happens, but accepted by the parser:
+  (range_pattern (crate) @keyword)
+] {
+  ;; All uses of `crate` are threaded through the root node,
+  ;; so they can cross file boundaries.
+  node @keyword.use
+  attr (@keyword.use) type = "push_symbol", symbol = "%crate", is_reference, source_node = @keyword
+  edge @keyword.use -> ROOT_NODE
+}
+
+;; An identifier at the start of a path is resolved relative to the `.scope`.
+;; This means that in expression or type-expression context, it can resolve to
+;; a module, type, or trait in the current lexical scope. (It could refer to a
+;; crate in the extern prelude, but we don't support that yet.)
+;;
+;; (If that whole path is inside the braces of a `(scoped_use_list)`, as for
+;; the path `io::Error` in `use std::{io::Error};`, then the curret lexical
+;; scope would be the wrong place to start. Therefore the `.scope` must be
+;; determined by its qualifier instead, in this case `std::`. This isn't
+;; implemented yet.)
+[
+  (scoped_identifier path: (identifier) @name)
+  (scoped_type_identifier path: (identifier) @name)
+  (scoped_use_list path: (identifier) @name)
+  (visibility_modifier (identifier) @name)
+  ;; bogus if it happens, but accepted by the parser:
+  (range_pattern (identifier) @name)
+] {
+  ;; For now, a copy of the code for resolving `(type_identifier)`.
+  node @name.use
+  attr (@name.use) node_reference = @name
+
+  let t = (node)
+  attr (t) push_symbol = "%types"
+  edge @name.use -> t
+  edge t -> @name.scope
+}
+
+(bracketed_type (_) @child) @parent {
+  let @parent.use = @child.use
+}
+
+(qualified_type alias: (_) @trait) @parent {
+  let @parent.use = @trait.use
+}
+
+(scoped_identifier path: (generic_type) @parent) {
+  ;; Dummy node to avoid "undefined scoped variable". Not hooked up yet.
+  node @parent.use
+}
+
+;; ## Marking the context of expressions
+;;
+;; This is for scoped identifiers. The context of a path determines which
+;; namespace to search.
+
+;; Note: This is a complete copy of the huge list under "Marking unqualified
+;; references". Obviously the duplication is very bad. I don't know how else to
+;; get this effect.
+
+[
+  ;; ### Expressions
+  (arguments (_) @here)
+  (array_expression (_) @here)
+  (assignment_expression left: (_) @here)
+  (assignment_expression right: (_) @here)
+  (await_expression (_) @here)
+  (base_field_initializer (_) @here)
+  (binary_expression left: (_) @here)
+  (binary_expression right: (_) @here)
+  (break_expression (_) @here)
+  (call_expression function: (_) @here)
+  (compound_assignment_expr left: (_) @here)
+  (compound_assignment_expr right: (_) @here)
+  (field_expression value: (_) @here)
+  (field_initializer value: (_) @here)
+  (for_expression value: (_) @here)
+  (generic_function function: (_) @here)
+  (if_expression condition: (_) @here)
+  (if_let_expression value: (_) @here)
+  (index_expression (_) @here)
+  (match_expression value: (_) @here)
+  (match_pattern condition: (_) @here)
+  (parenthesized_expression (_) @here)
+  (range_expression (_) @here)
+  (reference_expression value: (_) @here)
+  (return_expression (_) @here)
+  (shorthand_field_initializer (_) @here)
+  (try_expression (_) @here)
+  (tuple_expression (_) @here)
+  (type_cast_expression value: (_) @here)
+  (unary_expression (_) @here)
+  (while_expression condition: (_) @here)
+  (while_let_expression value: (_) @here)
+  (yield_expression (_) @here)
+
+  ;; ### Types
+  (array_type length: (_) @here)
+
+  ;; ### Statements
+  (block (_)* (_) @here)
+  (expression_statement (_) @here)
+  (let_declaration value: (_) @here)
+
+  ;; ### Items
+  (const_item value: (_) @here)
+  (static_item value: (_) @here)
+] {
+  let @here.context = "%values"
+}
+
+;; Note: This is a complete copy of the second huge list under "Marking
+;; unqualified references".
+[
+  ;; ### Types
+  (abstract_type trait: (_) @here)
+  (array_type element: (_) @here)
+  (bounded_type (_) @here)
+  (dynamic_type trait: (_) @here)
+  (function_type trait: (_) @here)  ;; only for Fn, FnMut, FnOnce
+  (function_type return_type: (_) @here)
+  (generic_type type: (_) @here)
+  (generic_type_with_turbofish type: (_) @here)
+  (pointer_type type: (_) @here)
+  (qualified_type type: (_) @here)
+  (qualified_type alias: (_) @here)
+  (reference_type type: (_) @here)
+  (scoped_type_identifier path: (_) @here)
+  (tuple_type (_) @here)
+  (type_binding type: (_) @here)
+
+  ;; ### Expressions
+  (type_cast_expression type: (_) @here)
+  (bracketed_type (_) @here)
+  (struct_expression name: (_) @here)
+  (scoped_identifier path: (_) @here)
+
+  ;; ### Patterns
+  (struct_pattern type: (_) @here)
+
+  ;; ### Items
+  (const_item type: (_) @here)
+  (field_declaration type: (_) @here)
+  (function_item return_type: (_) @here)
+  (impl_item trait: (_) @here)
+  (impl_item type: (_) @here)
+  (ordered_field_declaration_list type: (_) @here)
+  (parameter type: (_) @here)
+  (static_item type: (_) @here)
+  (trait_bounds (_) @here)
+  (type_item type: (_) @here)
+  (where_predicate left: (_) @here)
+
+  ;; ### Statements
+  (let_declaration type: (_) @here)
+] {
+  let @here.context = "%types"
+}
+
+;; Ambiguous contexts
+(type_arguments (_) @here) {
+  ;; type or value depending on the generic, I think
+  let @here.context = "%types" ;; bug
+}
+
+(tuple_struct_pattern type: (_) @here) {
+  ;; type or value, whichever comes first
+  let @here.context = "%values" ;; BUG - try "%any"
+}
+
+;; Pattern context
+[
+  (for_expression pattern: (_) @here)
+  (if_let_expression pattern: (_) @here)
+  (while_let_expression pattern: (_) @here)
+  (let_declaration pattern: (_) @here)
+  (parameter pattern: (_) @here)
+  (closure_parameters (_) @here)
+  (match_pattern . (_) @here)
+  (tuple_pattern (_) @here)
+  (tuple_struct_pattern type: (_) (_) @here)
+  (slice_pattern (_) @here)
+  (field_pattern name: (shorthand_field_identifier) @here)
+  (field_pattern pattern: (_) @here)
+  (mut_pattern (mutable_specifier) (_) @here)
+  (ref_pattern (_) @here)
+  (captured_pattern (_) @here "@" (_))
+  (reference_pattern "&" (mutable_specifier)? (_) @here)
+  (or_pattern (_) @here)
+] {
+  let @here.context = "%pattern"
+}
+
+;; Macro context
+(macro_invocation macro: (_) @here) {
+  let @here.context = "%macro"
+}
+
+;; Use-path context
+[
+  (scoped_use_list path: (_) @here)
+  (use_as_clause path: (_) @here)
+  (use_declaration argument: (_) @here)
+  (use_list (_) @here)
+  (use_wildcard (_) @here "::" "*")
+] {
+  ;; Here we may be importing either a type or a value, or both. We can't
+  ;; locally tell which, so importable scopes must provide that `%any` reaches
+  ;; both the `%values` namespace and the `%types` namespace.
+  let @here.context = "%any"
+}
+
+
+;; ## Resolving qualified identifiers in paths
+;;
+;; In a path like `a::b::c::d`, each segment except the initial `a` is qualified.
+;; For the initial segment, see the section on "Qualifiers".
+;;
+;; (scoped_identifier) appears in some very different contexts,
+;; including (use_list), as in `use some_crate::{self, std::io};` where
+;; `std::io` ends up having an unusual meaning.
+
+[
+  (scoped_identifier path: (_)? @parent name: (identifier) @name) @path
+  (scoped_type_identifier path: (_)? @parent name: (type_identifier) @name) @path
+] {
+  node @name.use
+  attr (@name.use) node_reference = @name
+  let @path.use = @name.use
+
+  node s
+  attr (s) push_symbol = (replace @path.context "%pattern" "%values")
+
+  edge @name.use -> s
+  if some @parent {
+    let @name.scope = @parent.use
+  } else {
+    ;; `::foo` syntax. This is a crate name. TODO - connect s to the extern
+    ;; crates. For now, we bogusly treat this like unqualified `foo` rather
+    ;; than leave @name.scope unset and fail the whole file.
+    let @name.scope = @path.scope
+  }
+  edge s -> @name.scope
+}
+
+;; Set the scope of the `list:` child of a `(scoped_use_list)`.
+(scoped_use_list path: (_)? @parent list: (use_list) @child) @context {
+  if some @parent {
+    let @child.scope = @parent.use
+  } else {
+    ;; `use ::{foo};` syntax. TODO - connect this scope to the extern crates.
+    ;; For now, we bogusly treat this like unqualified `foo` rather than leave
+    ;; @child.scope unset and fail the whole file.
+    let @child.scope = @context.scope
+  }
+}
+
+
+
+;; # Fields
+;; Link fields in struct expressions and patterns to their definitions.
+
+[
+  (struct_expression
+    body: (field_initializer_list
+      (field_initializer name: (field_identifier) @field_name)
+    )
+  )
+  (struct_pattern (field_pattern name: (_) @field_name))
+] {
+  node @field_name.use
+  attr (@field_name.use) node_reference = @field_name
+}
+
+(struct_expression
+  name: [(type_identifier) (scoped_type_identifier)] @ty
+  body: (field_initializer_list [
+    (field_initializer name: (field_identifier) @field_name)
+    (shorthand_field_initializer (identifier) @field_name)
+  ])
+) {
+  node push_fields
+  attr (push_fields) push_symbol = "%fields"
+  edge @field_name.use -> push_fields
+  edge push_fields -> @ty.use
+}
+
+(struct_pattern
+  type: [(type_identifier) (scoped_type_identifier)] @ty
+  [
+    (field_pattern name: (_) @field_name)
+    (shorthand_field_identifier) @field_name
+  ]
+) {
+  node push_fields
+  attr (push_fields) push_symbol = "%fields"
+  edge @field_name.use -> push_fields
+  edge push_fields -> @ty.use
+}
+
+
+
+;; # Lifetimes
+;; See also `(type_parameters (lifetime) @lifetime) @params` above.
+
+;; Uses of lifetimes.
+[
+  (where_predicate left: (lifetime) @lifetime)
+  (trait_bounds (lifetime) @lifetime)
+  (self_parameter (lifetime) @lifetime)
+  (bounded_type (lifetime) @lifetime)
+  (type_arguments (lifetime) @lifetime)
+  (reference_type (lifetime) @lifetime)
+] {
+  node @lifetime.use
+  attr (@lifetime.use) node_reference = @lifetime
+  node t
+  attr (t) push_symbol = "%types"
+  edge @lifetime.use -> t
+  edge t -> @lifetime.scope
+}
+
+
+
+;; # Loop labels
+;; These look like lifetimes but inhabit a separate namespace.
+
+;; Uses of loop labels.
+[
+  (break_expression (loop_label) @label)
+  (continue_expression (loop_label) @label)
+] @expr {
+  node @label.use
+  attr (@label.use) node_reference = @label
+  node t
+  attr (t) push_symbol = "%loop"
+  edge @label.use -> t
+  edge t -> @expr.scope
+}
+
+
+
+;; # Imports
+;;
+;; The code in this section has two goals:
+;;
+;; -   Support references that appear within `use` declarations, like the
+;;     `Error` in `use anyhow::Error;`
+;;
+;; -   Add `use`-bindings to the lexical scope, so that throughout your code, the
+;;     way we handle identifiers is import-aware. If on line 1234 of a file you
+;;     have `let map = HashMap::new();`, we want `HashMap` to be linked to the
+;;     right definition via the `use hashbrown::HashMap;` on line 12.
+;;
+;; The bit of syntax between `use` and `;` is called a *UseTree*. It can have
+;; several forms:
+;;
+;;     use w::x::y::z;
+;;     use x::memory_management as mm;
+;;     use { std::io, tokio::runtime::Runtime };
+;;     use std::io::{self, Read};
+;;     use std::{io, thread::{self, spawn}};
+;;     use hms_pinafore::prelude::*;
+;;     use crate as my_root;
+;;
+;; At the beginning of a UseTree, `self::`, `super::`, `crate::`, and bare `::`
+;; can be used to specify where to start the search for items to import.
+;;
+;; So the full grammar is like this:
+;;
+;;     UseTree :
+;;         UseTreePrefix? UseTreeTail
+;;
+;;     UseTreePrefix :
+;;         `self` `::`
+;;         (`super` `::`)+
+;;         `crate` `::`
+;;         `::`
+;;
+;;     UseTreeTail :
+;;         UseTreeLeaf Alias?
+;;         Identifier `::` UseTreeTail
+;;         `{` (UseTreeTail (`,` UseTreeTail)* `,`?)? `}`
+;;         `*`
+;;
+;;     UseTreeLeaf :
+;;         Identifier
+;;         `self`  // only within a {} list with non-empty prefix
+;;         `crate`  // only without any prefix and with alias
+;;
+;;     Alias :
+;;         `as` Identifier
+;;         `as` `_`
+;;
+;; Unfortunately the way grammar.js renders these is backwards for processing
+;; them. Ideally we'd treat `::` as right-associative here, so that `x::y::z`
+;; is rendered as `(:: x (:: y (identifier z)))`. This is the opposite of how
+;; the syntax tree is constructed for everything else in the language, though.
+;; So what we actually get is `(:: (:: (identifier x) y) z)`.
+;;
+;;    use_clause:
+;;        (self)  // we accept it but this isn't actually legal Rust syntax
+;;        (super) // same
+;;        (crate) // same
+;;        (identifier)
+;;        (scoped_identifier)
+;;        (use_as_clause)
+;;        (use_list)
+;;        (scoped_use_list)
+;;        (use_wildcard)
+;;
+;; Also unfortunately, the same node type `(scoped_identifier)` is used in
+;; imports as in expressions, despite the meaning being quite different,
+;; especially in the case of the `bar::baz` in `use foo::{bar::baz};`.
+;;
+;; We assume that the identifier at the beginning of a path in expression
+;; context searches exactly the same places as an identifier at the beginning
+;; of a path in `use_clause` context.
+
+;; Add `use-bindings` to the lexical scope.
+[
+  (use_declaration [
+    (identifier) @name
+    (scoped_identifier name: (identifier) @name)
+  ])
+  (use_list [
+    (identifier) @name
+    (scoped_identifier name: (identifier) @name)
+  ])
+  (use_as_clause
+    path: [
+      (identifier) @name
+      (scoped_identifier name: (identifier) @name)
+      (crate) @crate_root
+    ]
+    alias: (_) @alias
+  )
+  ;; In `use a::b::{self, ...}`, bind `b`.
+  (scoped_use_list
+    path: [
+      (identifier) @name
+      (scoped_identifier name: (identifier) @name)
+      (crate) @crate_root
+    ]
+    (use_list [
+      (self)
+      (use_as_clause path: (self) alias: (_) @alias)
+    ])
+  )
+] @import {
+  ;; Make a binding for @name in the type namespace. This gadget pops `"type"
+  ;; @name` (or @alias instead, if present), then forwards to the imported item
+  ;; by re-pushing `"%types" @name` and exiting to @name.scope, which is
+  ;; selected by other rules.
+  node type_relay
+  if some @alias {
+    attr (type_relay) type = "pop_symbol", node_symbol = @alias
+  } else {
+    attr (type_relay) type = "pop_symbol", node_symbol = @name
+  }
+  edge @import.item_def_types -> type_relay
+  if some @crate_root {
+    edge type_relay -> @crate_root.use
+  } else {
+    node type_relay1
+    attr (type_relay1) type = "push_symbol", node_symbol = @name
+    node type_relay2
+    attr (type_relay2) push_symbol = "%types"
+    edge type_relay -> type_relay1
+    edge type_relay1 -> type_relay2
+    edge type_relay2 -> @name.scope
+  }
+
+  ;; Same deal for the value namespace.
+  if none @crate_root {
+    node value_relay
+    if some @alias {
+      attr (value_relay) type = "pop_symbol", node_symbol = @alias
+    } else {
+      attr (value_relay) type = "pop_symbol", node_symbol = @name
+    }
+    node value_relay1
+    attr (value_relay1) type = "push_symbol", node_symbol = @name
+    node value_relay2
+    attr (value_relay2) push_symbol = "%values"
+    edge @import.item_def_values -> value_relay
+    edge value_relay -> value_relay1
+    edge value_relay1 -> value_relay2
+    edge value_relay2 -> @name.scope
+  }
+
+  ;; TODO - need %any propagation here as well? test case would be import of an
+  ;; import
+}
+
+;; Identifiers in import context, qualified by a scoped_use_list.
+;;
+;; There is different code for the identifier at the start of a path.
+;; Awkwardly, with use-lists it is possible for the same identifier to be both
+;; the start and the end of a path, and it's hard to tell when that's happening
+;; using only tree-sitter queries. Consider `use {{foo}};`.
+[
+  (scoped_use_list (use_list (identifier) @ident))
+  (scoped_use_list (use_list (use_as_clause path: (identifier) @ident)))
+] {
+  ;; Implementation note: Compare with the code in sections "Identifiers in
+  ;; expression context" and "Identifiers in type context".
+  node @ident.use
+  attr (@ident.use) node_reference = @ident
+
+  let a = (node)
+  attr (a) push_symbol = "%any"
+  edge @ident.use -> a
+  edge a -> @ident.scope
+}
+
+;; Scope inheritance in `use` syntax.
+[
+  (scoped_use_list path: (_) @child)
+  (use_as_clause path: (_) @child)
+  (use_declaration argument: (_) @child)
+  (use_list (_) @child)
+  (use_wildcard (_) @child "::" "*")
+] @parent {
+  let @child.scope = @parent.scope
+}
+
+;; Propagate the binding scopes to the leaves of imports.
+[
+  (_ (use_list) @child)
+  (_ (scoped_use_list) @child)
+  (_ (use_as_clause) @child)
+] @parent {
+  let @child.item_def_types = @parent.item_def_types
+  let @child.item_def_values = @parent.item_def_values
+}

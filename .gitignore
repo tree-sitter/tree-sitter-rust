@@ -7,3 +7,8 @@ examples
 !examples/ast.rs
 /target/
 .build/
+/stack-graph-tests/target/
+/stack-graph-tests/src/bin/**/*.html
+/stack-graph-tests/src/bin/**/*.paths.json
+/stack-graph-tests/multifile/**/*.html
+/stack-graph-tests/multifile/**/*.paths.json
