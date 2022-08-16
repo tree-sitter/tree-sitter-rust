@@ -953,10 +953,8 @@ module.exports = grammar({
       $.async_block,
       $.block,
       $.if_expression,
-      $.if_let_expression,
       $.match_expression,
       $.while_expression,
-      $.while_let_expression,
       $.loop_expression,
       $.for_expression,
       $.const_block
@@ -1173,29 +1171,35 @@ module.exports = grammar({
       $._expression
     ),
 
-    if_expression: $ => seq(
-      'if',
-      field('condition', $._expression),
-      field('consequence', $.block),
-      optional(field("alternative", $.else_clause))
-    ),
-
-    if_let_expression: $ => seq(
-      'if',
+    let_condition: $ => seq(
       'let',
       field('pattern', $._pattern),
       '=',
-      field('value', $._expression),
+      field('value', prec.left(PREC.and, $._expression))
+    ),
+
+    _condition: $ => choice(
+      prec.left(PREC.and, $._expression),
+      $.let_condition,
+    ),
+
+    _conditions: $ => choice(
+      $._condition,
+      seq($._condition, '&&', $._conditions)
+    ),
+
+    if_expression: $ => seq(
+      'if',
+      field('condition', $._conditions),
       field('consequence', $.block),
-      optional(field('alternative', $.else_clause))
+      optional(field("alternative", $.else_clause))
     ),
 
     else_clause: $ => seq(
       'else',
       choice(
         $.block,
-        $.if_expression,
-        $.if_let_expression
+        $.if_expression
       )
     ),
 
@@ -1234,23 +1238,13 @@ module.exports = grammar({
 
     match_pattern: $ => seq(
       $._pattern,
-      optional(seq('if', field('condition', $._expression)))
+      optional(seq('if', field('condition', $._conditions)))
     ),
 
     while_expression: $ => seq(
       optional(seq($.loop_label, ':')),
       'while',
-      field('condition', $._expression),
-      field('body', $.block)
-    ),
-
-    while_let_expression: $ => seq(
-      optional(seq($.loop_label, ':')),
-      'while',
-      'let',
-      field('pattern', $._pattern),
-      '=',
-      field('value', $._expression),
+      field('condition', $._conditions),
       field('body', $.block)
     ),
 

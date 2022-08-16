@@ -166,10 +166,6 @@
         "named": true
       },
       {
-        "type": "if_let_expression",
-        "named": true
-      },
-      {
         "type": "index_expression",
         "named": true
       },
@@ -243,10 +239,6 @@
       },
       {
         "type": "while_expression",
-        "named": true
-      },
-      {
-        "type": "while_let_expression",
         "named": true
       },
       {
@@ -1028,10 +1020,6 @@
             "named": true
           },
           {
-            "type": "if_let_expression",
-            "named": true
-          },
-          {
             "type": "index_expression",
             "named": true
           },
@@ -1101,10 +1089,6 @@
           },
           {
             "type": "while_expression",
-            "named": true
-          },
-          {
-            "type": "while_let_expression",
             "named": true
           },
           {
@@ -1447,10 +1431,6 @@
         },
         {
           "type": "if_expression",
-          "named": true
-        },
-        {
-          "type": "if_let_expression",
           "named": true
         }
       ]
@@ -2289,11 +2269,19 @@
         ]
       },
       "condition": {
-        "multiple": false,
+        "multiple": true,
         "required": true,
         "types": [
           {
+            "type": "&&",
+            "named": false
+          },
+          {
             "type": "_expression",
+            "named": true
+          },
+          {
+            "type": "let_condition",
             "named": true
           }
         ]
@@ -2304,52 +2292,6 @@
         "types": [
           {
             "type": "block",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "if_let_expression",
-    "named": true,
-    "fields": {
-      "alternative": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "else_clause",
-            "named": true
-          }
-        ]
-      },
-      "consequence": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "block",
-            "named": true
-          }
-        ]
-      },
-      "pattern": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "_pattern",
-            "named": true
-          }
-        ]
-      },
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "_expression",
             "named": true
           }
         ]
@@ -2452,6 +2394,32 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "let_condition",
+    "named": true,
+    "fields": {
+      "pattern": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "_pattern",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "_expression",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -2720,11 +2688,19 @@
     "named": true,
     "fields": {
       "condition": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
+            "type": "&&",
+            "named": false
+          },
+          {
             "type": "_expression",
+            "named": true
+          },
+          {
+            "type": "let_condition",
             "named": true
           }
         ]
@@ -4704,57 +4680,19 @@
         ]
       },
       "condition": {
-        "multiple": false,
+        "multiple": true,
         "required": true,
         "types": [
+          {
+            "type": "&&",
+            "named": false
+          },
           {
             "type": "_expression",
             "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": false,
-      "required": false,
-      "types": [
-        {
-          "type": "loop_label",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "while_let_expression",
-    "named": true,
-    "fields": {
-      "body": {
-        "multiple": false,
-        "required": true,
-        "types": [
+          },
           {
-            "type": "block",
-            "named": true
-          }
-        ]
-      },
-      "pattern": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "_pattern",
-            "named": true
-          }
-        ]
-      },
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "_expression",
+            "type": "let_condition",
             "named": true
           }
         ]
