@@ -6921,46 +6921,87 @@
         }
       ]
     },
+    "let_chain": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "condition",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "let_condition"
+              },
+              {
+                "type": "PREC_LEFT",
+                "value": 3,
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_expression"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "STRING",
+                "value": "&&"
+              },
+              {
+                "type": "FIELD",
+                "name": "condition",
+                "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "let_condition"
+                    },
+                    {
+                      "type": "PREC_LEFT",
+                      "value": 3,
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "_expression"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
     "_condition": {
       "type": "CHOICE",
       "members": [
         {
-          "type": "PREC_LEFT",
-          "value": 3,
+          "type": "PREC_DYNAMIC",
+          "value": 1,
           "content": {
             "type": "SYMBOL",
             "name": "_expression"
           }
         },
         {
-          "type": "SYMBOL",
-          "name": "let_condition"
-        }
-      ]
-    },
-    "_conditions": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_condition"
+          "type": "PREC_DYNAMIC",
+          "value": 1,
+          "content": {
+            "type": "SYMBOL",
+            "name": "let_condition"
+          }
         },
         {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_condition"
-            },
-            {
-              "type": "STRING",
-              "value": "&&"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "_conditions"
-            }
-          ]
+          "type": "SYMBOL",
+          "name": "let_chain"
         }
       ]
     },
@@ -6976,7 +7017,7 @@
           "name": "condition",
           "content": {
             "type": "SYMBOL",
-            "name": "_conditions"
+            "name": "_condition"
           }
         },
         {
@@ -7218,7 +7259,7 @@
                   "name": "condition",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_conditions"
+                    "name": "_condition"
                   }
                 }
               ]
@@ -7263,7 +7304,7 @@
           "name": "condition",
           "content": {
             "type": "SYMBOL",
-            "name": "_conditions"
+            "name": "_condition"
           }
         },
         {
@@ -8985,6 +9026,14 @@
     [
       "type_parameters",
       "for_lifetimes"
+    ],
+    [
+      "_condition",
+      "let_chain"
+    ],
+    [
+      "binary_expression",
+      "let_chain"
     ]
   ],
   "precedences": [],

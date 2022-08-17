@@ -124,6 +124,8 @@ module.exports = grammar({
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
     [$.type_parameters, $.for_lifetimes],
+    [$._condition, $.let_chain],
+    [$.binary_expression, $.let_chain],
   ],
 
   word: $ => $.identifier,
@@ -1178,19 +1180,20 @@ module.exports = grammar({
       field('value', prec.left(PREC.and, $._expression))
     ),
 
-    _condition: $ => choice(
-      prec.left(PREC.and, $._expression),
+    let_chain: $ => sepBy1('&&', field('condition', choice(
       $.let_condition,
-    ),
+      prec.left(PREC.and, $._expression)
+    ))),
 
-    _conditions: $ => choice(
-      $._condition,
-      seq($._condition, '&&', $._conditions)
+    _condition: $ => choice(
+      prec.dynamic(1, $._expression),
+      prec.dynamic(1, $.let_condition),
+      $.let_chain
     ),
 
     if_expression: $ => seq(
       'if',
-      field('condition', $._conditions),
+      field('condition', $._condition),
       field('consequence', $.block),
       optional(field("alternative", $.else_clause))
     ),
@@ -1238,13 +1241,13 @@ module.exports = grammar({
 
     match_pattern: $ => seq(
       $._pattern,
-      optional(seq('if', field('condition', $._conditions)))
+      optional(seq('if', field('condition', $._condition)))
     ),
 
     while_expression: $ => seq(
       optional(seq($.loop_label, ':')),
       'while',
-      field('condition', $._conditions),
+      field('condition', $._condition),
       field('body', $.block)
     ),
 

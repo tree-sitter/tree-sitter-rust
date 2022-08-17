@@ -484,6 +484,10 @@ fn main() {
 
 let y = if x == 5 { 10 } else { 15 };
 
+if foo && bar {}
+
+if foo && bar || baz {}
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -515,7 +519,21 @@ let y = if x == 5 { 10 } else { 15 };
         (integer_literal))
       alternative: (else_clause
         (block
-          (integer_literal))))))
+          (integer_literal)))))
+  (expression_statement
+    (if_expression
+      condition: (binary_expression
+        left: (identifier)
+        right: (identifier))
+      consequence: (block)))
+  (expression_statement
+    (if_expression
+      condition: (binary_expression
+        left: (binary_expression
+          left: (identifier)
+          right: (identifier))
+        right: (identifier))
+      consequence: (block))))
 
 ================================================================================
 If let expressions
@@ -526,6 +544,10 @@ if let ("Bacon", b) = dish {
 
 if let Some("chained") = a && b && let (C, D) = e {
 }
+
+if foo && let bar = || baz && quux {}
+
+if a && let b = || c || d && e {}
 
 --------------------------------------------------------------------------------
 
@@ -540,17 +562,44 @@ if let Some("chained") = a && b && let (C, D) = e {
       consequence: (block)))
   (expression_statement
     (if_expression
-      condition: (let_condition
-        pattern: (tuple_struct_pattern
-          type: (identifier)
-          (string_literal))
-        value: (identifier))
-      condition: (identifier)
-      condition: (let_condition
-        pattern: (tuple_pattern
-          (identifier)
-          (identifier))
-        value: (identifier))
+      condition: (let_chain
+        condition: (let_condition
+          pattern: (tuple_struct_pattern
+            type: (identifier)
+            (string_literal))
+          value: (identifier))
+        condition: (identifier)
+        condition: (let_condition
+          pattern: (tuple_pattern
+            (identifier)
+            (identifier))
+          value: (identifier)))
+      consequence: (block)))
+  (expression_statement
+    (if_expression
+      condition: (let_chain
+        condition: (identifier)
+        condition: (let_condition
+          pattern: (identifier)
+          value: (closure_expression
+            parameters: (closure_parameters)
+            body: (binary_expression
+              left: (identifier)
+              right: (identifier)))))
+      consequence: (block)))
+  (expression_statement
+    (if_expression
+      condition: (let_chain
+        condition: (identifier)
+        condition: (let_condition
+          pattern: (identifier)
+          value: (closure_expression
+            parameters: (closure_parameters)
+            body: (binary_expression
+              left: (identifier)
+              right: (binary_expression
+                left: (identifier)
+                right: (identifier))))))
       consequence: (block))))
 
 ================================================================================
@@ -675,17 +724,18 @@ let msg = match x {
         (match_arm
           pattern: (match_pattern
             (identifier)
-            condition: (let_condition
-              pattern: (tuple_struct_pattern
-                type: (identifier)
-                (identifier))
-              value: (identifier))
-            condition: (identifier)
-            condition: (let_condition
-              pattern: (tuple_struct_pattern
-                type: (identifier)
-                (identifier))
-              value: (identifier)))
+            condition: (let_chain
+              condition: (let_condition
+                pattern: (tuple_struct_pattern
+                  type: (identifier)
+                  (identifier))
+                value: (identifier))
+              condition: (identifier)
+              condition: (let_condition
+                pattern: (tuple_struct_pattern
+                  type: (identifier)
+                  (identifier))
+                value: (identifier))))
           value: (string_literal))
         (match_arm
           pattern: (match_pattern)

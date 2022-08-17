@@ -2269,15 +2269,15 @@
         ]
       },
       "condition": {
-        "multiple": true,
+        "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "&&",
-            "named": false
+            "type": "_expression",
+            "named": true
           },
           {
-            "type": "_expression",
+            "type": "let_chain",
             "named": true
           },
           {
@@ -2394,6 +2394,26 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "let_chain",
+    "named": true,
+    "fields": {
+      "condition": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "_expression",
+            "named": true
+          },
+          {
+            "type": "let_condition",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -2688,15 +2708,15 @@
     "named": true,
     "fields": {
       "condition": {
-        "multiple": true,
+        "multiple": false,
         "required": false,
         "types": [
           {
-            "type": "&&",
-            "named": false
+            "type": "_expression",
+            "named": true
           },
           {
-            "type": "_expression",
+            "type": "let_chain",
             "named": true
           },
           {
@@ -4680,15 +4700,15 @@
         ]
       },
       "condition": {
-        "multiple": true,
+        "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "&&",
-            "named": false
+            "type": "_expression",
+            "named": true
           },
           {
-            "type": "_expression",
+            "type": "let_chain",
             "named": true
           },
           {
