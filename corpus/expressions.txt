@@ -563,13 +563,13 @@ if a && let b = || c || d && e {}
   (expression_statement
     (if_expression
       condition: (let_chain
-        condition: (let_condition
+        (let_condition
           pattern: (tuple_struct_pattern
             type: (identifier)
             (string_literal))
           value: (identifier))
-        condition: (identifier)
-        condition: (let_condition
+        (identifier)
+        (let_condition
           pattern: (tuple_pattern
             (identifier)
             (identifier))
@@ -578,8 +578,8 @@ if a && let b = || c || d && e {}
   (expression_statement
     (if_expression
       condition: (let_chain
-        condition: (identifier)
-        condition: (let_condition
+        (identifier)
+        (let_condition
           pattern: (identifier)
           value: (closure_expression
             parameters: (closure_parameters)
@@ -590,8 +590,8 @@ if a && let b = || c || d && e {}
   (expression_statement
     (if_expression
       condition: (let_chain
-        condition: (identifier)
-        condition: (let_condition
+        (identifier)
+        (let_condition
           pattern: (identifier)
           value: (closure_expression
             parameters: (closure_parameters)
@@ -725,13 +725,13 @@ let msg = match x {
           pattern: (match_pattern
             (identifier)
             condition: (let_chain
-              condition: (let_condition
+              (let_condition
                 pattern: (tuple_struct_pattern
                   type: (identifier)
                   (identifier))
                 value: (identifier))
-              condition: (identifier)
-              condition: (let_condition
+              (identifier)
+              (let_condition
                 pattern: (tuple_struct_pattern
                   type: (identifier)
                   (identifier))

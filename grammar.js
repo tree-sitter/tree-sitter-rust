@@ -1180,10 +1180,10 @@ module.exports = grammar({
       field('value', prec.left(PREC.and, $._expression))
     ),
 
-    let_chain: $ => sepBy1('&&', field('condition', choice(
+    let_chain: $ => sepBy1('&&', choice(
       $.let_condition,
       prec.left(PREC.and, $._expression)
-    ))),
+    )),
 
     _condition: $ => choice(
       prec.dynamic(1, $._expression),
