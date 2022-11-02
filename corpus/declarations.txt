@@ -432,6 +432,68 @@ let u32: str = "";
     (string_literal)))
 
 ================================================================================
+let-else Statements
+================================================================================
+
+let Foo::Bar {
+    texts,
+    values,
+} = foo().bar().await? else {
+    return Err(index)
+};
+
+let Some(x) = y else {
+    let None = z else {
+        foo();
+        break;
+    };
+    continue;
+};
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (let_declaration
+    (struct_pattern
+      (scoped_type_identifier
+        (identifier)
+        (type_identifier))
+      (field_pattern
+        (shorthand_field_identifier))
+      (field_pattern
+        (shorthand_field_identifier)))
+      (try_expression
+        (await_expression
+          (call_expression
+            (field_expression
+              (call_expression
+                (identifier)
+                (arguments))
+              (field_identifier))
+            (arguments))))
+        (block
+          (return_expression
+            (call_expression
+              (identifier)
+              (arguments (identifier))))))
+  (let_declaration
+    (tuple_struct_pattern
+      (identifier)
+      (identifier))
+    (identifier)
+    (block
+      (let_declaration
+        (identifier)
+        (identifier)
+        (block
+          (expression_statement
+            (call_expression
+              (identifier)
+              (arguments)))
+          (expression_statement (break_expression))))
+    (expression_statement (continue_expression)))))
+
+================================================================================
 Structs
 ================================================================================
 
