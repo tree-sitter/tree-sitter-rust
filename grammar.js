@@ -125,6 +125,8 @@ module.exports = grammar({
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
     [$.type_parameters, $.for_lifetimes],
+    [$.if_expression],
+    [$.if_let_expression],
   ],
 
   word: $ => $.identifier,
@@ -632,6 +634,10 @@ module.exports = grammar({
       optional(seq(
         '=',
         field('value', $._expression)
+      )),
+      optional(seq(
+        'else',
+        field('let_else_block', $.block)
       )),
       ';'
     ),
