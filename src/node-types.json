@@ -2458,7 +2458,7 @@
     "type": "let_declaration",
     "named": true,
     "fields": {
-      "let_else_block": {
+      "alternative": {
         "multiple": false,
         "required": false,
         "types": [
