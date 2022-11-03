@@ -636,7 +636,7 @@
     }
   },
   {
-    "type": "attr_item",
+    "type": "attribute",
     "named": true,
     "fields": {
       "arguments": {
@@ -700,11 +700,7 @@
       "required": true,
       "types": [
         {
-          "type": "attr_item",
-          "named": true
-        },
-        {
-          "type": "meta_item",
+          "type": "attribute",
           "named": true
         }
       ]
@@ -2386,11 +2382,7 @@
       "required": true,
       "types": [
         {
-          "type": "attr_item",
-          "named": true
-        },
-        {
-          "type": "meta_item",
+          "type": "attribute",
           "named": true
         }
       ]
@@ -2445,6 +2437,16 @@
     "type": "let_declaration",
     "named": true,
     "fields": {
+      "alternative": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          }
+        ]
+      },
       "pattern": {
         "multiple": false,
         "required": true,
@@ -2731,81 +2733,6 @@
       "types": [
         {
           "type": "_pattern",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "meta_arguments",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "_literal",
-          "named": true
-        },
-        {
-          "type": "meta_item",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "meta_item",
-    "named": true,
-    "fields": {
-      "arguments": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "meta_arguments",
-            "named": true
-          }
-        ]
-      },
-      "value": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "_expression",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "crate",
-          "named": true
-        },
-        {
-          "type": "identifier",
-          "named": true
-        },
-        {
-          "type": "metavariable",
-          "named": true
-        },
-        {
-          "type": "scoped_identifier",
-          "named": true
-        },
-        {
-          "type": "self",
-          "named": true
-        },
-        {
-          "type": "super",
           "named": true
         }
       ]
