@@ -77,7 +77,6 @@ module.exports = grammar({
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
     [$.type_parameters, $.for_lifetimes],
-    [$._condition, $.let_chain],
     [$.binary_expression, $.let_chain],
   ],
 
@@ -1108,14 +1107,14 @@ module.exports = grammar({
       field('value', prec.left(PREC.and, $._expression))
     ),
 
-    let_chain: $ => sepBy1('&&', choice(
+    let_chain: $ => sepBy2('&&', choice(
       $.let_condition,
       prec.left(PREC.and, $._expression)
     )),
 
     _condition: $ => choice(
       prec.dynamic(1, $._expression),
-      prec.dynamic(1, $.let_condition),
+      $.let_condition,
       $.let_chain
     ),
 
@@ -1475,6 +1474,10 @@ module.exports = grammar({
     metavariable: $ => /\$[a-zA-Z_]\w*/
   }
 })
+
+function sepBy2(sep, rule) {
+  return seq(rule, repeat1(seq(sep, rule)))
+}
 
 function sepBy1(sep, rule) {
   return seq(rule, repeat(seq(sep, rule)))

@@ -6409,7 +6409,7 @@
           ]
         },
         {
-          "type": "REPEAT",
+          "type": "REPEAT1",
           "content": {
             "type": "SEQ",
             "members": [
@@ -6451,12 +6451,8 @@
           }
         },
         {
-          "type": "PREC_DYNAMIC",
-          "value": 1,
-          "content": {
-            "type": "SYMBOL",
-            "name": "let_condition"
-          }
+          "type": "SYMBOL",
+          "name": "let_condition"
         },
         {
           "type": "SYMBOL",
@@ -8448,10 +8444,6 @@
     [
       "type_parameters",
       "for_lifetimes"
-    ],
-    [
-      "_condition",
-      "let_chain"
     ],
     [
       "binary_expression",
