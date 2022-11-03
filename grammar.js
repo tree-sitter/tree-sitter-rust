@@ -77,7 +77,6 @@ module.exports = grammar({
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
     [$.type_parameters, $.for_lifetimes],
-    [$.binary_expression, $.let_chain],
   ],
 
   word: $ => $.identifier,
@@ -1107,15 +1106,18 @@ module.exports = grammar({
       field('value', prec.left(PREC.and, $._expression))
     ),
 
-    let_chain: $ => sepBy2('&&', choice(
-      $.let_condition,
-      prec.left(PREC.and, $._expression)
+    _let_chain: $ => prec.left(PREC.and, choice(
+      seq($._let_chain, '&&', $.let_condition),
+      seq($._let_chain, '&&', $._expression),
+      seq($.let_condition, '&&', $._expression),
+      seq($.let_condition, '&&', $.let_condition),
+      seq($._expression, '&&', $.let_condition),
     )),
 
     _condition: $ => choice(
-      prec.dynamic(1, $._expression),
+      $._expression,
       $.let_condition,
-      $.let_chain
+      alias($._let_chain, $.let_chain),
     ),
 
     else_clause: $ => seq(

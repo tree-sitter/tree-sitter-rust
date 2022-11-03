@@ -541,6 +541,37 @@ if foo && bar || baz {}
       consequence: (block))))
 
 ================================================================================
+Basic if let expressions
+================================================================================
+
+if let Some(a) = b
+    && c
+    && d
+    && let Some(e) = f
+{
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (if_expression
+      condition: (let_chain
+        (let_condition
+          pattern: (tuple_struct_pattern
+            type: (identifier)
+            (identifier))
+          value: (identifier))
+        (identifier)
+        (identifier)
+        (let_condition
+          pattern: (tuple_struct_pattern
+            type: (identifier)
+            (identifier))
+          value: (identifier)))
+      consequence: (block))))
+
+================================================================================
 If let expressions
 ================================================================================
 
