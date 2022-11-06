@@ -1406,8 +1406,10 @@ module.exports = grammar({
     string_literal: $ => seq(
       alias(/b?"/, '"'),
       repeat(choice(
+        $.interpolation,
+        $._escape_interpolation,
         $.escape_sequence,
-        $._string_content
+        $._string_content,
       )),
       token.immediate('"')
     ),
@@ -1473,7 +1475,22 @@ module.exports = grammar({
     super: $ => 'super',
     crate: $ => 'crate',
 
-    metavariable: $ => /\$[a-zA-Z_]\w*/
+    metavariable: $ => /\$[a-zA-Z_]\w*/,
+
+    interpolation:
+      $ => seq(
+        '{',
+        optional(choice($.integer_literal, $.identifier)),
+        optional($.format_specifier),
+        '}'
+      ),
+
+    _escape_interpolation: _ => choice('{{', '}}'),
+
+    format_specifier: _ => seq(
+      ':',
+      optional(repeat(token(/[^{}\n]+/)))
+    ),
   }
 })
 

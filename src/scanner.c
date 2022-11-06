@@ -27,7 +27,7 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
   if (valid_symbols[STRING_CONTENT] && !valid_symbols[FLOAT_LITERAL]) {
     bool has_content = false;
     for (;;) {
-      if (lexer->lookahead == '\"' || lexer->lookahead == '\\') {
+      if (lexer->lookahead == '\"' || lexer->lookahead == '\\' || lexer->lookahead == '{') {
         break;
       } else if (lexer->lookahead == 0) {
         return false;

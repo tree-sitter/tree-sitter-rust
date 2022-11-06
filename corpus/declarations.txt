@@ -124,7 +124,8 @@ fn accumulate(self) -> Machine<{State::Accumulate}> {}
         (macro_invocation
           macro: (identifier)
           (token_tree
-            (string_literal)
+            (string_literal
+              (interpolation))
             (identifier))))))
   (function_item
     name: (identifier)
@@ -1209,7 +1210,9 @@ pub enum Error {
         (attribute
           (identifier)
           (token_tree
-            (string_literal)
+            (string_literal
+              (interpolation
+                (format_specifier)))
             (identifier)
             (token_tree
               (integer_literal)))))
@@ -1221,7 +1224,11 @@ pub enum Error {
         (attribute
           (identifier)
           (token_tree
-            (string_literal)
+            (string_literal
+              (interpolation
+                (identifier))
+              (interpolation)
+              (interpolation))
             (identifier)
             (identifier)
             (identifier)

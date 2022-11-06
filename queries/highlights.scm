@@ -153,3 +153,7 @@
 "*" @operator
 "&" @operator
 "'" @operator
+
+(interpolation
+  "{" @punctuation.special
+  "}" @punctuation.special) @embedded

@@ -191,3 +191,135 @@ false;
     (boolean_literal))
   (expression_statement
     (boolean_literal)))
+
+================================================================================
+Format strings
+================================================================================
+
+"{}";
+"{a}";
+"a {a}";
+"a {{}}";
+"a {b}}}";
+"a {{{b}";
+"a {{b}}";
+"a {{{b}}}";
+"a {aaaa}";
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (string_literal
+      (interpolation)))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier))))
+  (expression_statement
+    (string_literal))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier))))
+  (expression_statement
+    (string_literal))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier)))))
+
+================================================================================
+Format strings with format specifiers
+================================================================================
+"{:}";
+"{:?}";
+"{:#?}";
+"{a:?}";
+"{a:#?}";
+"{0:#?}";
+"{1} {0}";
+"{:b}";
+"{a:b}";
+"{a:#b}";
+"{a:#032b}";
+"{a:10.3b}";
+"{a:e}";
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (string_literal
+      (interpolation
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier)
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier)
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (integer_literal)
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (integer_literal))
+      (interpolation
+        (integer_literal))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier)
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier)
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier)
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier)
+        (format_specifier))))
+  (expression_statement
+    (string_literal
+      (interpolation
+        (identifier)
+        (format_specifier)))))
