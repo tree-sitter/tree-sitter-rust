@@ -6,6 +6,9 @@
 (enum_item
     name: (type_identifier) @name) @definition.class
 
+(enum_variant
+    name: (identifier) @name) @definition.class
+
 (union_item
     name: (type_identifier) @name) @definition.class
 
