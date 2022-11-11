@@ -197,6 +197,8 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
             }
           }
           break;
+        case '\0':
+          return false;
         default:
           advance(lexer);
       }
