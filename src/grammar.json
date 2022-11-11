@@ -8303,8 +8303,17 @@
                 ]
               },
               {
-                "type": "STRING",
-                "value": "\n"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "\r\n"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "\n"
+                  }
+                ]
               }
             ]
           }
