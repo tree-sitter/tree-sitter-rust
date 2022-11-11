@@ -39,13 +39,15 @@ const primitive_types = numeric_types.concat(['bool', 'str', 'char'])
 module.exports = grammar({
   name: 'rust',
 
-  extras: $ => [/\s/, $.line_comment, $.block_comment],
+  extras: $ => [/\s/, $.line_doc_comment, $.line_comment, $.block_comment, $.block_doc_comment],
 
   externals: $ => [
     $._string_content,
     $.raw_string_literal,
     $.float_literal,
-    $.block_comment,
+    $._block_comment_start,
+    $._block_doc_comment_start,
+    $._block_comment_content
   ],
 
   supertypes: $ => [
@@ -1440,14 +1442,28 @@ module.exports = grammar({
 
     boolean_literal: $ => choice('true', 'false'),
 
+    doc_comment: $ => choice(
+        $.line_doc_comment,
+        $.block_doc_comment
+    ),
+
+    doc_content: $ => token.immediate(/.*/),
+
+    line_doc_comment: $ => choice(
+        token(seq('//', choice('/', '!'), '\n')),
+        seq('//', token.immediate(choice('/', '!')), $.doc_content)
+    ),
+
+    line_comment: $ => token(choice(seq('//', /[^\/!].*/), seq('////', /.*/))),
+
+    block_comment: $ => seq($._block_comment_start, $._block_comment_content, '*/'),
+    block_doc_comment: $ => seq($._block_doc_comment_start, alias($._block_comment_content, $.doc_content), '*/'),
+
     comment: $ => choice(
       $.line_comment,
       $.block_comment
     ),
 
-    line_comment: $ => token(seq(
-      '//', /.*/
-    )),
 
     _path: $ => choice(
       $.self,

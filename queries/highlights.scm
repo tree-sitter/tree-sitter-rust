@@ -69,6 +69,8 @@
 
 (line_comment) @comment
 (block_comment) @comment
+(line_doc_comment) @comment
+(block_doc_comment) @comment
 
 "(" @punctuation.bracket
 ")" @punctuation.bracket

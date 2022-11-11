@@ -5,7 +5,9 @@ enum TokenType {
   STRING_CONTENT,
   RAW_STRING_LITERAL,
   FLOAT_LITERAL,
-  BLOCK_COMMENT,
+  BLOCK_COMMENT_START,
+  BLOCK_DOC_COMMENT_START,
+  BLOCK_COMMENT_CONTENT,
 };
 
 void *tree_sitter_rust_external_scanner_create() { return NULL; }
@@ -141,43 +143,62 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
     return true;
   }
 
-  if (lexer->lookahead == '/') {
-    advance(lexer);
-    if (lexer->lookahead != '*') return false;
-    advance(lexer);
+  if (!valid_symbols[BLOCK_COMMENT_CONTENT] &&
+      (valid_symbols[BLOCK_COMMENT_START] ||
+       valid_symbols[BLOCK_DOC_COMMENT_START])) {
+    if (lexer->lookahead == '/') {
+      advance(lexer);
+      if (lexer->lookahead != '*') {
+        return false;
+      }
+      advance(lexer);
+      lexer->mark_end(lexer);
 
-    bool after_star = false;
-    unsigned nesting_depth = 1;
+      if (lexer->lookahead == '!') {
+        advance(lexer);
+        lexer->result_symbol = BLOCK_DOC_COMMENT_START;
+        lexer->mark_end(lexer);
+        return true;
+      }
+
+      if (lexer->lookahead == '*') {
+        advance(lexer);
+        if (lexer->lookahead != '*' && lexer->lookahead != '/') {
+          lexer->mark_end(lexer);
+          lexer->result_symbol = BLOCK_DOC_COMMENT_START;
+          lexer->mark_end(lexer);
+          return true;
+        }
+      }
+      lexer->result_symbol = BLOCK_COMMENT_START;
+      return true;
+    }
+  }
+
+  if (valid_symbols[BLOCK_COMMENT_CONTENT]) {
+    unsigned depth = 1;
     for (;;) {
       switch (lexer->lookahead) {
-        case '\0':
-          return false;
-        case '*':
-          advance(lexer);
-          after_star = true;
-          break;
         case '/':
-          if (after_star) {
+          advance(lexer);
+          if (lexer->lookahead == '*') {
             advance(lexer);
-            after_star = false;
-            nesting_depth--;
-            if (nesting_depth == 0) {
-              lexer->result_symbol = BLOCK_COMMENT;
+            depth++;
+          }
+          break;
+        case '*':
+          lexer->mark_end(lexer);
+          advance(lexer);
+          if (lexer->lookahead == '/') {
+            advance(lexer);
+            if (--depth == 0) {
+              lexer->result_symbol = BLOCK_COMMENT_CONTENT;
               return true;
-            }
-          } else {
-            advance(lexer);
-            after_star = false;
-            if (lexer->lookahead == '*') {
-              nesting_depth++;
-              advance(lexer);
             }
           }
           break;
         default:
           advance(lexer);
-          after_star = false;
-          break;
       }
     }
   }
