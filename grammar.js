@@ -1447,7 +1447,7 @@ module.exports = grammar({
         $.block_doc_comment
     ),
 
-    doc_content: $ => token.immediate(/.*/),
+    doc_content: $ => token.immediate(/.*\r?\n/),
 
     line_doc_comment: $ => choice(
         token(seq('//', choice('/', '!'), choice('\r\n', '\n'))),

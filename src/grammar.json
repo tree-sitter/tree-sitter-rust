@@ -8274,7 +8274,7 @@
       "type": "IMMEDIATE_TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": ".*"
+        "value": ".*\\r?\\n"
       }
     },
     "line_doc_comment": {
