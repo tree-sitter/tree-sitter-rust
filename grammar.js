@@ -1096,8 +1096,28 @@ module.exports = grammar({
       'if',
       field('condition', $._condition),
       field('consequence', $.block),
-      optional(field("alternative", $.else_clause))
+      repeat($.else_clause),
     )),
+
+    _else_if: $ => prec.right(seq(
+      'if',
+      field('condition', $._condition),
+      field('consequence', $.block),
+    )),
+
+    else_clause: $ => seq(
+      'else',
+      choice(
+        $.block,
+        $._else_if
+      )
+    ),
+
+    _condition: $ => choice(
+      $._expression,
+      $.let_condition,
+      alias($._let_chain, $.let_chain),
+    ),
 
     let_condition: $ => seq(
       'let',
@@ -1113,20 +1133,6 @@ module.exports = grammar({
       seq($.let_condition, '&&', $.let_condition),
       seq($._expression, '&&', $.let_condition),
     )),
-
-    _condition: $ => choice(
-      $._expression,
-      $.let_condition,
-      alias($._let_chain, $.let_chain),
-    ),
-
-    else_clause: $ => seq(
-      'else',
-      choice(
-        $.block,
-        $.if_expression
-      )
-    ),
 
     match_expression: $ => seq(
       'match',
