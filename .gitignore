@@ -5,4 +5,5 @@ build
 package-lock.json
 /examples
 !examples/ast.rs
+!examples/weird-exprs.rs
 /target/
