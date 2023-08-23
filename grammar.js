@@ -778,6 +778,7 @@ module.exports = grammar({
     generic_type: $ => prec(1, seq(
       field('type', choice(
         $._type_identifier,
+        $._reserved_identifier,
         $.scoped_type_identifier,
       )),
       field('type_arguments', $.type_arguments),
@@ -1173,7 +1174,7 @@ module.exports = grammar({
       '}',
     ),
 
-    match_arm: $ => seq(
+    match_arm: $ => prec.right(seq(
       repeat($.attribute_item),
       field('pattern', $.match_pattern),
       '=>',
@@ -1181,7 +1182,7 @@ module.exports = grammar({
         seq(field('value', $._expression), ','),
         field('value', prec(1, $._expression_ending_with_block)),
       ),
-    ),
+    )),
 
     last_match_arm: $ => seq(
       repeat($.attribute_item),
@@ -1192,7 +1193,7 @@ module.exports = grammar({
     ),
 
     match_pattern: $ => seq(
-      $._pattern,
+      choice($._pattern, alias($.closure_expression, $.closure_pattern)),
       optional(seq('if', field('condition', $._condition))),
     ),
 
@@ -1224,6 +1225,7 @@ module.exports = grammar({
     ),
 
     closure_expression: $ => prec(PREC.closure, seq(
+      optional('static'),
       optional('move'),
       field('parameters', $.closure_parameters),
       choice(
@@ -1231,7 +1233,7 @@ module.exports = grammar({
           optional(seq('->', field('return_type', $._type))),
           field('body', $.block),
         ),
-        field('body', $._expression),
+        field('body', choice($._expression, '_')),
       ),
     )),
 
@@ -1311,7 +1313,7 @@ module.exports = grammar({
 
     tuple_pattern: $ => seq(
       '(',
-      sepBy(',', $._pattern),
+      sepBy(',', choice($._pattern, $.closure_expression)),
       optional(','),
       ')',
     ),
