@@ -1641,6 +1641,32 @@ pub trait Graph {
         (type_identifier)))))
 
 ================================================================================
+Associated Type Definitions
+================================================================================
+
+impl Trait for T {
+    type Associated = T where 'static: 'static;
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (impl_item
+    (type_identifier)
+    (type_identifier)
+    (declaration_list
+      (type_item
+        (type_identifier)
+        (type_identifier)
+        (where_clause
+          (where_predicate
+            (lifetime
+              (identifier))
+            (trait_bounds
+              (lifetime
+                (identifier)))))))))
+
+================================================================================
 Generic Associated Types
 ================================================================================
 
