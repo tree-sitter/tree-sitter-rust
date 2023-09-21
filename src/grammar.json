@@ -4096,7 +4096,7 @@
         },
         {
           "type": "PREC",
-          "value": 14,
+          "value": 15,
           "content": {
             "type": "SEQ",
             "members": [
@@ -5298,7 +5298,7 @@
     },
     "range_expression": {
       "type": "PREC_LEFT",
-      "value": 15,
+      "value": 1,
       "content": {
         "type": "CHOICE",
         "members": [
@@ -5396,17 +5396,21 @@
       }
     },
     "try_expression": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_expression"
-        },
-        {
-          "type": "STRING",
-          "value": "?"
-        }
-      ]
+      "type": "PREC",
+      "value": 13,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "_expression"
+          },
+          {
+            "type": "STRING",
+            "value": "?"
+          }
+        ]
+      }
     },
     "reference_expression": {
       "type": "PREC",
@@ -5993,7 +5997,7 @@
     },
     "call_expression": {
       "type": "PREC",
-      "value": 14,
+      "value": 15,
       "content": {
         "type": "SEQ",
         "members": [
@@ -7307,7 +7311,7 @@
     },
     "index_expression": {
       "type": "PREC",
-      "value": 14,
+      "value": 15,
       "content": {
         "type": "SEQ",
         "members": [
@@ -7332,7 +7336,7 @@
     },
     "await_expression": {
       "type": "PREC",
-      "value": 13,
+      "value": 14,
       "content": {
         "type": "SEQ",
         "members": [
@@ -7353,7 +7357,7 @@
     },
     "field_expression": {
       "type": "PREC",
-      "value": 13,
+      "value": 14,
       "content": {
         "type": "SEQ",
         "members": [
