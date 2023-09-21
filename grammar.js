@@ -418,6 +418,7 @@ module.exports = grammar({
       field('type_parameters', optional($.type_parameters)),
       '=',
       field('type', $._type),
+      optional($.where_clause),
       ';',
     ),
 
