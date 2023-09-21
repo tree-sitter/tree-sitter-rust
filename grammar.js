@@ -12,10 +12,11 @@
 /// <reference types="tree-sitter-cli/dsl" />
 // @ts-check
 
+// https://doc.rust-lang.org/reference/expressions.html#expression-precedence
 const PREC = {
-  range: 15,
-  call: 14,
-  field: 13,
+  call: 15,
+  field: 14,
+  try: 13,
   unary: 12,
   cast: 11,
   multiplicative: 10,
@@ -27,6 +28,7 @@ const PREC = {
   comparative: 4,
   and: 3,
   or: 2,
+  range: 1,
   assign: 0,
   closure: -1,
 };
@@ -979,10 +981,10 @@ module.exports = grammar({
       $._expression,
     )),
 
-    try_expression: $ => seq(
+    try_expression: $ => prec(PREC.try, seq(
       $._expression,
       '?',
-    ),
+    )),
 
     reference_expression: $ => prec(PREC.unary, seq(
       '&',

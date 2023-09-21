@@ -85,6 +85,7 @@ Try expressions
 ================================================================================
 
 a.unwrap()?;
+&a?;
 
 --------------------------------------------------------------------------------
 
@@ -95,7 +96,11 @@ a.unwrap()?;
         (field_expression
           (identifier)
           (field_identifier))
-        (arguments)))))
+        (arguments))))
+  (expression_statement
+    (reference_expression
+      (try_expression
+        (identifier)))))
 
 ================================================================================
 Binary operator expressions
