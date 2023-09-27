@@ -7,3 +7,4 @@ package-lock.json
 !examples/ast.rs
 !examples/weird-exprs.rs
 /target/
+/fuzzer/

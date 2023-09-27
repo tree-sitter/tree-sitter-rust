@@ -74,7 +74,10 @@ module.exports = grammar({
     $._string_content,
     $.raw_string_literal,
     $.float_literal,
-    $.block_comment,
+    $._outer_block_doc_comment,
+    $._inner_block_doc_comment,
+    '*/',
+    $._error_sentinel,
   ],
 
   supertypes: $ => [
@@ -1497,9 +1500,42 @@ module.exports = grammar({
       $.block_comment,
     ),
 
-    line_comment: _ => token(seq(
-      '//', /.*/,
-    )),
+    line_comment: $ => seq(
+      // All line comments start with two //
+      '//',
+      // Then are followed by:
+      // - 2 or more slashes making it a regular comment
+      // - 1 slash or 1 or more bang operators making it a doc comment
+      // - or just content for the comment
+      choice(
+        // A tricky edge case where what looks like a doc comment is not
+        seq(token.immediate(prec(2, /\/\//)), /.*/),
+        // A regular doc comment
+        seq(field('doc', alias($._line_doc_comment, $.doc_comment)), /.*/),
+        token.immediate(prec(1, /.*/)),
+      ),
+    ),
+
+    _line_doc_comment: $ => choice(
+      // An outer line doc comment applies to the element that it is outside of
+      field('outer', alias($._outer_line_doc_comment, $.outer_doc_comment)),
+      // An inner line doc comment applies to the element it is inside of
+      field('inner', alias($._inner_line_doc_comment, $.inner_doc_comment)),
+    ),
+
+    _inner_line_doc_comment: _ => token.immediate(prec(2, '!')),
+    _outer_line_doc_comment: _ => token.immediate(prec(2, /\/[^\/]/)),
+
+    block_comment: $ => seq(
+      '/*',
+      optional(field('doc', alias($._block_doc_comment, $.doc_comment))),
+      '*/',
+    ),
+
+    _block_doc_comment: $ => choice(
+      field('inner', alias($._inner_block_doc_comment, $.inner_doc_comment)),
+      field('outer', alias($._outer_block_doc_comment, $.outer_doc_comment)),
+    ),
 
     _path: $ => choice(
       $.self,

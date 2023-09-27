@@ -2,185 +2,317 @@
 #include <wctype.h>
 
 enum TokenType {
-  STRING_CONTENT,
-  RAW_STRING_LITERAL,
-  FLOAT_LITERAL,
-  BLOCK_COMMENT,
+    STRING_CONTENT,
+    RAW_STRING_LITERAL,
+    FLOAT_LITERAL,
+    BLOCK_OUTER_DOC,
+    BLOCK_INNER_DOC,
+    BLOCK_COMMENT_END,
+    ERROR_SENTINEL
 };
 
 void *tree_sitter_rust_external_scanner_create() { return NULL; }
+
 void tree_sitter_rust_external_scanner_destroy(void *p) {}
+
 void tree_sitter_rust_external_scanner_reset(void *p) {}
+
 unsigned tree_sitter_rust_external_scanner_serialize(void *p, char *buffer) { return 0; }
+
 void tree_sitter_rust_external_scanner_deserialize(void *p, const char *b, unsigned n) {}
 
-static void advance(TSLexer *lexer) {
-  lexer->advance(lexer, false);
-}
+static inline bool is_num_char(int32_t c) { return c == '_' || iswdigit(c); }
 
-static bool is_num_char(int32_t c) {
-  return c == '_' || iswdigit(c);
-}
+static inline void advance(TSLexer *lexer) { lexer->advance(lexer, false); }
 
-bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
-                                            const bool *valid_symbols) {
-  if (valid_symbols[STRING_CONTENT] && !valid_symbols[FLOAT_LITERAL]) {
+static inline void skip(TSLexer *lexer) { lexer->advance(lexer, true); }
+
+static inline bool process_string(TSLexer *lexer) {
     bool has_content = false;
     for (;;) {
-      if (lexer->lookahead == '\"' || lexer->lookahead == '\\') {
-        break;
-      } else if (lexer->lookahead == 0) {
-        return false;
-      }
-      has_content = true;
-      advance(lexer);
+        if (lexer->lookahead == '\"' || lexer->lookahead == '\\') {
+            break;
+        }
+        if (lexer->eof(lexer)) {
+            return false;
+        }
+        has_content = true;
+        advance(lexer);
     }
     lexer->result_symbol = STRING_CONTENT;
+    lexer->mark_end(lexer);
     return has_content;
-  }
+}
 
-  while (iswspace(lexer->lookahead)) lexer->advance(lexer, true);
-
-  if (
-    valid_symbols[RAW_STRING_LITERAL] &&
-    (lexer->lookahead == 'r' || lexer->lookahead == 'b' || lexer->lookahead == 'c')
-  ) {
+static inline bool process_raw_string(TSLexer *lexer) {
     lexer->result_symbol = RAW_STRING_LITERAL;
-    if (lexer->lookahead == 'b' || lexer->lookahead == 'c') advance(lexer);
-    if (lexer->lookahead != 'r') return false;
+    if (lexer->lookahead == 'b' || lexer->lookahead == 'c') {
+        advance(lexer);
+    }
+    if (lexer->lookahead != 'r') {
+        return false;
+    }
     advance(lexer);
 
     unsigned opening_hash_count = 0;
     while (lexer->lookahead == '#') {
-      advance(lexer);
-      opening_hash_count++;
+        advance(lexer);
+        opening_hash_count++;
     }
 
-    if (lexer->lookahead != '"') return false;
+    if (lexer->lookahead != '"') {
+        return false;
+    }
     advance(lexer);
 
     for (;;) {
-      if (lexer->lookahead == 0) {
-        return false;
-      } else if (lexer->lookahead == '"') {
-        advance(lexer);
-        unsigned hash_count = 0;
-        while (lexer->lookahead == '#' && hash_count < opening_hash_count) {
-          advance(lexer);
-          hash_count++;
+        if (lexer->eof(lexer)) {
+            return false;
         }
-        if (hash_count == opening_hash_count) {
-          return true;
+        if (lexer->lookahead == '"') {
+            advance(lexer);
+            unsigned hash_count = 0;
+            while (lexer->lookahead == '#' && hash_count < opening_hash_count) {
+                advance(lexer);
+                hash_count++;
+            }
+            if (hash_count == opening_hash_count) {
+                lexer->mark_end(lexer);
+                return true;
+            }
+        } else {
+            advance(lexer);
         }
-      } else {
-        advance(lexer);
-      }
     }
-  }
+}
 
-  if (valid_symbols[FLOAT_LITERAL] && iswdigit(lexer->lookahead)) {
+static inline bool process_float_literal(TSLexer *lexer) {
     lexer->result_symbol = FLOAT_LITERAL;
 
     advance(lexer);
     while (is_num_char(lexer->lookahead)) {
-      advance(lexer);
+        advance(lexer);
     }
 
     bool has_fraction = false, has_exponent = false;
 
     if (lexer->lookahead == '.') {
-      has_fraction = true;
-      advance(lexer);
-      if (iswalpha(lexer->lookahead)) {
-          // The dot is followed by a letter: 1.max(2) => not a float but an integer
-          return false;
-      }
-
-      if (lexer->lookahead == '.') {
-        return false;
-      }
-      while (is_num_char(lexer->lookahead)) {
+        has_fraction = true;
         advance(lexer);
-      }
+        if (iswalpha(lexer->lookahead)) {
+            // The dot is followed by a letter: 1.max(2) => not a float but an integer
+            return false;
+        }
+
+        if (lexer->lookahead == '.') {
+            return false;
+        }
+        while (is_num_char(lexer->lookahead)) {
+            advance(lexer);
+        }
     }
 
     lexer->mark_end(lexer);
 
     if (lexer->lookahead == 'e' || lexer->lookahead == 'E') {
-      has_exponent = true;
-      advance(lexer);
-      if (lexer->lookahead == '+' || lexer->lookahead == '-') {
+        has_exponent = true;
         advance(lexer);
-      }
-      if (!is_num_char(lexer->lookahead)) {
-        return true;
-      }
-      advance(lexer);
-      while (is_num_char(lexer->lookahead)) {
+        if (lexer->lookahead == '+' || lexer->lookahead == '-') {
+            advance(lexer);
+        }
+        if (!is_num_char(lexer->lookahead)) {
+            return true;
+        }
         advance(lexer);
-      }
+        while (is_num_char(lexer->lookahead)) {
+            advance(lexer);
+        }
 
-      lexer->mark_end(lexer);
+        lexer->mark_end(lexer);
     }
 
-    if (!has_exponent && !has_fraction) return false;
+    if (!has_exponent && !has_fraction) {
+        return false;
+    }
 
     if (lexer->lookahead != 'u' && lexer->lookahead != 'i' && lexer->lookahead != 'f') {
-      return true;
+        return true;
     }
     advance(lexer);
     if (!iswdigit(lexer->lookahead)) {
-      return true;
+        return true;
     }
 
     while (iswdigit(lexer->lookahead)) {
-      advance(lexer);
+        advance(lexer);
     }
 
     lexer->mark_end(lexer);
     return true;
-  }
+}
 
-  if (lexer->lookahead == '/') {
-    advance(lexer);
-    if (lexer->lookahead != '*') return false;
-    advance(lexer);
+typedef enum {
+    LeftForwardSlash,
+    LeftAsterisk,
+    Continuing,
+} BlockCommentState;
 
-    bool after_star = false;
-    unsigned nesting_depth = 1;
-    for (;;) {
-      switch (lexer->lookahead) {
-        case '\0':
-          return false;
-        case '*':
-          advance(lexer);
-          after_star = true;
-          break;
-        case '/':
-          if (after_star) {
-            advance(lexer);
-            after_star = false;
-            nesting_depth--;
-            if (nesting_depth == 0) {
-              lexer->result_symbol = BLOCK_COMMENT;
-              return true;
-            }
-          } else {
-            advance(lexer);
-            after_star = false;
-            if (lexer->lookahead == '*') {
-              nesting_depth++;
-              advance(lexer);
-            }
-          }
-          break;
-        default:
-          advance(lexer);
-          after_star = false;
-          break;
-      }
+typedef struct {
+    BlockCommentState state;
+    unsigned nestingDepth;
+} BlockCommentProcessing;
+
+static inline void process_left_forward_slash(BlockCommentProcessing *processing, char current) {
+    if (current == '*') {
+        processing->nestingDepth += 1;
     }
-  }
+    processing->state = Continuing;
+};
 
-  return false;
+static inline void process_left_asterisk(BlockCommentProcessing *processing, char current) {
+    if (current == '*') {
+        processing->state = LeftAsterisk;
+        return;
+    }
+
+    if (current == '/') {
+        processing->nestingDepth -= 1;
+    }
+
+    processing->state = Continuing;
+}
+
+static inline void process_continuing(BlockCommentProcessing *processing, char current) {
+    switch (current) {
+        case '/':
+            processing->state = LeftForwardSlash;
+            break;
+        case '*':
+            processing->state = LeftAsterisk;
+            break;
+    }
+}
+
+static inline bool process_block_comment(TSLexer *lexer, const bool *valid_symbols) {
+    char first = (char)lexer->lookahead;
+    // The first character is stored so we can safely advance inside
+    // these if blocks. However, because we only store one, we can only
+    // safely advance 1 time. Since there's a chance that an advance could
+    // happen in one state, we must advance in all states to ensure that
+    // the program ends up in a sane state prior to processing the block
+    // comment if need be.
+    if (valid_symbols[BLOCK_INNER_DOC] && first == '!') {
+        lexer->result_symbol = BLOCK_INNER_DOC;
+        advance(lexer);
+        return true;
+    }
+    if (valid_symbols[BLOCK_OUTER_DOC] && first == '*') {
+        advance(lexer);
+        lexer->mark_end(lexer);
+        // If the next token is a / that means that it's an empty
+        // block comment and we should go to the BLOCK_COMMENT_END case
+        // If the next token is a * that means that this isn't a BLOCK_OUTER_DOC
+        // as BLOCK_OUTER_DOC's only have 2 * not 3 or more.
+        if (lexer->lookahead != '/' && lexer->lookahead != '*') {
+            lexer->result_symbol = BLOCK_OUTER_DOC;
+            return true;
+        }
+    } else {
+        advance(lexer);
+    }
+
+    if (valid_symbols[BLOCK_COMMENT_END]) {
+        BlockCommentProcessing processing = {Continuing, 1};
+        // Manually set the current state based on the first character
+        switch (first) {
+            case '*':
+                processing.state = LeftAsterisk;
+                break;
+            case '/':
+                processing.state = LeftForwardSlash;
+                break;
+            default:
+                processing.state = Continuing;
+                break;
+        }
+
+        // For the purposes of actually parsing rust code, this
+        // is incorrect as it considers an unterminated block comment
+        // to be an error. However, for the purposes of syntax highlighting
+        // this should be considered successful as otherwise you are not able
+        // to syntax highlight a block of code prior to closing the
+        // block comment
+        while (!lexer->eof(lexer) && processing.nestingDepth != 0) {
+            // Set first to the current lookahead as that is the second character
+            // as we force an advance in the above code when we are checking if we
+            // need to handle a block comment inner or outer doc comment signifier
+            // node
+            first = (char)lexer->lookahead;
+            switch (processing.state) {
+                case LeftForwardSlash:
+                    process_left_forward_slash(&processing, first);
+                    break;
+                case LeftAsterisk:
+                    process_left_asterisk(&processing, first);
+                    break;
+                case Continuing:
+                    process_continuing(&processing, first);
+                    break;
+                default:
+                    break;
+            }
+            advance(lexer);
+        }
+        lexer->mark_end(lexer);
+        lexer->result_symbol = BLOCK_COMMENT_END;
+        return true;
+    }
+
+    return false;
+}
+
+bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
+    // The documentation states that if the lexical analysis fails for some reason
+    // they will mark every state as valid and pass it to the external scanner
+    // However, we can't do anything to help them recover in that case so we
+    // should just fail.
+    /*
+      link: https://tree-sitter.github.io/tree-sitter/creating-parsers#external-scanners
+      If a syntax error is encountered during regular parsing, Tree-sitter’s
+      first action during error recovery will be to call the external scanner’s
+      scan function with all tokens marked valid. The scanner should detect this
+      case and handle it appropriately. One simple method of detection is to add
+      an unused token to the end of the externals array, for example
+
+      externals: $ => [$.token1, $.token2, $.error_sentinel],
+
+      then check whether that token is marked valid to determine whether
+      Tree-sitter is in error correction mode.
+    */
+    if (valid_symbols[ERROR_SENTINEL]) {
+        return false;
+    }
+
+    if (valid_symbols[BLOCK_COMMENT_END] || valid_symbols[BLOCK_INNER_DOC] || valid_symbols[BLOCK_OUTER_DOC]) {
+        return process_block_comment(lexer, valid_symbols);
+    }
+
+    if (valid_symbols[STRING_CONTENT] && !valid_symbols[FLOAT_LITERAL]) {
+        return process_string(lexer);
+    }
+
+    while (iswspace(lexer->lookahead)) {
+        skip(lexer);
+    }
+
+    if (valid_symbols[RAW_STRING_LITERAL] &&
+        (lexer->lookahead == 'r' || lexer->lookahead == 'b' || lexer->lookahead == 'c')) {
+        return process_raw_string(lexer);
+    }
+
+    if (valid_symbols[FLOAT_LITERAL] && iswdigit(lexer->lookahead)) {
+        return process_float_literal(lexer);
+    }
+
+    return false;
 }
