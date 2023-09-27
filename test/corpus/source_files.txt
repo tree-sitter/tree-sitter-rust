@@ -8,10 +8,23 @@ Block comments
 
 /* Comment with asterisks **/
 
+/** Outer block comment */
+
+
+/*! Inner block comment */
+/**/
+
 ----
 
 (source_file
   (block_comment)
+  (block_comment)
+  (block_comment
+    doc: (doc_comment
+      outer: (outer_doc_comment)))
+  (block_comment
+    doc: (doc_comment
+      inner: (inner_doc_comment)))
   (block_comment))
 
 ============================================
@@ -28,7 +41,8 @@ Nested block comments
 
 /****
   /****
-    nested with extra stars
+    nested with extra stars which makes it a regular block comment
+    and not a block doc comment
   ****/
 ****/
 
@@ -50,10 +64,123 @@ Line comments
 
 // Comment
 
+/// Outer line doc comment
+
+//! Inner line doc comment
+
 ----
 
 (source_file
+  (line_comment)
+  (line_comment
+    doc: (doc_comment
+      outer: (outer_doc_comment)))
+  (line_comment
+    doc: (doc_comment
+      inner: (inner_doc_comment))))
+
+====================================
+Line doc comments
+====================================
+//!  - Inner line doc
+//!! - Still an inner line doc (but with a bang at the beginning)
+
+//   - Only a comment
+///  - Outer line doc (exactly 3 slashes)
+//// - Only a comment
+
+---
+
+(source_file
+  (line_comment
+    doc: (doc_comment
+      inner: (inner_doc_comment)))
+  (line_comment
+    doc: (doc_comment
+      inner: (inner_doc_comment)))
+
+  (line_comment)
+  (line_comment
+    doc: (doc_comment
+      outer: (outer_doc_comment)))
   (line_comment))
+
+====================================
+Block doc comments
+====================================
+
+/*!  - Inner block doc */
+/*!! - Still an inner block doc (but with a bang at the beginning) */
+
+/*   - Only a comment */
+/**  - Outer block doc (exactly) 2 asterisks */
+/*** - Only a comment */
+
+----
+
+(source_file
+  (block_comment
+    (doc_comment
+      (inner_doc_comment)))
+  (block_comment
+    (doc_comment
+      (inner_doc_comment)))
+  (block_comment)
+  (block_comment
+    (doc_comment
+      (outer_doc_comment)))
+  (block_comment))
+
+=====================================
+Nested doc block comments
+=====================================
+
+/*   /* */  /** */  /*! */  */
+/*!  /* */  /** */  /*! */  */
+/**  /* */  /** */  /*! */  */
+
+----
+
+(source_file
+  (block_comment)
+  (block_comment
+    (doc_comment
+      (inner_doc_comment)))
+  (block_comment
+    (doc_comment
+      (outer_doc_comment))))
+
+====================================
+Comments degenerate cases
+====================================
+
+//!
+
+/*!*/
+
+//
+
+///
+
+/**/
+
+/***/
+
+----
+
+(source_file
+  (line_comment
+    (doc_comment
+      (inner_doc_comment)))
+  (block_comment
+    (doc_comment
+      (inner_doc_comment)))
+  (line_comment)
+  (line_comment
+    (doc_comment
+      (outer_doc_comment)))
+  (block_comment)
+  (block_comment))
 
 =====================================
 Greek letters in identifiers
