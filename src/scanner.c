@@ -1,18 +1,46 @@
+#include <string.h>
 #include <tree_sitter/parser.h>
 #include <wctype.h>
 
 enum TokenType {
   STRING_CONTENT,
-  RAW_STRING_LITERAL,
+  RAW_STRING_LITERAL_OPEN,
+  RAW_STRING_LITERAL_CONTENT,
+  RAW_STRING_LITERAL_CLOSE,
   FLOAT_LITERAL,
   BLOCK_COMMENT,
 };
 
-void *tree_sitter_rust_external_scanner_create() { return NULL; }
-void tree_sitter_rust_external_scanner_destroy(void *p) {}
+struct ScannerState {
+  unsigned opening_hash_count;
+};
+
+static struct ScannerState initial_state;
+
+void *tree_sitter_rust_external_scanner_create() {
+  struct ScannerState *state = malloc(sizeof(struct ScannerState));
+  *state = initial_state;
+  return state;
+}
+
+void tree_sitter_rust_external_scanner_destroy(void *p) {
+  struct ScannerState *state = p;
+  free(state);
+}
+
 void tree_sitter_rust_external_scanner_reset(void *p) {}
-unsigned tree_sitter_rust_external_scanner_serialize(void *p, char *buffer) { return 0; }
-void tree_sitter_rust_external_scanner_deserialize(void *p, const char *b, unsigned n) {}
+
+unsigned tree_sitter_rust_external_scanner_serialize(void *p, char *buffer) {
+  memcpy(buffer, p, sizeof(struct ScannerState));
+  return sizeof(struct ScannerState);
+}
+
+void tree_sitter_rust_external_scanner_deserialize(void *p, const char *b, unsigned n) {
+  struct ScannerState *state = p;
+  *state = initial_state;
+  if (n < sizeof(struct ScannerState)) return;
+  memcpy(state, b, sizeof(struct ScannerState));
+}
 
 static void advance(TSLexer *lexer) {
   lexer->advance(lexer, false);
@@ -24,6 +52,8 @@ static bool is_num_char(int32_t c) {
 
 bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
                                             const bool *valid_symbols) {
+  struct ScannerState *state = payload;
+
   if (valid_symbols[STRING_CONTENT] && !valid_symbols[FLOAT_LITERAL]) {
     bool has_content = false;
     for (;;) {
@@ -42,40 +72,74 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
   while (iswspace(lexer->lookahead)) lexer->advance(lexer, true);
 
   if (
-    valid_symbols[RAW_STRING_LITERAL] &&
+    valid_symbols[RAW_STRING_LITERAL_OPEN] &&
     (lexer->lookahead == 'r' || lexer->lookahead == 'b')
   ) {
-    lexer->result_symbol = RAW_STRING_LITERAL;
+    lexer->result_symbol = RAW_STRING_LITERAL_OPEN;
     if (lexer->lookahead == 'b') advance(lexer);
     if (lexer->lookahead != 'r') return false;
     advance(lexer);
 
-    unsigned opening_hash_count = 0;
+    state->opening_hash_count = 0;
+
     while (lexer->lookahead == '#') {
       advance(lexer);
-      opening_hash_count++;
+      state->opening_hash_count++;
     }
 
     if (lexer->lookahead != '"') return false;
+
     advance(lexer);
+    return true;
+  }
+
+  if (
+    valid_symbols[RAW_STRING_LITERAL_CONTENT]
+  ) {
+    lexer->result_symbol = RAW_STRING_LITERAL_CONTENT;
 
     for (;;) {
       if (lexer->lookahead == 0) {
         return false;
       } else if (lexer->lookahead == '"') {
+        lexer->mark_end(lexer);
         advance(lexer);
         unsigned hash_count = 0;
-        while (lexer->lookahead == '#' && hash_count < opening_hash_count) {
+
+        while (lexer->lookahead == '#' && hash_count < state->opening_hash_count) {
           advance(lexer);
           hash_count++;
         }
-        if (hash_count == opening_hash_count) {
+
+        if (hash_count == state->opening_hash_count) {
           return true;
         }
+
       } else {
         advance(lexer);
       }
     }
+  }
+
+  if (valid_symbols[RAW_STRING_LITERAL_CLOSE]) {
+    lexer->result_symbol = RAW_STRING_LITERAL_CLOSE;
+
+    if (lexer->lookahead == '"') {
+      advance(lexer);
+      unsigned hash_count = 0;
+
+      while (lexer->lookahead == '#' && hash_count < state->opening_hash_count) {
+        advance(lexer);
+        hash_count++;
+      }
+
+      if (hash_count == state->opening_hash_count) {
+        return true;
+      }
+
+    }
+
+    return false;
   }
 
   if (valid_symbols[FLOAT_LITERAL] && iswdigit(lexer->lookahead)) {
