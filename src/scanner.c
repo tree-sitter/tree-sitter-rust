@@ -1,4 +1,4 @@
-#include <tree_sitter/parser.h>
+#include "tree_sitter/parser.h"
 #include <wctype.h>
 
 enum TokenType {
@@ -43,10 +43,10 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
 
   if (
     valid_symbols[RAW_STRING_LITERAL] &&
-    (lexer->lookahead == 'r' || lexer->lookahead == 'b')
+    (lexer->lookahead == 'r' || lexer->lookahead == 'b' || lexer->lookahead == 'c')
   ) {
     lexer->result_symbol = RAW_STRING_LITERAL;
-    if (lexer->lookahead == 'b') advance(lexer);
+    if (lexer->lookahead == 'b' || lexer->lookahead == 'c') advance(lexer);
     if (lexer->lookahead != 'r') return false;
     advance(lexer);
 

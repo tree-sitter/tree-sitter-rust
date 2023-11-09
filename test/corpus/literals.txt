@@ -73,6 +73,7 @@ String literals
 
 "";
 "abc";
+c"foo";
 b"foo\nbar";
 "foo\
     bar";
@@ -84,6 +85,8 @@ b"foo\nbar";
 --------------------------------------------------------------------------------
 
 (source_file
+  (expression_statement
+    (string_literal))
   (expression_statement
     (string_literal))
   (expression_statement
@@ -138,6 +141,21 @@ Raw byte string literals
 
 br#"abc"#;
 br##"abc"##;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (raw_string_literal))
+  (expression_statement
+    (raw_string_literal)))
+
+================================================================================
+Raw C string literals
+================================================================================
+
+cr#"abc"#;
+cr##"abc"##;
 
 --------------------------------------------------------------------------------
 
