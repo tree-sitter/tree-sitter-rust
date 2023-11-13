@@ -68,9 +68,9 @@ module.exports = grammar({
 
   externals: $ => [
     $._string_content,
-    $._raw_string_literal_open,
+    $._raw_string_literal_start,
     $.raw_string_literal_content,
-    $._raw_string_literal_close,
+    $._raw_string_literal_end,
     $.float_literal,
     $.block_comment,
   ],
@@ -1441,9 +1441,9 @@ module.exports = grammar({
     )),
 
     raw_string_literal: $ => seq(
-      $._raw_string_literal_open,
+      $._raw_string_literal_start,
       field('content', $.raw_string_literal_content),
-      $._raw_string_literal_close,
+      $._raw_string_literal_end,
     ),
 
     string_literal: $ => seq(

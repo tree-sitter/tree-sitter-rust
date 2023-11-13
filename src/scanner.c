@@ -4,9 +4,9 @@
 
 enum TokenType {
   STRING_CONTENT,
-  RAW_STRING_LITERAL_OPEN,
+  RAW_STRING_LITERAL_START,
   RAW_STRING_LITERAL_CONTENT,
-  RAW_STRING_LITERAL_CLOSE,
+  RAW_STRING_LITERAL_END,
   FLOAT_LITERAL,
   BLOCK_COMMENT,
 };
@@ -72,10 +72,10 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
   while (iswspace(lexer->lookahead)) lexer->advance(lexer, true);
 
   if (
-    valid_symbols[RAW_STRING_LITERAL_OPEN] &&
+    valid_symbols[RAW_STRING_LITERAL_START] &&
     (lexer->lookahead == 'r' || lexer->lookahead == 'b')
   ) {
-    lexer->result_symbol = RAW_STRING_LITERAL_OPEN;
+    lexer->result_symbol = RAW_STRING_LITERAL_START;
     if (lexer->lookahead == 'b') advance(lexer);
     if (lexer->lookahead != 'r') return false;
     advance(lexer);
@@ -93,9 +93,7 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
     return true;
   }
 
-  if (
-    valid_symbols[RAW_STRING_LITERAL_CONTENT]
-  ) {
+  if (valid_symbols[RAW_STRING_LITERAL_CONTENT]) {
     lexer->result_symbol = RAW_STRING_LITERAL_CONTENT;
 
     for (;;) {
@@ -121,8 +119,8 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
     }
   }
 
-  if (valid_symbols[RAW_STRING_LITERAL_CLOSE]) {
-    lexer->result_symbol = RAW_STRING_LITERAL_CLOSE;
+  if (valid_symbols[RAW_STRING_LITERAL_END]) {
+    lexer->result_symbol = RAW_STRING_LITERAL_END;
 
     if (lexer->lookahead == '"') {
       advance(lexer);
