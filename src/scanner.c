@@ -12,7 +12,7 @@ enum TokenType {
 };
 
 struct ScannerState {
-  unsigned opening_hash_count;
+  uint32_t opening_hash_count;
 };
 
 static struct ScannerState initial_state;
