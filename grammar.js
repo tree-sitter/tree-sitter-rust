@@ -486,6 +486,7 @@ module.exports = grammar({
       'impl',
       field('type_parameters', optional($.type_parameters)),
       optional(seq(
+        optional('!'),
         field('trait', choice(
           $._type_identifier,
           $.scoped_type_identifier,
