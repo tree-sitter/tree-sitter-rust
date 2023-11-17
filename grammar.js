@@ -910,6 +910,7 @@ module.exports = grammar({
     _expression_ending_with_block: $ => choice(
       $.unsafe_block,
       $.async_block,
+      $.try_block,
       $.block,
       $.if_expression,
       $.match_expression,
@@ -1286,6 +1287,11 @@ module.exports = grammar({
     async_block: $ => seq(
       'async',
       optional('move'),
+      $.block,
+    ),
+
+    try_block: $ => seq(
+      'try',
       $.block,
     ),
 
