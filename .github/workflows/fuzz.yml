@@ -17,6 +17,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: vigoux/tree-sitter-fuzz-action@v1
         with:
-          language: bash
+          language: rust
           external-scanner: src/scanner.c
           time: 60
