@@ -459,11 +459,11 @@ module.exports = grammar({
       $.extern_modifier,
     )),
 
-    where_clause: $ => seq(
+    where_clause: $ => prec.right(seq(
       'where',
       sepBy1(',', $.where_predicate),
       optional(','),
-    ),
+    )),
 
     where_predicate: $ => seq(
       field('left', choice(
@@ -1206,20 +1206,20 @@ module.exports = grammar({
     ),
 
     while_expression: $ => seq(
-      optional(seq($.loop_label, ':')),
+      optional(seq($.label, ':')),
       'while',
       field('condition', $._condition),
       field('body', $.block),
     ),
 
     loop_expression: $ => seq(
-      optional(seq($.loop_label, ':')),
+      optional(seq($.label, ':')),
       'loop',
       field('body', $.block),
     ),
 
     for_expression: $ => seq(
-      optional(seq($.loop_label, ':')),
+      optional(seq($.label, ':')),
       'for',
       field('pattern', $._pattern),
       'in',
@@ -1254,11 +1254,11 @@ module.exports = grammar({
       '|',
     ),
 
-    loop_label: $ => seq('\'', $.identifier),
+    label: $ => seq('\'', $.identifier),
 
-    break_expression: $ => prec.left(seq('break', optional($.loop_label), optional($._expression))),
+    break_expression: $ => prec.left(seq('break', optional($.label), optional($._expression))),
 
-    continue_expression: $ => prec.left(seq('continue', optional($.loop_label))),
+    continue_expression: $ => prec.left(seq('continue', optional($.label))),
 
     index_expression: $ => prec(PREC.call, seq($._expression, '[', $._expression, ']')),
 
@@ -1289,6 +1289,7 @@ module.exports = grammar({
     ),
 
     block: $ => seq(
+      optional(seq($.label, ':')),
       '{',
       repeat($._statement),
       optional($._expression),

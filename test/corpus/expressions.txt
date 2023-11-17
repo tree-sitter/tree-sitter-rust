@@ -837,17 +837,17 @@ Loop expressions
 (source_file
   (expression_statement
     (loop_expression
-      (loop_label
+      (label
         (identifier))
       (block
         (expression_statement
           (loop_expression
-            (loop_label
+            (label
               (identifier))
             (block
               (expression_statement
                 (break_expression
-                  (loop_label
+                  (label
                     (identifier))))
               (expression_statement
                 (break_expression
@@ -899,7 +899,7 @@ for i in 0..256 {
               (identifier)))))))
   (expression_statement
     (for_expression
-      (loop_label
+      (label
         (identifier))
       (identifier)
       (range_expression
@@ -908,7 +908,7 @@ for i in 0..256 {
       (block
         (expression_statement
           (for_expression
-            (loop_label
+            (label
               (identifier))
             (identifier)
             (range_expression
@@ -925,7 +925,7 @@ for i in 0..256 {
                   (block
                     (expression_statement
                       (continue_expression
-                        (loop_label
+                        (label
                           (identifier)))))))
               (expression_statement
                 (if_expression
@@ -937,7 +937,7 @@ for i in 0..256 {
                   (block
                     (expression_statement
                       (continue_expression
-                        (loop_label
+                        (label
                           (identifier))))))))))))))
 
 ================================================================================
