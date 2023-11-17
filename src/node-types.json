@@ -869,6 +869,10 @@
         {
           "type": "expression_statement",
           "named": true
+        },
+        {
+          "type": "label",
+          "named": true
         }
       ]
     }
@@ -929,7 +933,7 @@
           "named": true
         },
         {
-          "type": "loop_label",
+          "type": "label",
           "named": true
         }
       ]
@@ -1418,7 +1422,7 @@
       "required": false,
       "types": [
         {
-          "type": "loop_label",
+          "type": "label",
           "named": true
         }
       ]
@@ -1909,7 +1913,7 @@
       "required": false,
       "types": [
         {
-          "type": "loop_label",
+          "type": "label",
           "named": true
         }
       ]
@@ -2447,6 +2451,21 @@
     }
   },
   {
+    "type": "label",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "let_chain",
     "named": true,
     "fields": {},
@@ -2582,22 +2601,7 @@
       "required": false,
       "types": [
         {
-          "type": "loop_label",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "loop_label",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "identifier",
+          "type": "label",
           "named": true
         }
       ]
@@ -4731,7 +4735,7 @@
       "required": false,
       "types": [
         {
-          "type": "loop_label",
+          "type": "label",
           "named": true
         }
       ]
