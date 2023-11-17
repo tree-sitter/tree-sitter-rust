@@ -1,6 +1,9 @@
 # tree-sitter-rust
 
 [![CI](https://github.com/tree-sitter/tree-sitter-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/tree-sitter/tree-sitter-rust/actions/workflows/ci.yml)
+[![Discord](https://img.shields.io/discord/1063097320771698699?logo=discord)](https://discord.gg/w7nTvsVJhm)
+[![Rust Crate](https://img.shields.io/crates/v/tree-sitter-rust.svg)](https://crates.io/crates/tree-sitter-rust)
+[![Node Package](https://img.shields.io/npm/v/tree-sitter-rust.svg)](https://www.npmjs.com/package/tree-sitter-rust)
 
 Rust grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 
