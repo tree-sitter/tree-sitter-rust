@@ -117,20 +117,37 @@ r#"abc"#; r##"ok"##;
 r##"foo #"# bar"##;
 r###"foo ##"## bar"###;
 r######"foo ##### bar"######;
+r######"fo
+
+sdfdsafasdf
+
+o ##### bar"######;
+r#""#;
 
 --------------------------------------------------------------------------------
 
 (source_file
   (expression_statement
-    (raw_string_literal))
+    (raw_string_literal
+      content: (raw_string_literal_content)))
   (expression_statement
-    (raw_string_literal))
+    (raw_string_literal
+      content: (raw_string_literal_content)))
   (expression_statement
-    (raw_string_literal))
+    (raw_string_literal
+      content: (raw_string_literal_content)))
   (expression_statement
-    (raw_string_literal))
+    (raw_string_literal
+      content: (raw_string_literal_content)))
   (expression_statement
-    (raw_string_literal)))
+    (raw_string_literal
+      content: (raw_string_literal_content)))
+  (expression_statement
+    (raw_string_literal
+      content: (raw_string_literal_content)))
+  (expression_statement
+    (raw_string_literal
+      content: (raw_string_literal_content))))
 
 ================================================================================
 Raw byte string literals
@@ -138,14 +155,29 @@ Raw byte string literals
 
 br#"abc"#;
 br##"abc"##;
+br##""##;
+br#####"abc
+asdfadfg41029367'äöö3247<234trdfg
+"##
+
+asdf
+"#####;
 
 --------------------------------------------------------------------------------
 
 (source_file
   (expression_statement
-    (raw_string_literal))
+    (raw_string_literal
+      content: (raw_string_literal_content)))
   (expression_statement
-    (raw_string_literal)))
+    (raw_string_literal
+      content: (raw_string_literal_content)))
+  (expression_statement
+    (raw_string_literal
+      content: (raw_string_literal_content)))
+  (expression_statement
+    (raw_string_literal
+      content: (raw_string_literal_content))))
 
 ================================================================================
 Character literals
