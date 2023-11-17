@@ -2397,50 +2397,54 @@
       }
     },
     "where_clause": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "where"
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "where_predicate"
-            },
-            {
-              "type": "REPEAT",
-              "content": {
-                "type": "SEQ",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": ","
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "where_predicate"
-                  }
-                ]
+      "type": "PREC_RIGHT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "where"
+          },
+          {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "where_predicate"
+              },
+              {
+                "type": "REPEAT",
+                "content": {
+                  "type": "SEQ",
+                  "members": [
+                    {
+                      "type": "STRING",
+                      "value": ","
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "where_predicate"
+                    }
+                  ]
+                }
               }
-            }
-          ]
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "STRING",
-              "value": ","
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        }
-      ]
+            ]
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "STRING",
+                "value": ","
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          }
+        ]
+      }
     },
     "where_predicate": {
       "type": "SEQ",
@@ -6162,8 +6166,20 @@
                       "type": "SEQ",
                       "members": [
                         {
-                          "type": "SYMBOL",
-                          "name": "_expression"
+                          "type": "SEQ",
+                          "members": [
+                            {
+                              "type": "REPEAT",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "attribute_item"
+                              }
+                            },
+                            {
+                              "type": "SYMBOL",
+                              "name": "_expression"
+                            }
+                          ]
                         },
                         {
                           "type": "REPEAT",
@@ -6175,8 +6191,20 @@
                                 "value": ","
                               },
                               {
-                                "type": "SYMBOL",
-                                "name": "_expression"
+                                "type": "SEQ",
+                                "members": [
+                                  {
+                                    "type": "REPEAT",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "attribute_item"
+                                    }
+                                  },
+                                  {
+                                    "type": "SYMBOL",
+                                    "name": "_expression"
+                                  }
+                                ]
                               }
                             ]
                           }
@@ -6933,7 +6961,7 @@
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "loop_label"
+                  "name": "label"
                 },
                 {
                   "type": "STRING",
@@ -6979,7 +7007,7 @@
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "loop_label"
+                  "name": "label"
                 },
                 {
                   "type": "STRING",
@@ -7017,7 +7045,7 @@
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "loop_label"
+                  "name": "label"
                 },
                 {
                   "type": "STRING",
@@ -7246,7 +7274,7 @@
         }
       ]
     },
-    "loop_label": {
+    "label": {
       "type": "SEQ",
       "members": [
         {
@@ -7274,7 +7302,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "loop_label"
+                "name": "label"
               },
               {
                 "type": "BLANK"
@@ -7311,7 +7339,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "loop_label"
+                "name": "label"
               },
               {
                 "type": "BLANK"
@@ -7446,6 +7474,27 @@
     "block": {
       "type": "SEQ",
       "members": [
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "label"
+                },
+                {
+                  "type": "STRING",
+                  "value": ":"
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
         {
           "type": "STRING",
           "value": "{"
@@ -8334,7 +8383,7 @@
           "type": "ALIAS",
           "content": {
             "type": "PATTERN",
-            "value": "b?\""
+            "value": "[bc]?\""
           },
           "named": false,
           "value": "\""
@@ -8724,6 +8773,9 @@
     [
       "type_parameters",
       "for_lifetimes"
+    ],
+    [
+      "array_expression"
     ]
   ],
   "precedences": [],
