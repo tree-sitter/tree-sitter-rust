@@ -64,7 +64,11 @@ const primitive_types = numeric_types.concat(['bool', 'str', 'char']);
 module.exports = grammar({
   name: 'rust',
 
-  extras: $ => [/\s/, $.line_comment, $.block_comment],
+  extras: $ => [
+    /\s/,
+    $.line_comment,
+    $.block_comment,
+  ],
 
   externals: $ => [
     $._string_content,
@@ -102,6 +106,7 @@ module.exports = grammar({
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
     [$.type_parameters, $.for_lifetimes],
+    [$.array_expression],
   ],
 
   word: $ => $.identifier,
@@ -1065,7 +1070,7 @@ module.exports = grammar({
           field('length', $._expression),
         ),
         seq(
-          sepBy(',', $._expression),
+          sepBy(',', seq(repeat($.attribute_item), $._expression)),
           optional(','),
         ),
       ),

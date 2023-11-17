@@ -358,6 +358,12 @@ Array expressions
 [1, 2, 3];
 ["a", "b", "c"];
 [0; 128];
+[
+    #[cfg(foo)]
+    "foo",
+    #[cfg(bar)]
+    "bar",
+];
 
 --------------------------------------------------------------------------------
 
@@ -377,7 +383,19 @@ Array expressions
   (expression_statement
     (array_expression
       (integer_literal)
-      length: (integer_literal))))
+      length: (integer_literal)))
+  (expression_statement
+    (array_expression
+      (attribute_item
+        (attribute
+          (identifier)
+          arguments: (token_tree (identifier))))
+      (string_literal)
+      (attribute_item
+        (attribute
+          (identifier)
+          arguments: (token_tree (identifier))))
+      (string_literal))))
 
 ================================================================================
 Tuple expressions
