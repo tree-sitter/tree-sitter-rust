@@ -214,6 +214,10 @@
         "named": true
       },
       {
+        "type": "try_block",
+        "named": true
+      },
+      {
         "type": "try_expression",
         "named": true
       },
@@ -1071,6 +1075,10 @@
           },
           {
             "type": "struct_expression",
+            "named": true
+          },
+          {
+            "type": "try_block",
             "named": true
           },
           {
@@ -4021,6 +4029,21 @@
     }
   },
   {
+    "type": "try_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "block",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "try_expression",
     "named": true,
     "fields": {},
@@ -5178,6 +5201,10 @@
   },
   {
     "type": "true",
+    "named": false
+  },
+  {
+    "type": "try",
     "named": false
   },
   {
