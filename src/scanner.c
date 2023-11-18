@@ -11,35 +11,36 @@ enum TokenType {
   BLOCK_COMMENT,
 };
 
-struct ScannerState {
-  uint32_t opening_hash_count;
-};
+/// Stores the state of this external scanner for serialization.
+typedef struct RustScannerState {
+  uint32_t opening_hash_count; ///< Nr of '#' at the start of a raw string literal.
+} Scanner;
 
-static struct ScannerState initial_state;
+static Scanner initial_state;
 
 void *tree_sitter_rust_external_scanner_create() {
-  struct ScannerState *state = malloc(sizeof(struct ScannerState));
+  Scanner *state = malloc(sizeof(Scanner));
   *state = initial_state;
   return state;
 }
 
 void tree_sitter_rust_external_scanner_destroy(void *p) {
-  struct ScannerState *state = p;
+  Scanner *state = p;
   free(state);
 }
 
 void tree_sitter_rust_external_scanner_reset(void *p) {}
 
 unsigned tree_sitter_rust_external_scanner_serialize(void *p, char *buffer) {
-  memcpy(buffer, p, sizeof(struct ScannerState));
-  return sizeof(struct ScannerState);
+  memcpy(buffer, p, sizeof(Scanner));
+  return sizeof(Scanner);
 }
 
 void tree_sitter_rust_external_scanner_deserialize(void *p, const char *b, unsigned n) {
-  struct ScannerState *state = p;
+  Scanner *state = p;
   *state = initial_state;
-  if (n < sizeof(struct ScannerState)) return;
-  memcpy(state, b, sizeof(struct ScannerState));
+  if (n < sizeof(Scanner)) return;
+  memcpy(state, b, sizeof(Scanner));
 }
 
 static void advance(TSLexer *lexer) {
@@ -52,7 +53,7 @@ static bool is_num_char(int32_t c) {
 
 bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer,
                                             const bool *valid_symbols) {
-  struct ScannerState *state = payload;
+  Scanner *state = payload;
 
   if (valid_symbols[STRING_CONTENT] && !valid_symbols[FLOAT_LITERAL]) {
     bool has_content = false;
