@@ -4,6 +4,20 @@
 ((identifier) @constant
  (#match? @constant "^[A-Z][A-Z\\d_]+$'"))
 
+; Assume Ok, Err, Some, None is keyword
+((scoped_type_identifier
+  path: (identifier) @type.builtin)
+ (#match? @type "Ok"))
+((scoped_type_identifier
+  path: (identifier) @type.builtin)
+ (#match? @type "Err"))
+((scoped_type_identifier
+  path: (identifier) @type.builtin)
+ (#match? @type "Some"))
+((scoped_type_identifier
+  path: (identifier) @type.builtin)
+ (#match? @type "None"))
+
 ; Assume that uppercase names in paths are types
 ((scoped_identifier
   path: (identifier) @type)
