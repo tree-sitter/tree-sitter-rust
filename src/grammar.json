@@ -8123,25 +8123,39 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "STRING",
-              "value": "..."
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "STRING",
+                      "value": "..."
+                    },
+                    {
+                      "type": "STRING",
+                      "value": "..="
+                    }
+                  ]
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_literal_pattern"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "_path"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "type": "STRING",
-              "value": "..="
-            }
-          ]
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_literal_pattern"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "_path"
+              "value": ".."
             }
           ]
         }
