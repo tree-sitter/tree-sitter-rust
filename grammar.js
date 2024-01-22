@@ -1388,10 +1388,15 @@ module.exports = grammar({
         $._literal_pattern,
         $._path,
       ),
-      choice('...', '..='),
       choice(
-        $._literal_pattern,
-        $._path,
+        seq(
+          choice('...', '..='),
+          choice(
+            $._literal_pattern,
+            $._path,
+          ),
+        ),
+        '..',
       ),
     ),
 

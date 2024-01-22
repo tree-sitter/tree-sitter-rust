@@ -162,6 +162,7 @@ match x {
   Some(1 ... 5) => a,
   a @ b...c => a,
   a @ b..=c => a,
+  d.. => a,
 }
 
 --------------------------------------------------------------------------------
@@ -215,6 +216,11 @@ match x {
               (range_pattern
                 (identifier)
                 (identifier))))
+          value: (identifier))
+        (match_arm
+          pattern: (match_pattern
+            (range_pattern
+              (identifier)))
           value: (identifier))))))
 
 ================================================================================
