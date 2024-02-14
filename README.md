@@ -1,9 +1,10 @@
 # tree-sitter-rust
 
-[![CI](https://github.com/tree-sitter/tree-sitter-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/tree-sitter/tree-sitter-rust/actions/workflows/ci.yml)
-[![Discord](https://img.shields.io/discord/1063097320771698699?logo=discord)](https://discord.gg/w7nTvsVJhm)
-[![Rust Crate](https://img.shields.io/crates/v/tree-sitter-rust.svg)](https://crates.io/crates/tree-sitter-rust)
-[![Node Package](https://img.shields.io/npm/v/tree-sitter-rust.svg)](https://www.npmjs.com/package/tree-sitter-rust)
+[![CI][ci]](https://github.com/tree-sitter/tree-sitter-rust/actions/workflows/ci.yml)
+[![discord][discord]](https://discord.gg/w7nTvsVJhm)
+[![matrix][matrix]](https://matrix.to/#/#tree-sitter-chat:matrix.org)
+[![crates][crates]](https://crates.io/crates/tree-sitter-rust)
+[![npm][npm]](https://www.npmjs.com/package/tree-sitter-rust)
 
 Rust grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 
@@ -39,3 +40,9 @@ Rust grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 - Archive of the outdated [Syntax Index](https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/book/first-edition/syntax-index.html)
   that contains examples of all syntax in Rust cross-referenced with the section
   of The Book that describes it.
+
+[ci]: https://img.shields.io/github/actions/workflow/status/tree-sitter/tree-sitter-rust/ci.yml?logo=github&label=CI
+[discord]: https://img.shields.io/discord/1063097320771698699?logo=discord&label=discord
+[matrix]: https://img.shields.io/matrix/tree-sitter-chat%3Amatrix.org?logo=matrix&label=matrix
+[npm]: https://img.shields.io/npm/v/tree-sitter-rust?logo=npm
+[crates]: https://img.shields.io/crates/v/tree-sitter-rust?logo=rust
