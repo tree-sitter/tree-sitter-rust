@@ -882,6 +882,22 @@
     }
   },
   {
+    "type": "block_comment",
+    "named": true,
+    "fields": {
+      "doc": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "doc_comment",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "boolean_literal",
     "named": true,
     "fields": {}
@@ -1449,6 +1465,32 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "doc_comment",
+    "named": true,
+    "fields": {
+      "inner": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "inner_doc_comment",
+            "named": true
+          }
+        ]
+      },
+      "outer": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "outer_doc_comment",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -2587,6 +2629,22 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "line_comment",
+    "named": true,
+    "fields": {
+      "doc": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "doc_comment",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -4836,6 +4894,10 @@
     "named": false
   },
   {
+    "type": "*/",
+    "named": false
+  },
+  {
     "type": "*=",
     "named": false
   },
@@ -4881,6 +4943,14 @@
   },
   {
     "type": "/",
+    "named": false
+  },
+  {
+    "type": "/*",
+    "named": false
+  },
+  {
+    "type": "//",
     "named": false
   },
   {
@@ -4992,10 +5062,6 @@
     "named": false
   },
   {
-    "type": "block_comment",
-    "named": true
-  },
-  {
     "type": "break",
     "named": false
   },
@@ -5084,6 +5150,10 @@
     "named": false
   },
   {
+    "type": "inner_doc_comment",
+    "named": true
+  },
+  {
     "type": "integer_literal",
     "named": true
   },
@@ -5098,10 +5168,6 @@
   {
     "type": "lifetime",
     "named": false
-  },
-  {
-    "type": "line_comment",
-    "named": true
   },
   {
     "type": "literal",
@@ -5137,6 +5203,10 @@
   },
   {
     "type": "mutable_specifier",
+    "named": true
+  },
+  {
+    "type": "outer_doc_comment",
     "named": true
   },
   {
