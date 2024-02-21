@@ -172,6 +172,7 @@ module.exports = grammar({
         )),
         choice(
           seq('(', rules, ')', ';'),
+          seq('[', rules, ']', ';'),
           seq('{', rules, '}'),
         ),
       );

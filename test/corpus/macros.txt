@@ -184,6 +184,10 @@ macro_rules! zero_or_one {
     };
 }
 
+macro_rules! empty [
+    () => {};
+];
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -254,4 +258,9 @@ macro_rules! zero_or_one {
             type: (fragment_specifier))))
       right: (token_tree
         (token_repetition
-          (metavariable))))))
+          (metavariable)))))
+  (macro_definition
+    name: (identifier)
+    (macro_rule
+      left: (token_tree_pattern)
+      right: (token_tree))))
