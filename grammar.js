@@ -1525,7 +1525,7 @@ module.exports = grammar({
     ),
 
     _inner_line_doc_comment: _ => token.immediate(prec(2, '!')),
-    _outer_line_doc_comment: _ => token.immediate(prec(2, /\/[^\/]/)),
+    _outer_line_doc_comment: _ => token.immediate(prec(2, /\/[^\/\r\n]?/)),
 
     block_comment: $ => seq(
       '/*',
