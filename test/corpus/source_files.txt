@@ -98,7 +98,6 @@ Line doc comments
   (line_comment
     doc: (doc_comment
       inner: (inner_doc_comment)))
-
   (line_comment)
   (line_comment
     doc: (doc_comment
@@ -161,6 +160,7 @@ Comments degenerate cases
 //
 
 ///
+let x; // <- immediate item after an empty line doc comment
 
 /**/
 
@@ -179,6 +179,9 @@ Comments degenerate cases
   (line_comment
     (doc_comment
       (outer_doc_comment)))
+  (let_declaration
+    (identifier))
+  (line_comment)
   (block_comment)
   (block_comment))
 

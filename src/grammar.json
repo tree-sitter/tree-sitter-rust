@@ -8756,7 +8756,7 @@
         "value": 2,
         "content": {
           "type": "PATTERN",
-          "value": "\\/[^\\/]"
+          "value": "\\/[^\\/\\r\\n]?"
         }
       }
     },
