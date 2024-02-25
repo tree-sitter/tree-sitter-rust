@@ -5,9 +5,10 @@ enum TokenType {
     STRING_CONTENT,
     RAW_STRING_LITERAL,
     FLOAT_LITERAL,
-    BLOCK_OUTER_DOC,
-    BLOCK_INNER_DOC,
-    BLOCK_COMMENT_END,
+    BLOCK_OUTER_DOC_MARKER,
+    BLOCK_INNER_DOC_MARKER,
+    BLOCK_COMMENT_CONTENT,
+    LINE_DOC_CONTENT,
     ERROR_SENTINEL
 };
 
@@ -151,6 +152,22 @@ static inline bool process_float_literal(TSLexer *lexer) {
     return true;
 }
 
+static inline bool process_line_doc_content(TSLexer *lexer) {
+    lexer->result_symbol = LINE_DOC_CONTENT;
+    for (;;) {
+        if (lexer->eof(lexer)) {
+            return true;
+        }
+        if (lexer->lookahead == '\n') {
+            // Include the newline in the doc content node.
+            // Line endings are useful for markdown injection.
+            advance(lexer);
+            return true;
+        }
+        advance(lexer);
+    }
+}
+
 typedef enum {
     LeftForwardSlash,
     LeftAsterisk,
@@ -169,8 +186,9 @@ static inline void process_left_forward_slash(BlockCommentProcessing *processing
     processing->state = Continuing;
 };
 
-static inline void process_left_asterisk(BlockCommentProcessing *processing, char current) {
+static inline void process_left_asterisk(BlockCommentProcessing *processing, char current, TSLexer *lexer) {
     if (current == '*') {
+        lexer->mark_end(lexer);
         processing->state = LeftAsterisk;
         return;
     }
@@ -201,32 +219,39 @@ static inline bool process_block_comment(TSLexer *lexer, const bool *valid_symbo
     // happen in one state, we must advance in all states to ensure that
     // the program ends up in a sane state prior to processing the block
     // comment if need be.
-    if (valid_symbols[BLOCK_INNER_DOC] && first == '!') {
-        lexer->result_symbol = BLOCK_INNER_DOC;
+    if (valid_symbols[BLOCK_INNER_DOC_MARKER] && first == '!') {
+        lexer->result_symbol = BLOCK_INNER_DOC_MARKER;
         advance(lexer);
         return true;
     }
-    if (valid_symbols[BLOCK_OUTER_DOC] && first == '*') {
+    if (valid_symbols[BLOCK_OUTER_DOC_MARKER] && first == '*') {
         advance(lexer);
         lexer->mark_end(lexer);
-        // If the next token is a / that means that it's an empty
-        // block comment and we should go to the BLOCK_COMMENT_END case
-        // If the next token is a * that means that this isn't a BLOCK_OUTER_DOC
-        // as BLOCK_OUTER_DOC's only have 2 * not 3 or more.
-        if (lexer->lookahead != '/' && lexer->lookahead != '*') {
-            lexer->result_symbol = BLOCK_OUTER_DOC;
+        // If the next token is a / that means that it's an empty block comment.
+        if (lexer->lookahead == '/') {
+            return false;
+        }
+        // If the next token is a * that means that this isn't a BLOCK_OUTER_DOC_MARKER
+        // as BLOCK_OUTER_DOC_MARKER's only have 2 * not 3 or more.
+        if (lexer->lookahead != '*') {
+            lexer->result_symbol = BLOCK_OUTER_DOC_MARKER;
             return true;
         }
     } else {
         advance(lexer);
     }
 
-    if (valid_symbols[BLOCK_COMMENT_END]) {
+    if (valid_symbols[BLOCK_COMMENT_CONTENT]) {
         BlockCommentProcessing processing = {Continuing, 1};
         // Manually set the current state based on the first character
         switch (first) {
             case '*':
                 processing.state = LeftAsterisk;
+                if (lexer->lookahead == '/') {
+                    // This case can happen in an empty doc block comment
+                    // like /*!*/. The comment has no contents, so bail.
+                    return false;
+                }
                 break;
             case '/':
                 processing.state = LeftForwardSlash;
@@ -253,18 +278,21 @@ static inline bool process_block_comment(TSLexer *lexer, const bool *valid_symbo
                     process_left_forward_slash(&processing, first);
                     break;
                 case LeftAsterisk:
-                    process_left_asterisk(&processing, first);
+                    process_left_asterisk(&processing, first, lexer);
                     break;
                 case Continuing:
+                    lexer->mark_end(lexer);
                     process_continuing(&processing, first);
                     break;
                 default:
                     break;
             }
             advance(lexer);
+            if (first == '/' && processing.nestingDepth != 0) {
+                lexer->mark_end(lexer);
+            }
         }
-        lexer->mark_end(lexer);
-        lexer->result_symbol = BLOCK_COMMENT_END;
+        lexer->result_symbol = BLOCK_COMMENT_CONTENT;
         return true;
     }
 
@@ -293,12 +321,16 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const
         return false;
     }
 
-    if (valid_symbols[BLOCK_COMMENT_END] || valid_symbols[BLOCK_INNER_DOC] || valid_symbols[BLOCK_OUTER_DOC]) {
+    if (valid_symbols[BLOCK_COMMENT_CONTENT] || valid_symbols[BLOCK_INNER_DOC_MARKER] || valid_symbols[BLOCK_OUTER_DOC_MARKER]) {
         return process_block_comment(lexer, valid_symbols);
     }
 
     if (valid_symbols[STRING_CONTENT] && !valid_symbols[FLOAT_LITERAL]) {
         return process_string(lexer);
+    }
+
+    if (valid_symbols[LINE_DOC_CONTENT]) {
+        return process_line_doc_content(lexer);
     }
 
     while (iswspace(lexer->lookahead)) {

@@ -20,11 +20,11 @@ Block comments
   (block_comment)
   (block_comment)
   (block_comment
-    doc: (doc_comment
-      outer: (outer_doc_comment)))
+    outer: (outer_doc_comment_marker)
+    doc: (doc_comment))
   (block_comment
-    doc: (doc_comment
-      inner: (inner_doc_comment)))
+    inner: (inner_doc_comment_marker)
+    doc: (doc_comment))
   (block_comment))
 
 ============================================
@@ -73,11 +73,11 @@ Line comments
 (source_file
   (line_comment)
   (line_comment
-    doc: (doc_comment
-      outer: (outer_doc_comment)))
+    outer: (outer_doc_comment_marker)
+    doc: (doc_comment))
   (line_comment
-    doc: (doc_comment
-      inner: (inner_doc_comment))))
+    inner: (inner_doc_comment_marker)
+    doc: (doc_comment)))
 
 ====================================
 Line doc comments
@@ -87,21 +87,25 @@ Line doc comments
 
 //   - Only a comment
 ///  - Outer line doc (exactly 3 slashes)
+///
 //// - Only a comment
 
 ---
 
 (source_file
   (line_comment
-    doc: (doc_comment
-      inner: (inner_doc_comment)))
+    inner: (inner_doc_comment_marker)
+    doc: (doc_comment))
   (line_comment
-    doc: (doc_comment
-      inner: (inner_doc_comment)))
+    inner: (inner_doc_comment_marker)
+    doc: (doc_comment))
   (line_comment)
   (line_comment
-    doc: (doc_comment
-      outer: (outer_doc_comment)))
+    outer: (outer_doc_comment_marker)
+    doc: (doc_comment))
+  (line_comment
+    outer: (outer_doc_comment_marker)
+    doc: (doc_comment))
   (line_comment))
 
 ====================================
@@ -119,15 +123,15 @@ Block doc comments
 
 (source_file
   (block_comment
-    (doc_comment
-      (inner_doc_comment)))
+    inner: (inner_doc_comment_marker)
+    doc: (doc_comment))
   (block_comment
-    (doc_comment
-      (inner_doc_comment)))
+    inner: (inner_doc_comment_marker)
+    doc: (doc_comment))
   (block_comment)
   (block_comment
-    (doc_comment
-      (outer_doc_comment)))
+    outer: (outer_doc_comment_marker)
+    doc: (doc_comment))
   (block_comment))
 
 =====================================
@@ -143,11 +147,11 @@ Nested doc block comments
 (source_file
   (block_comment)
   (block_comment
-    (doc_comment
-      (inner_doc_comment)))
+    inner: (inner_doc_comment_marker)
+    doc: (doc_comment))
   (block_comment
-    (doc_comment
-      (outer_doc_comment))))
+    outer: (outer_doc_comment_marker)
+    doc: (doc_comment)))
 
 ====================================
 Comments degenerate cases
@@ -170,20 +174,31 @@ let x; // <- immediate item after an empty line doc comment
 
 (source_file
   (line_comment
-    (doc_comment
-      (inner_doc_comment)))
+    (inner_doc_comment_marker)
+    (doc_comment))
   (block_comment
-    (doc_comment
-      (inner_doc_comment)))
+    (inner_doc_comment_marker))
   (line_comment)
   (line_comment
-    (doc_comment
-      (outer_doc_comment)))
+    (outer_doc_comment_marker)
+    (doc_comment))
   (let_declaration
     (identifier))
   (line_comment)
   (block_comment)
   (block_comment))
+
+================================================================================
+Line doc comment with no EOL
+================================================================================
+
+//! Doc comment
+--------------------------------------------------------------------------------
+
+(source_file
+  (line_comment
+    (inner_doc_comment_marker)
+    (doc_comment)))
 
 =====================================
 Greek letters in identifiers
@@ -195,5 +210,11 @@ const ψ_2 : Ψ = 1;
 ---
 
 (source_file
-  (const_item (identifier) (type_identifier) (integer_literal))
-  (const_item (identifier) (type_identifier) (integer_literal)))
+  (const_item
+    (identifier)
+    (type_identifier)
+    (integer_literal))
+  (const_item
+    (identifier)
+    (type_identifier)
+    (integer_literal)))
