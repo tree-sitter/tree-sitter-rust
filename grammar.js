@@ -74,9 +74,10 @@ module.exports = grammar({
     $._string_content,
     $.raw_string_literal,
     $.float_literal,
-    $._outer_block_doc_comment,
-    $._inner_block_doc_comment,
-    '*/',
+    $._outer_block_doc_comment_marker,
+    $._inner_block_doc_comment_marker,
+    $._block_comment_content,
+    $._line_doc_content,
     $._error_sentinel,
   ],
 
@@ -1512,30 +1513,40 @@ module.exports = grammar({
         // A tricky edge case where what looks like a doc comment is not
         seq(token.immediate(prec(2, /\/\//)), /.*/),
         // A regular doc comment
-        seq(field('doc', alias($._line_doc_comment, $.doc_comment)), /.*/),
+        seq($._line_doc_comment_marker, field('doc', alias($._line_doc_content, $.doc_comment))),
         token.immediate(prec(1, /.*/)),
       ),
     ),
 
-    _line_doc_comment: $ => choice(
+    _line_doc_comment_marker: $ => choice(
       // An outer line doc comment applies to the element that it is outside of
-      field('outer', alias($._outer_line_doc_comment, $.outer_doc_comment)),
+      field('outer', alias($._outer_line_doc_comment_marker, $.outer_doc_comment_marker)),
       // An inner line doc comment applies to the element it is inside of
-      field('inner', alias($._inner_line_doc_comment, $.inner_doc_comment)),
+      field('inner', alias($._inner_line_doc_comment_marker, $.inner_doc_comment_marker)),
     ),
 
-    _inner_line_doc_comment: _ => token.immediate(prec(2, '!')),
-    _outer_line_doc_comment: _ => token.immediate(prec(2, /\/[^\/\r\n]?/)),
+    _inner_line_doc_comment_marker: _ => token.immediate(prec(2, '!')),
+    _outer_line_doc_comment_marker: _ => token.immediate(prec(2, '/')),
 
     block_comment: $ => seq(
       '/*',
-      optional(field('doc', alias($._block_doc_comment, $.doc_comment))),
+      optional(
+        choice(
+          // Documentation block comments: /** docs */ or /*! docs */
+          seq(
+            $._block_doc_comment_marker,
+            optional(field('doc', alias($._block_comment_content, $.doc_comment))),
+          ),
+          // Non-doc block comments
+          $._block_comment_content,
+        ),
+      ),
       '*/',
     ),
 
-    _block_doc_comment: $ => choice(
-      field('inner', alias($._inner_block_doc_comment, $.inner_doc_comment)),
-      field('outer', alias($._outer_block_doc_comment, $.outer_doc_comment)),
+    _block_doc_comment_marker: $ => choice(
+      field('outer', alias($._outer_block_doc_comment_marker, $.outer_doc_comment_marker)),
+      field('inner', alias($._inner_block_doc_comment_marker, $.inner_doc_comment_marker)),
     ),
 
     _path: $ => choice(
