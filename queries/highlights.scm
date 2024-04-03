@@ -131,6 +131,7 @@
 "use" @keyword
 "where" @keyword
 "while" @keyword
+"yield" @keyword
 (crate) @keyword
 (mutable_specifier) @keyword
 (use_list (self) @keyword)
