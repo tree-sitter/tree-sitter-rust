@@ -1,14 +1,11 @@
 /**
  * @file Rust grammar for tree-sitter
  * @author Maxim Sokolov <maxim0xff@gmail.com>
- * @author Max Brunsfeld
+ * @author Max Brunsfeld <maxbrunsfeld@gmail.com>
  * @author Amaan Qureshi <amaanq12@gmail.com>
  * @license MIT
  */
 
-/* eslint-disable arrow-parens */
-/* eslint-disable camelcase */
-/* eslint-disable-next-line spaced-comment */
 /// <reference types="tree-sitter-cli/dsl" />
 // @ts-check
 
@@ -33,7 +30,7 @@ const PREC = {
   closure: -1,
 };
 
-const numeric_types = [
+const numericTypes = [
   'u8',
   'i8',
   'u16',
@@ -59,7 +56,7 @@ const TOKEN_TREE_NON_SPECIAL_TOKENS = [
   '<', '>', '|', '~',
 ];
 
-const primitive_types = numeric_types.concat(['bool', 'str', 'char']);
+const primitiveTypes = numericTypes.concat(['bool', 'str', 'char']);
 
 module.exports = grammar({
   name: 'rust',
@@ -236,7 +233,7 @@ module.exports = grammar({
     // with $).
     _non_special_token: $ => choice(
       $._literal, $.identifier, $.mutable_specifier, $.self, $.super, $.crate,
-      alias(choice(...primitive_types), $.primitive_type),
+      alias(choice(...primitiveTypes), $.primitive_type),
       prec.right(repeat1(choice(...TOKEN_TREE_NON_SPECIAL_TOKENS))),
       '\'',
       'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'if', 'impl',
@@ -481,7 +478,7 @@ module.exports = grammar({
         $.tuple_type,
         $.array_type,
         $.higher_ranked_trait_bound,
-        alias(choice(...primitive_types), $.primitive_type),
+        alias(choice(...primitiveTypes), $.primitive_type),
       )),
       field('bounds', $.trait_bounds),
     ),
@@ -714,7 +711,7 @@ module.exports = grammar({
       $.empty_type,
       $.dynamic_type,
       $.bounded_type,
-      alias(choice(...primitive_types), $.primitive_type),
+      alias(choice(...primitiveTypes), $.primitive_type),
     ),
 
     bracketed_type: $ => seq(
@@ -886,7 +883,7 @@ module.exports = grammar({
       $.yield_expression,
       $._literal,
       prec.left($.identifier),
-      alias(choice(...primitive_types), $.identifier),
+      alias(choice(...primitiveTypes), $.identifier),
       prec.left($._reserved_identifier),
       $.self,
       $.scoped_identifier,
@@ -1312,7 +1309,7 @@ module.exports = grammar({
 
     _pattern: $ => choice(
       $._literal_pattern,
-      alias(choice(...primitive_types), $.identifier),
+      alias(choice(...primitiveTypes), $.identifier),
       $.identifier,
       $.scoped_identifier,
       $.tuple_pattern,
@@ -1457,7 +1454,7 @@ module.exports = grammar({
         /0b[01_]+/,
         /0o[0-7_]+/,
       ),
-      optional(choice(...numeric_types)),
+      optional(choice(...numericTypes)),
     )),
 
     string_literal: $ => seq(
@@ -1550,7 +1547,7 @@ module.exports = grammar({
 
     _path: $ => choice(
       $.self,
-      alias(choice(...primitive_types), $.identifier),
+      alias(choice(...primitiveTypes), $.identifier),
       $.metavariable,
       $.super,
       $.crate,
