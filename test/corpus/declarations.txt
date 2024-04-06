@@ -1831,6 +1831,8 @@ Higher-ranked types
 trait T: for<'a> AddAssign<&'a usize> {
 }
 
+type FnObject<'b> = dyn for<'a> FnLike<&'a isize, &'a isize> + 'b;
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -1848,7 +1850,31 @@ trait T: for<'a> AddAssign<&'a usize> {
               (lifetime
                 (identifier))
               (primitive_type))))))
-    (declaration_list)))
+    (declaration_list))
+  (type_item
+    (type_identifier)
+    (type_parameters
+      (lifetime
+        (identifier)))
+    (bounded_type
+      (dynamic_type
+        (higher_ranked_trait_bound
+          (type_parameters
+            (lifetime
+              (identifier)))
+          (generic_type
+            (type_identifier)
+            (type_arguments
+              (reference_type
+                (lifetime
+                  (identifier))
+                (primitive_type))
+              (reference_type
+                (lifetime
+                  (identifier))
+                (primitive_type))))))
+      (lifetime
+        (identifier)))))
 
 ================================================================================
 Visibility modifiers
