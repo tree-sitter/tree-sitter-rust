@@ -1190,7 +1190,7 @@ module.exports = grammar({
     ),
 
     match_arm: $ => prec.right(seq(
-      repeat($.attribute_item),
+      repeat(choice($.attribute_item, $.inner_attribute_item)),
       field('pattern', $.match_pattern),
       '=>',
       choice(
@@ -1200,7 +1200,7 @@ module.exports = grammar({
     )),
 
     last_match_arm: $ => seq(
-      repeat($.attribute_item),
+      repeat(choice($.attribute_item, $.inner_attribute_item)),
       field('pattern', $.match_pattern),
       '=>',
       field('value', $._expression),
