@@ -1668,6 +1668,30 @@ fn univariant(this: &impl ?Sized, that: &(impl LayoutCalculator + ?Sized)) {}
     (block)))
 
 ================================================================================
+Trait bounds in type in trait
+================================================================================
+
+impl<T: AstDeref<Target: HasNodeId>> HasNodeId for T {}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (impl_item
+    (type_parameters
+      (constrained_type_parameter
+        (type_identifier)
+        (trait_bounds
+          (generic_type
+            (type_identifier)
+            (type_arguments
+              (type_identifier)
+              (trait_bounds
+                (type_identifier)))))))
+    (type_identifier)
+    (type_identifier)
+    (declaration_list)))
+
+================================================================================
 Macro invocations inside trait declarations
 ================================================================================
 
