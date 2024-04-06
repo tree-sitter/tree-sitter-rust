@@ -294,7 +294,8 @@ type b = unsafe extern "C" fn() -> *mut c_void;
     (function_type
       (function_modifiers
         (extern_modifier
-          (string_literal)))
+          (string_literal
+            (string_content))))
       (parameters
         (pointer_type
           (mutable_specifier)
@@ -304,7 +305,8 @@ type b = unsafe extern "C" fn() -> *mut c_void;
     (function_type
       (function_modifiers
         (extern_modifier
-          (string_literal)))
+          (string_literal
+            (string_content))))
       (parameters)
       (pointer_type
         (mutable_specifier)

@@ -377,9 +377,12 @@ Array expressions
       (integer_literal)))
   (expression_statement
     (array_expression
-      (string_literal)
-      (string_literal)
-      (string_literal)))
+      (string_literal
+        (string_content))
+      (string_literal
+        (string_content))
+      (string_literal
+        (string_content))))
   (expression_statement
     (array_expression
       (integer_literal)
@@ -389,13 +392,17 @@ Array expressions
       (attribute_item
         (attribute
           (identifier)
-          arguments: (token_tree (identifier))))
-      (string_literal)
+          arguments: (token_tree
+            (identifier))))
+      (string_literal
+        (string_content))
       (attribute_item
         (attribute
           (identifier)
-          arguments: (token_tree (identifier))))
-      (string_literal))))
+          arguments: (token_tree
+            (identifier))))
+      (string_literal
+        (string_content)))))
 
 ================================================================================
 Tuple expressions
@@ -470,7 +477,8 @@ let u = game::User {name: "Joe", age: 35, score: 100_000};
       (field_initializer_list
         (field_initializer
           (field_identifier)
-          (string_literal))
+          (string_literal
+            (string_content)))
         (field_initializer
           (field_identifier)
           (integer_literal))
@@ -615,7 +623,8 @@ if a && let b = || c || d && e {}
     (if_expression
       condition: (let_condition
         pattern: (tuple_pattern
-          (string_literal)
+          (string_literal
+            (string_content))
           (identifier))
         value: (identifier))
       consequence: (block)))
@@ -625,7 +634,8 @@ if a && let b = || c || d && e {}
         (let_condition
           pattern: (tuple_struct_pattern
             type: (identifier)
-            (string_literal))
+            (string_literal
+              (string_content)))
           value: (identifier))
         (identifier)
         (let_condition
@@ -675,7 +685,8 @@ while let ("Bacon", b) = dish {
     (while_expression
       (let_condition
         (tuple_pattern
-          (string_literal)
+          (string_literal
+            (string_content))
           (identifier))
         (identifier))
       (block))))
@@ -718,11 +729,13 @@ let msg = match x {
           pattern: (match_pattern
             (integer_literal))
           value: (block
-            (string_literal)))
+            (string_literal
+              (string_content))))
         (match_arm
           pattern: (match_pattern
             (integer_literal))
-          value: (string_literal))
+          value: (string_literal
+            (string_content)))
         (match_arm
           pattern: (match_pattern
             (negative_literal
@@ -739,17 +752,20 @@ let msg = match x {
               (identifier)))
           pattern: (match_pattern
             (integer_literal))
-          value: (string_literal))
+          value: (string_literal
+            (string_content)))
         (match_arm
           pattern: (match_pattern
             (macro_invocation
               macro: (identifier)
               (token_tree
                 (integer_literal))))
-          value: (string_literal))
+          value: (string_literal
+            (string_content)))
         (match_arm
           pattern: (match_pattern)
-          value: (string_literal)))))
+          value: (string_literal
+            (string_content))))))
   (let_declaration
     pattern: (identifier)
     value: (match_expression
@@ -762,14 +778,16 @@ let msg = match x {
                 (integer_literal)
                 (integer_literal))
               (integer_literal)))
-          value: (string_literal))
+          value: (string_literal
+            (string_content)))
         (match_arm
           pattern: (match_pattern
             (identifier)
             condition: (binary_expression
               left: (identifier)
               right: (integer_literal)))
-          value: (string_literal))
+          value: (string_literal
+            (string_content)))
         (match_arm
           pattern: (match_pattern
             (identifier)
@@ -779,7 +797,8 @@ let msg = match x {
           value: (if_expression
             condition: (identifier)
             consequence: (block
-              (string_literal))))
+              (string_literal
+                (string_content)))))
         (match_arm
           pattern: (match_pattern
             (identifier)
@@ -795,10 +814,12 @@ let msg = match x {
                   type: (identifier)
                   (identifier))
                 value: (identifier))))
-          value: (string_literal))
+          value: (string_literal
+            (string_content)))
         (match_arm
           pattern: (match_pattern)
-          value: (string_literal))))))
+          value: (string_literal
+            (string_content)))))))
 
 ================================================================================
 While expressions

@@ -88,29 +88,42 @@ b"foo\nbar";
   (expression_statement
     (string_literal))
   (expression_statement
-    (string_literal))
-  (expression_statement
-    (string_literal))
+    (string_literal
+      (string_content)))
   (expression_statement
     (string_literal
-      (escape_sequence)))
+      (string_content)))
   (expression_statement
     (string_literal
-      (escape_sequence)))
+      (string_content)
+      (escape_sequence)
+      (string_content)))
+  (expression_statement
+    (string_literal
+      (string_content)
+      (escape_sequence)
+      (string_content)))
   (expression_statement
     (string_literal
       (escape_sequence)
-      (escape_sequence)))
-  (expression_statement
-    (string_literal))
-  (expression_statement
-    (string_literal
-      (escape_sequence)
+      (string_content)
       (escape_sequence)))
   (expression_statement
     (string_literal
+      (string_content)))
+  (expression_statement
+    (string_literal
+      (string_content)
       (escape_sequence)
-      (escape_sequence))))
+      (escape_sequence)
+      (string_content)))
+  (expression_statement
+    (string_literal
+      (string_content)
+      (escape_sequence)
+      (string_content)
+      (escape_sequence)
+      (string_content))))
 
 ================================================================================
 Raw string literals
