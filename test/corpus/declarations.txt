@@ -1101,6 +1101,11 @@ mod macos_only {
   #![cfg(target_os = "macos")]
 }
 
+match ty {
+    #![cfg_attr(all(test, exhaustive), deny(non_exhaustive_omitted_patterns))]
+    syn::Type::Array(ty) => self.visit_type(&ty.elem),
+}
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -1112,7 +1117,41 @@ mod macos_only {
           (identifier)
           arguments: (token_tree
             (identifier)
-            (string_literal)))))))
+            (string_literal
+              (string_content)))))))
+  (expression_statement
+    (match_expression
+      value: (identifier)
+      body: (match_block
+        (match_arm
+          (inner_attribute_item
+            (attribute
+              (identifier)
+              arguments: (token_tree
+                (identifier)
+                (token_tree
+                  (identifier)
+                  (identifier))
+                (identifier)
+                (token_tree
+                  (identifier)))))
+          pattern: (match_pattern
+            (tuple_struct_pattern
+              type: (scoped_identifier
+                path: (scoped_identifier
+                  path: (identifier)
+                  name: (identifier))
+                name: (identifier))
+              (identifier)))
+          value: (call_expression
+            function: (field_expression
+              value: (self)
+              field: (field_identifier))
+            arguments: (arguments
+              (reference_expression
+                value: (field_expression
+                  value: (identifier)
+                  field: (field_identifier))))))))))
 
 ================================================================================
 Key-Value Attribute Expressions
