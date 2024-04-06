@@ -71,7 +71,7 @@ module.exports = grammar({
   ],
 
   externals: $ => [
-    $._string_content,
+    $.string_content,
     $.raw_string_literal,
     $.float_literal,
     $._outer_block_doc_comment_marker,
@@ -1464,7 +1464,7 @@ module.exports = grammar({
       alias(/[bc]?"/, '"'),
       repeat(choice(
         $.escape_sequence,
-        $._string_content,
+        $.string_content,
       )),
       token.immediate('"'),
     ),

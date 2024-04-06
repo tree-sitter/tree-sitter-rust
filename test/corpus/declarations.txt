@@ -126,7 +126,8 @@ fn foo(bar: impl for<'a> Baz<Quux<'a>>) {}
         (macro_invocation
           macro: (identifier)
           (token_tree
-            (string_literal)
+            (string_literal
+              (string_content))
             (identifier))))))
   (function_item
     name: (identifier)
@@ -296,14 +297,16 @@ extern "C" fn printf(
   (function_item
     (function_modifiers
       (extern_modifier
-        (string_literal)))
+        (string_literal
+          (string_content))))
     (identifier)
     (parameters)
     (block))
   (function_item
     (function_modifiers
       (extern_modifier
-        (string_literal)))
+        (string_literal
+          (string_content))))
     (identifier)
     (parameters
       (pointer_type
@@ -1076,7 +1079,8 @@ mod macos_only {}
       (identifier)
       arguments: (token_tree
         (identifier)
-        (string_literal))))
+        (string_literal
+          (string_content)))))
   (mod_item
     name: (identifier)
     body: (declaration_list))
@@ -1091,7 +1095,8 @@ mod macos_only {}
       (scoped_identifier
         path: (identifier)
         name: (identifier))
-      value: (string_literal))))
+      value: (string_literal
+        (string_content)))))
 
 ================================================================================
 Inner attributes
@@ -1172,7 +1177,8 @@ fn baz() {}
       (macro_invocation
         (identifier)
         (token_tree
-          (string_literal)))))
+          (string_literal
+            (string_content))))))
   (function_item
     (identifier)
     (parameters)
@@ -1268,7 +1274,8 @@ pub enum Error {
         (attribute
           (identifier)
           (token_tree
-            (string_literal)
+            (string_literal
+              (string_content))
             (identifier)
             (token_tree
               (integer_literal)))))
@@ -1280,7 +1287,8 @@ pub enum Error {
         (attribute
           (identifier)
           (token_tree
-            (string_literal)
+            (string_literal
+              (string_content))
             (identifier)
             (identifier)
             (identifier)
@@ -1324,7 +1332,8 @@ fn foo() {
                 (identifier)
                 arguments: (token_tree
                   (identifier)
-                  (string_literal))))
+                  (string_literal
+                    (string_content)))))
             (identifier))))
       (let_declaration
         pattern: (identifier)
@@ -2169,7 +2178,8 @@ extern "C" {}
               (type_identifier)))))))
   (foreign_mod_item
     (extern_modifier
-      (string_literal))
+      (string_literal
+        (string_content)))
     (declaration_list)))
 
 ================================================================================
@@ -2242,7 +2252,7 @@ Array Constraint in Where Clause
 ================================================================================
 
 fn foo<D>(val: D)
-where   
+where
     [u8; 32]: From<D>,
 
 {}
