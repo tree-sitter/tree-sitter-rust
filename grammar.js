@@ -708,7 +708,7 @@ module.exports = grammar({
       $.function_type,
       $._type_identifier,
       $.macro_invocation,
-      $.empty_type,
+      $.never_type,
       $.dynamic_type,
       $.bounded_type,
       alias(choice(...primitiveTypes), $.primitive_type),
@@ -843,7 +843,7 @@ module.exports = grammar({
       field('type', $._type),
     ),
 
-    empty_type: _ => '!',
+    never_type: _ => '!',
 
     abstract_type: $ => seq(
       'impl',
