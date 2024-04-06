@@ -278,7 +278,7 @@ fn aborts() -> ! {
   (function_item
     (identifier)
     (parameters)
-    (empty_type)
+    (never_type)
     (block)))
 
 ================================================================================
