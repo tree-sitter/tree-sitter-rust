@@ -1208,7 +1208,7 @@ module.exports = grammar({
     ),
 
     match_pattern: $ => seq(
-      choice($._pattern, alias($.closure_expression, $.closure_pattern)),
+      $._pattern,
       optional(seq('if', field('condition', $._condition))),
     ),
 
@@ -1422,10 +1422,9 @@ module.exports = grammar({
       $._pattern,
     ),
 
-    or_pattern: $ => prec.left(-2, seq(
-      $._pattern,
-      '|',
-      $._pattern,
+    or_pattern: $ => prec.left(-2, choice(
+      seq($._pattern, '|', $._pattern),
+      seq('|', $._pattern),
     )),
 
     // Section - Literals

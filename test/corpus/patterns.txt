@@ -165,6 +165,13 @@ match x {
   d.. => a,
 }
 
+match name {
+  | "IPV6_FLOWINFO"
+  | "IPV6_FLOWLABEL_MGR"
+  | "IPV6_FLOWINFO_SEND" => true,
+  _ => false,
+}
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -221,7 +228,26 @@ match x {
           pattern: (match_pattern
             (range_pattern
               (identifier)))
-          value: (identifier))))))
+          value: (identifier)))))
+  (expression_statement
+    (match_expression
+      value: (identifier)
+      body: (match_block
+        (match_arm
+          pattern: (match_pattern
+            (or_pattern
+              (or_pattern
+                (or_pattern
+                  (string_literal
+                    (string_content)))
+                (string_literal
+                  (string_content)))
+              (string_literal
+                (string_content))))
+          value: (boolean_literal))
+        (match_arm
+          pattern: (match_pattern)
+          value: (boolean_literal))))))
 
 ================================================================================
 Or patterns
@@ -250,12 +276,6 @@ let ref mut x @ (A | B | C);
 fn foo((1 | 2 | 3): u8) {}
 
 if let x!() | y!() = () {}
-
-// Discomment after box pattern land on master
-// let box (A | B | C);
-
-// Not handled cause devs didn't got into agreement if should be acceptd or not
-// |Ok(x) | Err(x)| expr();
 
 --------------------------------------------------------------------------------
 
@@ -387,11 +407,7 @@ if let x!() | y!() = () {}
             macro: (identifier)
             (token_tree)))
         value: (unit_expression))
-      consequence: (block)))
-  (line_comment)
-  (line_comment)
-  (line_comment)
-  (line_comment))
+      consequence: (block))))
 
 ================================================================================
 Inline const or Const blocks as pattern
