@@ -526,7 +526,6 @@ module.exports = grammar({
         $._type,
         $.lifetime,
         $.higher_ranked_trait_bound,
-        $.removed_trait_bound,
       )),
     ),
 
@@ -711,6 +710,7 @@ module.exports = grammar({
       $.never_type,
       $.dynamic_type,
       $.bounded_type,
+      $.removed_trait_bound,
       alias(choice(...primitiveTypes), $.primitive_type),
     ),
 
@@ -851,6 +851,7 @@ module.exports = grammar({
       field('trait', choice(
         $._type_identifier,
         $.scoped_type_identifier,
+        $.removed_trait_bound,
         $.generic_type,
         $.function_type,
       )),
