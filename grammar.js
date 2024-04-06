@@ -859,6 +859,7 @@ module.exports = grammar({
     dynamic_type: $ => seq(
       'dyn',
       field('trait', choice(
+        $.higher_ranked_trait_bound,
         $._type_identifier,
         $.scoped_type_identifier,
         $.generic_type,
