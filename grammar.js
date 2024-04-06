@@ -729,7 +729,7 @@ module.exports = grammar({
       field('alias', $._type),
     ),
 
-    lifetime: $ => seq('\'', $.identifier),
+    lifetime: $ => prec(1, seq('\'', $.identifier)),
 
     array_type: $ => seq(
       '[',
@@ -812,12 +812,15 @@ module.exports = grammar({
 
     type_arguments: $ => seq(
       token(prec(1, '<')),
-      sepBy1(',', choice(
-        $._type,
-        $.type_binding,
-        $.lifetime,
-        $._literal,
-        $.block,
+      sepBy1(',', seq(
+        choice(
+          $._type,
+          $.type_binding,
+          $.lifetime,
+          $._literal,
+          $.block,
+        ),
+        optional($.trait_bounds),
       )),
       optional(','),
       '>',
