@@ -542,13 +542,16 @@ module.exports = grammar({
 
     type_parameters: $ => prec(1, seq(
       '<',
-      sepBy1(',', choice(
-        $.lifetime,
-        $.metavariable,
-        $._type_identifier,
-        $.constrained_type_parameter,
-        $.optional_type_parameter,
-        $.const_parameter,
+      sepBy1(',', seq(
+        repeat($.attribute_item),
+        choice(
+          $.lifetime,
+          $.metavariable,
+          $._type_identifier,
+          $.constrained_type_parameter,
+          $.optional_type_parameter,
+          $.const_parameter,
+        ),
       )),
       optional(','),
       '>',
