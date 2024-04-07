@@ -1407,7 +1407,7 @@ module.exports = grammar({
       ),
       choice(
         seq(
-          choice('...', '..='),
+          choice('...', '..=', '..'),
           choice(
             $._literal_pattern,
             $._path,
