@@ -438,6 +438,7 @@ NothingInMe {};
 Point {x: 10.0, y: 20.0};
 let a = SomeStruct { field1, field2: expression, field3, };
 let u = game::User {name: "Joe", age: 35, score: 100_000};
+let i = Instant { 0: Duration::from_millis(0) };
 
 --------------------------------------------------------------------------------
 
@@ -484,7 +485,20 @@ let u = game::User {name: "Joe", age: 35, score: 100_000};
           (integer_literal))
         (field_initializer
           (field_identifier)
-          (integer_literal))))))
+          (integer_literal)))))
+  (let_declaration
+    (identifier)
+    (struct_expression
+      (type_identifier)
+      (field_initializer_list
+        (field_initializer
+          (integer_literal)
+          (call_expression
+            (scoped_identifier
+              (identifier)
+              (identifier))
+            (arguments
+              (integer_literal))))))))
 
 ================================================================================
 Struct expressions with update initializers
