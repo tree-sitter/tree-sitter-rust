@@ -607,6 +607,7 @@ struct Point {
 }
 struct Color(pub i32, i32, i32);
 struct Inches(i32);
+struct Empty(pub ());
 
 --------------------------------------------------------------------------------
 
@@ -649,7 +650,12 @@ struct Inches(i32);
   (struct_item
     (type_identifier)
     (ordered_field_declaration_list
-      (primitive_type))))
+      (primitive_type)))
+  (struct_item
+    (type_identifier)
+    (ordered_field_declaration_list
+      (visibility_modifier)
+      (unit_type))))
 
 ================================================================================
 Unions
