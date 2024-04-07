@@ -1364,6 +1364,7 @@ module.exports = grammar({
       field('type', choice(
         $.identifier,
         $.scoped_identifier,
+        alias($.generic_type_with_turbofish, $.generic_type),
       )),
       '(',
       sepBy(',', $._pattern),

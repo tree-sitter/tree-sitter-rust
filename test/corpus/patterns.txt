@@ -79,6 +79,10 @@ match x {
   Person{name: adult_name, age: _} => ("adult", adult_name),
 }
 
+match y {
+  Bar::T1(_, Some::<isize>(x)) => println!("{x}"),
+}
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -113,7 +117,28 @@ match x {
           (tuple_expression
             (string_literal
               (string_content))
-            (identifier)))))))
+            (identifier))))))
+  (expression_statement
+    (match_expression
+      (identifier)
+      (match_block
+        (match_arm
+          (match_pattern
+            (tuple_struct_pattern
+              (scoped_identifier
+                (identifier)
+                (identifier))
+              (tuple_struct_pattern
+                (generic_type
+                  (type_identifier)
+                  (type_arguments
+                    (primitive_type)))
+                (identifier))))
+          (macro_invocation
+            (identifier)
+            (token_tree
+              (string_literal
+                (string_content)))))))))
 
 ================================================================================
 Ignored patterns
