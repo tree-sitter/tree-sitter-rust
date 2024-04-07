@@ -1038,6 +1038,7 @@ Type aliases
 
 type Inch = u64;
 type Name<T> = Vec<T>;
+type LazyResolve = impl (FnOnce() -> Capture) + Send + Sync + UnwindSafe;
 
 --------------------------------------------------------------------------------
 
@@ -1052,7 +1053,21 @@ type Name<T> = Vec<T>;
     (generic_type
       (type_identifier)
       (type_arguments
-        (type_identifier)))))
+        (type_identifier))))
+  (type_item
+    (type_identifier)
+    (bounded_type
+      (bounded_type
+        (bounded_type
+          (abstract_type
+            (tuple_type
+              (function_type
+                (type_identifier)
+                (parameters)
+                (type_identifier))))
+          (type_identifier))
+        (type_identifier))
+      (type_identifier))))
 
 ================================================================================
 Empty statements
