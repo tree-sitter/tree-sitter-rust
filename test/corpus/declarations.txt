@@ -290,6 +290,12 @@ extern "C" fn printf(
     ...,
 ) {}
 
+pub unsafe extern "C" fn c_variadic_no_use(fmt: *const i8, mut ap: ...) -> i32 {
+    // CHECK: call void @llvm.va_start
+    vprintf(fmt, ap.as_va_list())
+    // CHECK: call void @llvm.va_end
+}
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -311,7 +317,35 @@ extern "C" fn printf(
       (pointer_type
         (type_identifier))
       (variadic_parameter))
-    (block)))
+    (block))
+  (function_item
+    (visibility_modifier)
+    (function_modifiers
+      (extern_modifier
+        (string_literal
+          (string_content))))
+    (identifier)
+    (parameters
+      (parameter
+        (identifier)
+        (pointer_type
+          (primitive_type)))
+      (variadic_parameter
+        (mutable_specifier)
+        (identifier)))
+    (primitive_type)
+    (block
+      (line_comment)
+      (call_expression
+        (identifier)
+        (arguments
+          (identifier)
+          (call_expression
+            (field_expression
+              (identifier)
+              (field_identifier))
+            (arguments))))
+      (line_comment))))
 
 ================================================================================
 Use declarations
