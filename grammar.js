@@ -867,6 +867,7 @@ module.exports = grammar({
         $.removed_trait_bound,
         $.generic_type,
         $.function_type,
+        $.tuple_type,
       )),
     ),
 
