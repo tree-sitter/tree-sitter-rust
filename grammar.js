@@ -47,13 +47,12 @@ const numericTypes = [
   'f64',
 ];
 
-const TOKEN_TREE_NON_SPECIAL_TOKENS = [
-  '/', '_', '\\', '-',
-  '=', '->', ',', ';',
-  ':', '::', '!', '?',
-  '.', '@', '*', '&',
-  '#', '%', '^', '+',
-  '<', '>', '|', '~',
+// https://doc.rust-lang.org/reference/tokens.html#punctuation
+const TOKEN_TREE_NON_SPECIAL_PUNCTUATION = [
+  '+', '-', '*', '/', '%', '^', '!', '&', '|', '&&', '||', '<<',
+  '>>', '+=', '-=', '*=', '/=', '%=', '^=', '&=', '|=', '<<=',
+  '>>=', '=', '==', '!=', '>', '<', '>=', '<=', '@', '_', '.',
+  '..', '...', '..=', ',', ';', ':', '::', '->', '=>', '#', '?',
 ];
 
 const primitiveTypes = numericTypes.concat(['bool', 'str', 'char']);
@@ -238,7 +237,7 @@ module.exports = grammar({
     _non_special_token: $ => choice(
       $._literal, $.identifier, $.mutable_specifier, $.self, $.super, $.crate,
       alias(choice(...primitiveTypes), $.primitive_type),
-      prec.right(repeat1(choice(...TOKEN_TREE_NON_SPECIAL_TOKENS))),
+      prec.right(repeat1(choice(...TOKEN_TREE_NON_SPECIAL_PUNCTUATION))),
       '\'',
       'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'if', 'impl',
       'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait', 'type',
