@@ -660,7 +660,14 @@ module.exports = grammar({
       $.self,
     ),
 
-    variadic_parameter: _ => '...',
+    variadic_parameter: $ => seq(
+      optional($.mutable_specifier),
+      optional(seq(
+        field('pattern', $._pattern),
+        ':',
+      )),
+      '...',
+    ),
 
     parameter: $ => seq(
       optional($.mutable_specifier),
