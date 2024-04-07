@@ -69,7 +69,9 @@ module.exports = grammar({
 
   externals: $ => [
     $.string_content,
-    $.raw_string_literal,
+    $._raw_string_literal_start,
+    $.raw_string_literal_content,
+    $._raw_string_literal_end,
     $.float_literal,
     $._outer_block_doc_comment_marker,
     $._inner_block_doc_comment_marker,
@@ -1482,6 +1484,12 @@ module.exports = grammar({
         $.string_content,
       )),
       token.immediate('"'),
+    ),
+
+    raw_string_literal: $ => seq(
+      $._raw_string_literal_start,
+      alias($.raw_string_literal_content, $.string_content),
+      $._raw_string_literal_end,
     ),
 
     char_literal: _ => token(seq(

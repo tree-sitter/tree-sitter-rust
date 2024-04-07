@@ -1,9 +1,13 @@
+#include "tree_sitter/alloc.h"
 #include "tree_sitter/parser.h"
+
 #include <wctype.h>
 
 enum TokenType {
     STRING_CONTENT,
-    RAW_STRING_LITERAL,
+    RAW_STRING_LITERAL_START,
+    RAW_STRING_LITERAL_CONTENT,
+    RAW_STRING_LITERAL_END,
     FLOAT_LITERAL,
     BLOCK_OUTER_DOC_MARKER,
     BLOCK_INNER_DOC_MARKER,
@@ -12,15 +16,28 @@ enum TokenType {
     ERROR_SENTINEL
 };
 
-void *tree_sitter_rust_external_scanner_create() { return NULL; }
+typedef struct {
+    uint8_t opening_hash_count;
+} Scanner;
 
-void tree_sitter_rust_external_scanner_destroy(void *p) {}
+void *tree_sitter_rust_external_scanner_create() { return ts_calloc(1, sizeof(Scanner)); }
 
-void tree_sitter_rust_external_scanner_reset(void *p) {}
+void tree_sitter_rust_external_scanner_destroy(void *payload) { ts_free((Scanner *)payload); }
 
-unsigned tree_sitter_rust_external_scanner_serialize(void *p, char *buffer) { return 0; }
+unsigned tree_sitter_rust_external_scanner_serialize(void *payload, char *buffer) {
+    Scanner *scanner = (Scanner *)payload;
+    buffer[0] = (char)scanner->opening_hash_count;
+    return 1;
+}
 
-void tree_sitter_rust_external_scanner_deserialize(void *p, const char *b, unsigned n) {}
+void tree_sitter_rust_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {
+    Scanner *scanner = (Scanner *)payload;
+    scanner->opening_hash_count = 0;
+    if (length == 1) {
+        Scanner *scanner = (Scanner *)payload;
+        scanner->opening_hash_count = buffer[0];
+    }
+}
 
 static inline bool is_num_char(int32_t c) { return c == '_' || iswdigit(c); }
 
@@ -45,8 +62,7 @@ static inline bool process_string(TSLexer *lexer) {
     return has_content;
 }
 
-static inline bool process_raw_string(TSLexer *lexer) {
-    lexer->result_symbol = RAW_STRING_LITERAL;
+static inline bool scan_raw_string_start(Scanner *scanner, TSLexer *lexer) {
     if (lexer->lookahead == 'b' || lexer->lookahead == 'c') {
         advance(lexer);
     }
@@ -55,7 +71,7 @@ static inline bool process_raw_string(TSLexer *lexer) {
     }
     advance(lexer);
 
-    unsigned opening_hash_count = 0;
+    uint8_t opening_hash_count = 0;
     while (lexer->lookahead == '#') {
         advance(lexer);
         opening_hash_count++;
@@ -65,26 +81,42 @@ static inline bool process_raw_string(TSLexer *lexer) {
         return false;
     }
     advance(lexer);
+    scanner->opening_hash_count = opening_hash_count;
 
+    lexer->result_symbol = RAW_STRING_LITERAL_START;
+    return true;
+}
+
+static inline bool scan_raw_string_content(Scanner *scanner, TSLexer *lexer) {
     for (;;) {
         if (lexer->eof(lexer)) {
             return false;
         }
         if (lexer->lookahead == '"') {
+            lexer->mark_end(lexer);
             advance(lexer);
             unsigned hash_count = 0;
-            while (lexer->lookahead == '#' && hash_count < opening_hash_count) {
+            while (lexer->lookahead == '#' && hash_count < scanner->opening_hash_count) {
                 advance(lexer);
                 hash_count++;
             }
-            if (hash_count == opening_hash_count) {
-                lexer->mark_end(lexer);
+            if (hash_count == scanner->opening_hash_count) {
+                lexer->result_symbol = RAW_STRING_LITERAL_CONTENT;
                 return true;
             }
         } else {
             advance(lexer);
         }
     }
+}
+
+static inline bool scan_raw_string_end(Scanner *scanner, TSLexer *lexer) {
+    advance(lexer);
+    for (unsigned i = 0; i < scanner->opening_hash_count; i++) {
+        advance(lexer);
+    }
+    lexer->result_symbol = RAW_STRING_LITERAL_END;
+    return true;
 }
 
 static inline bool process_float_literal(TSLexer *lexer) {
@@ -321,7 +353,10 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const
         return false;
     }
 
-    if (valid_symbols[BLOCK_COMMENT_CONTENT] || valid_symbols[BLOCK_INNER_DOC_MARKER] || valid_symbols[BLOCK_OUTER_DOC_MARKER]) {
+    Scanner *scanner = (Scanner *)payload;
+
+    if (valid_symbols[BLOCK_COMMENT_CONTENT] || valid_symbols[BLOCK_INNER_DOC_MARKER] ||
+        valid_symbols[BLOCK_OUTER_DOC_MARKER]) {
         return process_block_comment(lexer, valid_symbols);
     }
 
@@ -337,9 +372,17 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const
         skip(lexer);
     }
 
-    if (valid_symbols[RAW_STRING_LITERAL] &&
+    if (valid_symbols[RAW_STRING_LITERAL_START] &&
         (lexer->lookahead == 'r' || lexer->lookahead == 'b' || lexer->lookahead == 'c')) {
-        return process_raw_string(lexer);
+        return scan_raw_string_start(scanner, lexer);
+    }
+
+    if (valid_symbols[RAW_STRING_LITERAL_CONTENT]) {
+        return scan_raw_string_content(scanner, lexer);
+    }
+
+    if (valid_symbols[RAW_STRING_LITERAL_END] && lexer->lookahead == '"') {
+        return scan_raw_string_end(scanner, lexer);
     }
 
     if (valid_symbols[FLOAT_LITERAL] && iswdigit(lexer->lookahead)) {
