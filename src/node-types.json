@@ -410,10 +410,6 @@
         "named": true
       },
       {
-        "type": "empty_type",
-        "named": true
-      },
-      {
         "type": "function_type",
         "named": true
       },
@@ -430,6 +426,10 @@
         "named": true
       },
       {
+        "type": "never_type",
+        "named": true
+      },
+      {
         "type": "pointer_type",
         "named": true
       },
@@ -439,6 +439,10 @@
       },
       {
         "type": "reference_type",
+        "named": true
+      },
+      {
+        "type": "removed_trait_bound",
         "named": true
       },
       {
@@ -476,7 +480,15 @@
             "named": true
           },
           {
+            "type": "removed_trait_bound",
+            "named": true
+          },
+          {
             "type": "scoped_type_identifier",
+            "named": true
+          },
+          {
+            "type": "tuple_type",
             "named": true
           },
           {
@@ -1228,46 +1240,6 @@
     }
   },
   {
-    "type": "closure_pattern",
-    "named": true,
-    "fields": {
-      "body": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "_",
-            "named": false
-          },
-          {
-            "type": "_expression",
-            "named": true
-          }
-        ]
-      },
-      "parameters": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "closure_parameters",
-            "named": true
-          }
-        ]
-      },
-      "return_type": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "_type",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "compound_assignment_expr",
     "named": true,
     "fields": {
@@ -1504,6 +1476,10 @@
             "named": true
           },
           {
+            "type": "higher_ranked_trait_bound",
+            "named": true
+          },
+          {
             "type": "scoped_type_identifier",
             "named": true
           },
@@ -1536,11 +1512,6 @@
   },
   {
     "type": "empty_statement",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "empty_type",
     "named": true,
     "fields": {}
   },
@@ -1822,12 +1793,16 @@
     "type": "field_initializer",
     "named": true,
     "fields": {
-      "name": {
+      "field": {
         "multiple": false,
         "required": true,
         "types": [
           {
             "type": "field_identifier",
+            "named": true
+          },
+          {
+            "type": "integer_literal",
             "named": true
           }
         ]
@@ -2801,6 +2776,10 @@
         {
           "type": "attribute_item",
           "named": true
+        },
+        {
+          "type": "inner_attribute_item",
+          "named": true
         }
       ]
     }
@@ -2875,10 +2854,6 @@
       "types": [
         {
           "type": "_pattern",
-          "named": true
-        },
-        {
-          "type": "closure_pattern",
           "named": true
         }
       ]
@@ -2957,6 +2932,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "never_type",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "optional_type_parameter",
@@ -3220,6 +3200,21 @@
         },
         {
           "type": "super",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "raw_string_literal",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "string_content",
           "named": true
         }
       ]
@@ -3649,6 +3644,10 @@
         {
           "type": "escape_sequence",
           "named": true
+        },
+        {
+          "type": "string_content",
+          "named": true
         }
       ]
     }
@@ -4032,10 +4031,6 @@
         {
           "type": "lifetime",
           "named": true
-        },
-        {
-          "type": "removed_trait_bound",
-          "named": true
         }
       ]
     }
@@ -4177,6 +4172,10 @@
         "required": true,
         "types": [
           {
+            "type": "generic_type",
+            "named": true
+          },
+          {
             "type": "identifier",
             "named": true
           },
@@ -4235,6 +4234,10 @@
         },
         {
           "type": "lifetime",
+          "named": true
+        },
+        {
+          "type": "trait_bounds",
           "named": true
         },
         {
@@ -4364,6 +4367,10 @@
       "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "const_parameter",
           "named": true
@@ -4678,7 +4685,28 @@
   {
     "type": "variadic_parameter",
     "named": true,
-    "fields": {}
+    "fields": {
+      "pattern": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "_pattern",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "mutable_specifier",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "visibility_modifier",
@@ -5040,10 +5068,6 @@
     "named": false
   },
   {
-    "type": "\\",
-    "named": false
-  },
-  {
     "type": "]",
     "named": false
   },
@@ -5244,10 +5268,6 @@
     "named": false
   },
   {
-    "type": "raw_string_literal",
-    "named": true
-  },
-  {
     "type": "ref",
     "named": false
   },
@@ -5274,6 +5294,10 @@
   {
     "type": "stmt",
     "named": false
+  },
+  {
+    "type": "string_content",
+    "named": true
   },
   {
     "type": "struct",
@@ -5357,10 +5381,6 @@
   },
   {
     "type": "}",
-    "named": false
-  },
-  {
-    "type": "~",
     "named": false
   }
 ]
