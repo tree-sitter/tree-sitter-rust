@@ -108,6 +108,8 @@ module.exports = grammar({
     [$.parameters, $.tuple_struct_pattern],
     [$.type_parameters, $.for_lifetimes],
     [$.array_expression],
+    [$.visibility_modifier],
+    [$.visibility_modifier, $.scoped_identifier, $.scoped_type_identifier],
   ],
 
   word: $ => $.identifier,
@@ -684,23 +686,22 @@ module.exports = grammar({
       optional($.string_literal),
     ),
 
-    visibility_modifier: $ => prec.right(
-      choice(
-        $.crate,
-        seq(
-          'pub',
-          optional(seq(
-            '(',
-            choice(
-              $.self,
-              $.super,
-              $.crate,
-              seq('in', $._path),
-            ),
-            ')',
-          )),
-        ),
-      )),
+    visibility_modifier: $ => choice(
+      $.crate,
+      seq(
+        'pub',
+        optional(seq(
+          '(',
+          choice(
+            $.self,
+            $.super,
+            $.crate,
+            seq('in', $._path),
+          ),
+          ')',
+        )),
+      ),
+    ),
 
     // Section - Types
 
