@@ -1,6 +1,6 @@
 {
   "name": "tree-sitter-rust",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "description": "Rust grammar for tree-sitter",
   "repository": "github:tree-sitter/tree-sitter-rust",
   "license": "MIT",
