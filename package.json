@@ -43,8 +43,8 @@
   "devDependencies": {
     "eslint": "^8.57.0",
     "eslint-config-google": "^0.14.0",
-    "tree-sitter-cli": "^0.22.2",
-    "prebuildify": "^6.0.0"
+    "tree-sitter-cli": "^0.22.5",
+    "prebuildify": "^6.0.1"
   },
   "scripts": {
     "install": "node-gyp-build",
