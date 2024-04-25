@@ -1,5 +1,6 @@
 {
   "name": "rust",
+  "inherits": null,
   "word": "identifier",
   "rules": {
     "source_file": {
@@ -2975,6 +2976,18 @@
               }
             ]
           }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "where_clause"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         },
         {
           "type": "STRING",

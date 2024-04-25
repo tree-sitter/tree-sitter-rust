@@ -520,6 +520,7 @@ module.exports = grammar({
       field('name', $._type_identifier),
       field('type_parameters', optional($.type_parameters)),
       field('bounds', optional($.trait_bounds)),
+      optional($.where_clause),
       ';',
     ),
 

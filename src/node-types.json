@@ -644,6 +644,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "where_clause",
+          "named": true
+        }
+      ]
     }
   },
   {
