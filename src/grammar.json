@@ -1,6 +1,5 @@
 {
   "name": "rust",
-  "inherits": null,
   "word": "identifier",
   "rules": {
     "source_file": {
@@ -9235,7 +9234,7 @@
     },
     "shebang": {
       "type": "PATTERN",
-      "value": "#![\\s]*[^\\[\\s]+"
+      "value": "#![\\s]*[^\\[].+"
     },
     "_reserved_identifier": {
       "type": "ALIAS",
