@@ -335,7 +335,8 @@ pub unsafe extern "C" fn c_variadic_no_use(fmt: *const i8, mut ap: ...) -> i32 {
         (identifier)))
     (primitive_type)
     (block
-      (line_comment)
+      (line_comment
+        (comment))
       (call_expression
         (identifier)
         (arguments
@@ -345,7 +346,8 @@ pub unsafe extern "C" fn c_variadic_no_use(fmt: *const i8, mut ap: ...) -> i32 {
               (identifier)
               (field_identifier))
             (arguments))))
-      (line_comment))))
+      (line_comment
+        (comment)))))
 
 ================================================================================
 Use declarations
@@ -1318,7 +1320,8 @@ pub enum Error {
 --------------------------------------------------------------------------------
 
 (source_file
-  (line_comment)
+  (line_comment
+    (comment))
   (use_declaration
     (scoped_identifier
       (identifier)
@@ -1614,7 +1617,8 @@ impl Foo {
         (parameters)
         (primitive_type)
         (block
-          (line_comment)
+          (line_comment
+            (comment))
           (expression_statement
             (call_expression
               (field_expression
