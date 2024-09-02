@@ -2480,6 +2480,11 @@
     }
   },
   {
+    "type": "inner_doc_comment_marker",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "label",
     "named": true,
     "fields": {},
@@ -3022,6 +3027,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "outer_doc_comment_marker",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "parameter",
@@ -5202,10 +5212,6 @@
     "named": false
   },
   {
-    "type": "inner_doc_comment_marker",
-    "named": true
-  },
-  {
     "type": "integer_literal",
     "named": true
   },
@@ -5255,10 +5261,6 @@
   },
   {
     "type": "mutable_specifier",
-    "named": true
-  },
-  {
-    "type": "outer_doc_comment_marker",
     "named": true
   },
   {

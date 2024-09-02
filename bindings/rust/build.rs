@@ -2,8 +2,10 @@ fn main() {
     let src_dir = std::path::Path::new("src");
 
     let mut c_config = cc::Build::new();
-    c_config.flag_if_supported("-Wno-unused-parameter");
-    c_config.std("c11").include(src_dir);
+    c_config
+        .std("c11")
+        .include(src_dir)
+        .flag_if_supported("-Wno-unused-parameter");
 
     #[cfg(target_env = "msvc")]
     c_config.flag("-utf-8");
