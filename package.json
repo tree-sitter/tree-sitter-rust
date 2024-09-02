@@ -29,31 +29,29 @@
     "src/**"
   ],
   "dependencies": {
-    "node-addon-api": "^8.0.0",
-    "node-gyp-build": "^4.8.0"
+    "node-addon-api": "^8.1.0",
+    "node-gyp-build": "^4.8.2"
   },
   "peerDependencies": {
     "tree-sitter": "^0.21.1"
   },
   "peerDependenciesMeta": {
-    "tree_sitter": {
+    "tree-sitter": {
       "optional": true
     }
   },
   "devDependencies": {
     "eslint": "^8.57.0",
     "eslint-config-google": "^0.14.0",
-    "tree-sitter-cli": "^0.22.5",
+    "tree-sitter-cli": "^0.23.0",
     "prebuildify": "^6.0.1"
   },
   "scripts": {
     "install": "node-gyp-build",
-    "prebuildify": "prebuildify --napi --strip",
-    "build": "tree-sitter generate --no-bindings",
-    "build-wasm": "tree-sitter build --wasm",
-    "lint": "eslint grammar.js",
-    "parse": "tree-sitter parse",
-    "test": "tree-sitter test"
+    "lint": "grammar.js",
+    "prestart": "tree-sitter build --wasm",
+    "start": "tree-sitter playground",
+    "test": "node --test bindings/node/*_test.js"
   },
   "tree-sitter": [
     {
