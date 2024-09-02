@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tree-sitter-rust"
 description = "Rust grammar for tree-sitter"
-version = "0.21.2"
+version = "0.23.0"
 keywords = ["incremental", "parsing", "tree-sitter", "rust"]
 classifiers = [
   "Intended Audience :: Developers",
