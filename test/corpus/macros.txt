@@ -154,8 +154,10 @@ ok! {
   (macro_invocation
     (identifier)
     (token_tree
-      (line_comment)
-      (block_comment))))
+      (line_comment
+        (comment))
+      (block_comment
+        (comment)))))
 
 ================================================================================
 Macro definition

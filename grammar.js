@@ -1533,10 +1533,10 @@ module.exports = grammar({
       // - or just content for the comment
       choice(
         // A tricky edge case where what looks like a doc comment is not
-        seq(token.immediate(prec(2, /\/\//)), /.*/),
+        seq(token.immediate(prec(3, /\/\//)), field('comment', alias(/.*/, $.comment))),
         // A regular doc comment
         seq($._line_doc_comment_marker, field('doc', alias($._line_doc_content, $.doc_comment))),
-        token.immediate(prec(1, /.*/)),
+        field('comment', alias(token.immediate(prec(1, /.*/)), $.comment)),
       ),
     ),
 
@@ -1560,7 +1560,7 @@ module.exports = grammar({
             optional(field('doc', alias($._block_comment_content, $.doc_comment))),
           ),
           // Non-doc block comments
-          $._block_comment_content,
+          field('comment', alias($._block_comment_content, $.comment)),
         ),
       ),
       '*/',

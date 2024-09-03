@@ -17,8 +17,10 @@ Block comments
 ----
 
 (source_file
-  (block_comment)
-  (block_comment)
+  (block_comment
+    comment: (comment))
+  (block_comment
+    comment: (comment))
   (block_comment
     outer: (outer_doc_comment_marker)
     doc: (doc_comment))
@@ -51,12 +53,18 @@ Nested block comments
 ----
 
 (source_file
-  (block_comment)
-  (line_comment)
-  (block_comment)
-  (line_comment)
-  (block_comment)
-  (line_comment))
+  (block_comment
+    (comment))
+  (line_comment
+    (comment))
+  (block_comment
+    (comment))
+  (line_comment
+    (comment))
+  (block_comment
+    (comment))
+  (line_comment
+    (comment)))
 
 ============================================
 Line comments
@@ -71,7 +79,8 @@ Line comments
 ----
 
 (source_file
-  (line_comment)
+  (line_comment
+    comment: (comment))
   (line_comment
     outer: (outer_doc_comment_marker)
     doc: (doc_comment))
@@ -99,14 +108,16 @@ Line doc comments
   (line_comment
     inner: (inner_doc_comment_marker)
     doc: (doc_comment))
-  (line_comment)
+  (line_comment
+    comment: (comment))
   (line_comment
     outer: (outer_doc_comment_marker)
     doc: (doc_comment))
   (line_comment
     outer: (outer_doc_comment_marker)
     doc: (doc_comment))
-  (line_comment))
+  (line_comment
+    comment: (comment)))
 
 ====================================
 Block doc comments
@@ -128,11 +139,13 @@ Block doc comments
   (block_comment
     inner: (inner_doc_comment_marker)
     doc: (doc_comment))
-  (block_comment)
+  (block_comment
+    comment: (comment))
   (block_comment
     outer: (outer_doc_comment_marker)
     doc: (doc_comment))
-  (block_comment))
+  (block_comment
+    comment: (comment)))
 
 =====================================
 Nested doc block comments
@@ -145,7 +158,8 @@ Nested doc block comments
 ----
 
 (source_file
-  (block_comment)
+  (block_comment
+    comment: (comment))
   (block_comment
     inner: (inner_doc_comment_marker)
     doc: (doc_comment))
@@ -178,15 +192,18 @@ let x; // <- immediate item after an empty line doc comment
     (doc_comment))
   (block_comment
     (inner_doc_comment_marker))
-  (line_comment)
+  (line_comment
+    (comment))
   (line_comment
     (outer_doc_comment_marker)
     (doc_comment))
   (let_declaration
     (identifier))
-  (line_comment)
+  (line_comment
+    (comment))
   (block_comment)
-  (block_comment))
+  (block_comment
+    (comment)))
 
 ================================================================================
 Line doc comment with no EOL
