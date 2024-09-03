@@ -907,6 +907,16 @@
     "type": "block_comment",
     "named": true,
     "fields": {
+      "comment": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "comment",
+            "named": true
+          }
+        ]
+      },
       "doc": {
         "multiple": false,
         "required": false,
@@ -2619,6 +2629,16 @@
     "type": "line_comment",
     "named": true,
     "fields": {
+      "comment": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "comment",
+            "named": true
+          }
+        ]
+      },
       "doc": {
         "multiple": false,
         "required": false,
@@ -5125,6 +5145,10 @@
   },
   {
     "type": "char_literal",
+    "named": true
+  },
+  {
+    "type": "comment",
     "named": true
   },
   {
