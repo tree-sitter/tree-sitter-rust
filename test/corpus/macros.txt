@@ -197,7 +197,7 @@ macro_rules! empty [
 --------------------------------------------------------------------------------
 
 (source_file
-  (macro_definition
+  (macro_rules
     name: (identifier)
     (macro_rule
       left: (token_tree_pattern)
@@ -206,14 +206,14 @@ macro_rules! empty [
         (token_tree
           (string_literal
             (string_content))))))
-  (macro_definition
+  (macro_rules
     name: (identifier)
     (macro_rule
       left: (token_tree_pattern)
       right: (token_tree
         (integer_literal)
         (integer_literal))))
-  (macro_definition
+  (macro_rules
     name: (identifier)
     (macro_rule
       left: (token_tree_pattern
@@ -239,7 +239,7 @@ macro_rules! empty [
           (string_literal
             (string_content))
           (metavariable)))))
-  (macro_definition
+  (macro_rules
     name: (identifier)
     (macro_rule
       left: (token_tree_pattern
@@ -257,7 +257,7 @@ macro_rules! empty [
           (token_repetition
             (metavariable)
             (metavariable))))))
-  (macro_definition
+  (macro_rules
     name: (identifier)
     (macro_rule
       left: (token_tree_pattern
@@ -268,8 +268,183 @@ macro_rules! empty [
       right: (token_tree
         (token_repetition
           (metavariable)))))
-  (macro_definition
+  (macro_rules
     name: (identifier)
     (macro_rule
       left: (token_tree_pattern)
       right: (token_tree))))
+
+================================================================================
+Macro definition 2.0
+================================================================================
+macro_rules! replace_expr_ {
+    ($_t:tt $sub:expr) => { $sub }
+}
+macro replace_expr($_t:tt $sub:expr) {
+    $sub
+}
+
+macro_rules! count_tts_ {
+    () => { 0 };
+    ($odd:tt $($a:tt $b:tt)*) => { (count_tts!($($a)*) << 1) | 1 };
+    ($($a:tt $even:tt)*) => { count_tts!($($a)*) << 1 };
+}
+macro count_tts {
+    () => { 0 },
+    ($odd:tt $($a:tt $b:tt)*) => { (count_tts!($($a)*) << 1) | 1 },
+    ($($a:tt $even:tt)*) => { count_tts!($($a)*) << 1 },
+}
+
+macro empty() {}
+--------------------------------------------------------------------------------
+(source_file
+ (macro_rules
+  (identifier)
+  (macro_rule
+   (token_tree_pattern
+    (token_binding_pattern
+     (metavariable)
+     (fragment_specifier))
+    (token_binding_pattern
+     (metavariable)
+     (fragment_specifier)))
+   (token_tree
+    (metavariable))))
+ (macro_definition
+  (identifier)
+  (macro_def_args
+   (token_binding_pattern
+    (metavariable)
+    (fragment_specifier))
+   (token_binding_pattern
+    (metavariable)
+    (fragment_specifier)))
+  (macro_def_body
+   (metavariable)))
+ (macro_rules
+  (identifier)
+  (macro_rule
+   (token_tree_pattern)
+   (token_tree
+    (integer_literal)))
+  (macro_rule
+   (token_tree_pattern
+    (token_binding_pattern
+     (metavariable)
+     (fragment_specifier))
+    (token_repetition_pattern
+     (token_binding_pattern
+      (metavariable)
+      (fragment_specifier))
+     (token_binding_pattern
+      (metavariable)
+      (fragment_specifier))))
+   (token_tree
+    (token_tree
+     (identifier)
+     (token_tree
+      (token_repetition
+       (metavariable)))
+     (integer_literal))
+    (integer_literal)))
+  (macro_rule
+   (token_tree_pattern
+    (token_repetition_pattern
+     (token_binding_pattern
+      (metavariable)
+      (fragment_specifier))
+     (token_binding_pattern
+      (metavariable)
+      (fragment_specifier))))
+   (token_tree
+    (identifier)
+    (token_tree
+     (token_repetition
+      (metavariable)))
+    (integer_literal))))
+ (macro_definition
+  (identifier)
+  (macro_rule
+   (token_tree_pattern)
+   (token_tree
+    (integer_literal)))
+  (macro_rule
+   (token_tree_pattern
+    (token_binding_pattern
+     (metavariable)
+     (fragment_specifier))
+    (token_repetition_pattern
+     (token_binding_pattern
+      (metavariable)
+      (fragment_specifier))
+     (token_binding_pattern
+      (metavariable)
+      (fragment_specifier))))
+   (token_tree
+    (token_tree
+     (identifier)
+     (token_tree
+      (token_repetition
+       (metavariable)))
+     (integer_literal))
+    (integer_literal)))
+  (macro_rule
+   (token_tree_pattern
+    (token_repetition_pattern
+     (token_binding_pattern
+      (metavariable)
+      (fragment_specifier))
+     (token_binding_pattern
+      (metavariable)
+      (fragment_specifier))))
+   (token_tree
+    (identifier)
+    (token_tree
+     (token_repetition
+      (metavariable)))
+    (integer_literal))))
+  (macro_definition
+   (identifier)
+    (macro_def_args)
+     (macro_def_body)))
+
+================================================================================
+Namespaced Macro Calls
+================================================================================
+mod a {
+    pub macro foo() { bar() }
+    pub fn bar() { }
+}
+
+fn main() {
+    a::foo!();  // Expansion calls a::bar
+}
+--------------------------------------------------------------------------------
+(source_file
+ (mod_item
+  (identifier)
+  (declaration_list
+   (macro_definition
+    (visibility_modifier)
+    (identifier)
+    (macro_def_args)
+    (macro_def_body
+     (identifier)
+     (token_tree)))
+   (function_item
+    (visibility_modifier)
+    (identifier)
+    (parameters)
+    (block))))
+ (function_item
+  (identifier)
+  (parameters)
+  (block
+   (expression_statement
+    (macro_invocation
+     (scoped_identifier
+      (identifier)
+      (identifier))
+     (token_tree)))
+   (line_comment))))
+

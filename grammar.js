@@ -136,6 +136,7 @@ module.exports = grammar({
     _declaration_statement: $ => choice(
       $.const_item,
       $.macro_invocation,
+      $.macro_rules,
       $.macro_definition,
       $.empty_statement,
       $.attribute_item,
@@ -159,7 +160,7 @@ module.exports = grammar({
 
     // Section - Macro definitions
 
-    macro_definition: $ => {
+    macro_rules: $ => {
       const rules = seq(
         repeat(seq($.macro_rule, ';')),
         optional($.macro_rule),
@@ -179,10 +180,42 @@ module.exports = grammar({
       );
     },
 
+    macro_definition: $ => {
+      const rules = seq(
+        repeat(seq($.macro_rule, ',')),
+        optional($.macro_rule),
+      );
+
+      return seq(
+        optional($.visibility_modifier),
+        'macro',
+        field('name', choice(
+          $.identifier,
+          $._reserved_identifier,
+        )),
+        choice(
+          seq($.macro_def_args, $.macro_def_body),
+          seq('{', rules, '}'),
+        ),
+      );
+    },
+
     macro_rule: $ => seq(
       field('left', $.token_tree_pattern),
       '=>',
       field('right', $.token_tree),
+    ),
+
+    macro_def_args: $ => seq(
+      '(',
+      field('left', repeat($._token_pattern)),
+      ')',
+    ),
+
+    macro_def_body: $ => seq(
+      '{',
+      field('right', repeat($._tokens)),
+      '}',
     ),
 
     _token_pattern: $ => choice(
