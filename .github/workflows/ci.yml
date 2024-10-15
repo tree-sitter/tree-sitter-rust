@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["*"]
+    branches: [master]
     paths:
       - grammar.js
       - src/**
@@ -44,7 +44,11 @@ jobs:
       - name: Run tests
         uses: tree-sitter/parser-test-action@v2
         with:
-          test-rust: ${{runner.os == 'Linux'}}
+          test-rust: true
+          test-node: true
+          test-python: true
+          test-go: true
+          test-swift: true
       - name: Parse examples
         uses: tree-sitter/parse-action@v4
         with:
