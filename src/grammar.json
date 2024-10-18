@@ -8924,7 +8924,7 @@
                   "type": "IMMEDIATE_TOKEN",
                   "content": {
                     "type": "PREC",
-                    "value": 2,
+                    "value": 3,
                     "content": {
                       "type": "PATTERN",
                       "value": "\\/\\/"
@@ -8932,8 +8932,17 @@
                   }
                 },
                 {
-                  "type": "PATTERN",
-                  "value": ".*"
+                  "type": "FIELD",
+                  "name": "comment",
+                  "content": {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "PATTERN",
+                      "value": ".*"
+                    },
+                    "named": true,
+                    "value": "comment"
+                  }
                 }
               ]
             },
@@ -8960,14 +8969,23 @@
               ]
             },
             {
-              "type": "IMMEDIATE_TOKEN",
+              "type": "FIELD",
+              "name": "comment",
               "content": {
-                "type": "PREC",
-                "value": 1,
+                "type": "ALIAS",
                 "content": {
-                  "type": "PATTERN",
-                  "value": ".*"
-                }
+                  "type": "IMMEDIATE_TOKEN",
+                  "content": {
+                    "type": "PREC",
+                    "value": 1,
+                    "content": {
+                      "type": "PATTERN",
+                      "value": ".*"
+                    }
+                  }
+                },
+                "named": true,
+                "value": "comment"
               }
             }
           ]
@@ -9071,8 +9089,17 @@
                   ]
                 },
                 {
-                  "type": "SYMBOL",
-                  "name": "_block_comment_content"
+                  "type": "FIELD",
+                  "name": "comment",
+                  "content": {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_block_comment_content"
+                    },
+                    "named": true,
+                    "value": "comment"
+                  }
                 }
               ]
             },
