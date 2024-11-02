@@ -99,3 +99,34 @@ try {}
   (expression_statement
     (try_block
       (block))))
+
+================================================================================
+Gen Block
+================================================================================
+
+gen {}
+gen { let x = 10; }
+gen { yield (); }
+gen move {}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (gen_block
+      (block)))
+  (expression_statement
+    (gen_block
+      (block
+        (let_declaration
+          (identifier)
+          (integer_literal)))))
+  (expression_statement
+    (gen_block
+      (block
+        (expression_statement
+          (yield_expression
+            (unit_expression))))))
+  (expression_statement
+    (gen_block
+      (block))))
