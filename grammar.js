@@ -239,9 +239,9 @@ module.exports = grammar({
       alias(choice(...primitiveTypes), $.primitive_type),
       prec.right(repeat1(choice(...TOKEN_TREE_NON_SPECIAL_PUNCTUATION))),
       '\'',
-      'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'if', 'impl',
-      'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait', 'type',
-      'union', 'unsafe', 'use', 'where', 'while',
+      'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'gen',
+      'if', 'impl', 'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait',
+      'type', 'union', 'unsafe', 'use', 'where', 'while',
     ),
 
     // Section - Declarations
@@ -931,6 +931,7 @@ module.exports = grammar({
     _expression_ending_with_block: $ => choice(
       $.unsafe_block,
       $.async_block,
+      $.gen_block,
       $.try_block,
       $.block,
       $.if_expression,
@@ -1307,6 +1308,12 @@ module.exports = grammar({
 
     async_block: $ => seq(
       'async',
+      optional('move'),
+      $.block,
+    ),
+
+    gen_block: $ => seq(
+      'gen',
       optional('move'),
       $.block,
     ),
