@@ -1068,6 +1068,10 @@
         },
         {
           "type": "STRING",
+          "value": "gen"
+        },
+        {
+          "type": "STRING",
           "value": "if"
         },
         {
@@ -5246,6 +5250,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "gen_block"
+        },
+        {
+          "type": "SYMBOL",
           "name": "try_block"
         },
         {
@@ -7732,6 +7740,31 @@
         {
           "type": "STRING",
           "value": "async"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "move"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "block"
+        }
+      ]
+    },
+    "gen_block": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "gen"
         },
         {
           "type": "CHOICE",
