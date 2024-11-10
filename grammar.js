@@ -1608,8 +1608,7 @@ module.exports = grammar({
  * @param {RuleOrLiteral} sep - The separator to use.
  * @param {RuleOrLiteral} rule
  *
- * @return {SeqRule}
- *
+ * @returns {SeqRule}
  */
 function sepBy1(sep, rule) {
   return seq(rule, repeat(seq(sep, rule)));
@@ -1622,8 +1621,7 @@ function sepBy1(sep, rule) {
  * @param {RuleOrLiteral} sep - The separator to use.
  * @param {RuleOrLiteral} rule
  *
- * @return {ChoiceRule}
- *
+ * @returns {ChoiceRule}
  */
 function sepBy(sep, rule) {
   return optional(sepBy1(sep, rule));

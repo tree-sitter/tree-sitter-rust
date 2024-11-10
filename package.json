@@ -56,7 +56,7 @@
   },
   "scripts": {
     "install": "node-gyp-build",
-    "lint": "grammar.js",
+    "lint": "eslint grammar.js",
     "prestart": "tree-sitter build --wasm",
     "start": "tree-sitter playground",
     "test": "node --test bindings/node/*_test.js"
