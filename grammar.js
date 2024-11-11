@@ -1018,7 +1018,10 @@ module.exports = grammar({
 
     reference_expression: $ => prec(PREC.unary, seq(
       '&',
-      optional($.mutable_specifier),
+      choice(
+        seq('raw', choice('const', $.mutable_specifier)),
+        optional($.mutable_specifier),
+      ),
       field('value', $._expression),
     )),
 

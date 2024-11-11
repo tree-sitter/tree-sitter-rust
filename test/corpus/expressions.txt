@@ -66,10 +66,21 @@ Reference expressions
 
 &a;
 &mut self.name;
+&raw const b;
+&raw mut self.age;
 
 --------------------------------------------------------------------------------
 
 (source_file
+  (expression_statement
+    (reference_expression
+      (identifier)))
+  (expression_statement
+    (reference_expression
+      (mutable_specifier)
+      (field_expression
+        (self)
+        (field_identifier))))
   (expression_statement
     (reference_expression
       (identifier)))
