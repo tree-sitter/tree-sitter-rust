@@ -121,6 +121,7 @@
 "mod" @keyword
 "move" @keyword
 "pub" @keyword
+"raw" @keyword
 "ref" @keyword
 "return" @keyword
 "static" @keyword
