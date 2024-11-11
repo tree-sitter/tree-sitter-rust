@@ -33,7 +33,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Set up tree-sitter
-        uses: tree-sitter/setup-action/cli@v1
+        uses: tree-sitter/setup-action/cli@v2
       - name: Set up examples
         run: |-
           git clone https://github.com/rust-lang-nursery/bitflags examples/bitflags --single-branch --depth=1 --filter=blob:none
