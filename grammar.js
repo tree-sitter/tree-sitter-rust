@@ -11,21 +11,22 @@
 
 // https://doc.rust-lang.org/reference/expressions.html#expression-precedence
 const PREC = {
-  call: 15,
-  field: 14,
-  try: 13,
-  unary: 12,
-  cast: 11,
-  multiplicative: 10,
-  additive: 9,
-  shift: 8,
-  bitand: 7,
-  bitxor: 6,
-  bitor: 5,
-  comparative: 4,
-  and: 3,
-  or: 2,
-  range: 1,
+  call: 16,
+  field: 15,
+  try: 14,
+  unary: 13,
+  cast: 12,
+  multiplicative: 11,
+  additive: 10,
+  shift: 9,
+  bitand: 8,
+  bitxor: 7,
+  bitor: 6,
+  comparative: 5,
+  and: 4,
+  or: 3,
+  range: 2,
+  attribute: 1,
   assign: 0,
   closure: -1,
 };
@@ -95,8 +96,10 @@ module.exports = grammar({
     $._field_identifier,
     $._non_special_token,
     $._declaration_statement,
+    $._declaration_statement_without_attribute,
     $._reserved_identifier,
     $._expression_ending_with_block,
+    $._expression_ending_with_block_without_attribute,
   ],
 
   conflicts: $ => [
@@ -132,12 +135,11 @@ module.exports = grammar({
       prec(1, $._expression_ending_with_block),
     ),
 
-    _declaration_statement: $ => choice(
+    _declaration_statement_without_attribute: $ => choice(
       $.const_item,
       $.macro_invocation,
       $.macro_definition,
       $.empty_statement,
-      $.attribute_item,
       $.inner_attribute_item,
       $.mod_item,
       $.foreign_mod_item,
@@ -154,6 +156,16 @@ module.exports = grammar({
       $.use_declaration,
       $.extern_crate_declaration,
       $.static_item,
+    ),
+
+    declaration_with_attribute: $ => seq(
+      field('attributes', $.attributes),
+      field('declaration', $._declaration_statement),
+    ),
+
+    _declaration_statement: $ => choice(
+      $._declaration_statement_without_attribute,
+      $.declaration_with_attribute,
     ),
 
     // Section - Macro definitions
@@ -252,6 +264,10 @@ module.exports = grammar({
       ']',
     ),
 
+    attributes: $ => prec.left(-3,
+      repeat1($.attribute_item)
+    ),
+
     inner_attribute_item: $ => seq(
       '#',
       '!',
@@ -332,12 +348,13 @@ module.exports = grammar({
 
     enum_variant_list: $ => seq(
       '{',
-      sepBy(',', seq(repeat($.attribute_item), $.enum_variant)),
+      sepBy(',', seq($.enum_variant)),
       optional(','),
       '}',
     ),
 
     enum_variant: $ => seq(
+      optional($.attributes),
       optional($.visibility_modifier),
       field('name', $.identifier),
       field('body', optional(choice(
@@ -352,7 +369,7 @@ module.exports = grammar({
 
     field_declaration_list: $ => seq(
       '{',
-      sepBy(',', seq(repeat($.attribute_item), $.field_declaration)),
+      sepBy(',', seq(optional($.attributes), $.field_declaration)),
       optional(','),
       '}',
     ),
@@ -367,7 +384,7 @@ module.exports = grammar({
     ordered_field_declaration_list: $ => seq(
       '(',
       sepBy(',', seq(
-        repeat($.attribute_item),
+        optional($.attributes),
         optional($.visibility_modifier),
         field('type', $._type),
       )),
@@ -549,7 +566,7 @@ module.exports = grammar({
     type_parameters: $ => prec(1, seq(
       '<',
       sepBy1(',', seq(
-        repeat($.attribute_item),
+        optional($.attributes),
         choice(
           $.metavariable,
           $.type_parameter,
@@ -660,7 +677,7 @@ module.exports = grammar({
     parameters: $ => seq(
       '(',
       sepBy(',', seq(
-        optional($.attribute_item),
+        optional($.attributes),
         choice(
           $.parameter,
           $.self_parameter,
@@ -951,15 +968,27 @@ module.exports = grammar({
       $.closure_expression,
       $.parenthesized_expression,
       $.struct_expression,
-      $._expression_ending_with_block,
+      $._expression_ending_with_block_without_attribute,
     ),
 
     _expression: $ => choice(
+        $._expression_without_attribute,
+        $.expression_with_attribute,
+    ),
+
+    expression_with_attribute: $ => prec(PREC.attribute,
+      seq(
+        field('attributes', $.attributes),
+        field('expression', $._expression_without_attribute),
+      )
+    ),
+
+    _expression_without_attribute: $ => choice(
       $._expression_except_range,
       $.range_expression,
     ),
 
-    _expression_ending_with_block: $ => choice(
+    _expression_ending_with_block_without_attribute: $ => choice(
       $.unsafe_block,
       $.async_block,
       $.gen_block,
@@ -971,6 +1000,18 @@ module.exports = grammar({
       $.loop_expression,
       $.for_expression,
       $.const_block,
+    ),
+
+    block_expression_with_attribute: $ => prec(PREC.attribute,
+      seq(
+        field('attributes', $.attributes),
+        field('expression', $._expression_ending_with_block_without_attribute),
+      )
+    ),
+
+    _expression_ending_with_block: $ => choice(
+      $._expression_ending_with_block_without_attribute,
+      $.block_expression_with_attribute,
     ),
 
     macro_invocation: $ => seq(
@@ -1113,14 +1154,14 @@ module.exports = grammar({
 
     arguments: $ => seq(
       '(',
-      sepBy(',', seq(repeat($.attribute_item), $._expression)),
+      sepBy(',', $._expression),
       optional(','),
       ')',
     ),
 
     array_expression: $ => seq(
       '[',
-      repeat($.attribute_item),
+      optional($.attributes),
       choice(
         seq(
           $._expression,
@@ -1128,7 +1169,7 @@ module.exports = grammar({
           field('length', $._expression),
         ),
         seq(
-          sepBy(',', seq(repeat($.attribute_item), $._expression)),
+          sepBy(',', seq(optional($.attributes), $._expression)),
           optional(','),
         ),
       ),
@@ -1143,7 +1184,7 @@ module.exports = grammar({
 
     tuple_expression: $ => seq(
       '(',
-      repeat($.attribute_item),
+      optional($.attributes),
       seq($._expression, ','),
       repeat(seq($._expression, ',')),
       optional($._expression),
@@ -1173,12 +1214,12 @@ module.exports = grammar({
     ),
 
     shorthand_field_initializer: $ => seq(
-      repeat($.attribute_item),
+      optional($.attributes),
       $.identifier,
     ),
 
     field_initializer: $ => seq(
-      repeat($.attribute_item),
+      optional($.attributes),
       field('field', choice($._field_identifier, $.integer_literal)),
       ':',
       field('value', $._expression),
@@ -1233,6 +1274,7 @@ module.exports = grammar({
 
     match_block: $ => seq(
       '{',
+      repeat($.inner_attribute_item),
       optional(seq(
         repeat($.match_arm),
         alias($.last_match_arm, $.match_arm),
@@ -1241,7 +1283,7 @@ module.exports = grammar({
     ),
 
     match_arm: $ => prec.right(seq(
-      repeat(choice($.attribute_item, $.inner_attribute_item)),
+      optional($.attributes),
       field('pattern', $.match_pattern),
       '=>',
       choice(
@@ -1251,7 +1293,7 @@ module.exports = grammar({
     )),
 
     last_match_arm: $ => seq(
-      repeat(choice($.attribute_item, $.inner_attribute_item)),
+      optional($.attributes),
       field('pattern', $.match_pattern),
       '=>',
       field('value', $._expression),
@@ -1358,13 +1400,13 @@ module.exports = grammar({
       $.block,
     ),
 
-    block: $ => seq(
+    block: $ => prec.right(3, seq(
       optional(seq($.label, ':')),
       '{',
       repeat($._statement),
       optional($._expression),
       '}',
-    ),
+    )),
 
     // Section - Patterns
 
