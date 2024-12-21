@@ -113,6 +113,22 @@ module.exports = grammar({
     [$.visibility_modifier, $.scoped_identifier, $.scoped_type_identifier],
   ],
 
+  reserved: {
+    global: $ => [
+      'enum',
+      'fn',
+      'for',
+      'if',
+      'let',
+      'loop',
+      'match',
+      'mod',
+      'struct',
+      'type',
+      'while',
+    ],
+  },
+
   word: $ => $.identifier,
 
   rules: {
