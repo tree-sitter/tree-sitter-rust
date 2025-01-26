@@ -138,7 +138,6 @@ module.exports = grammar({
       $.macro_invocation,
       $.macro_definition,
       $.empty_statement,
-      $.attribute_item,
       $.inner_attribute_item,
       $.mod_item,
       $.foreign_mod_item,
@@ -270,6 +269,7 @@ module.exports = grammar({
     ),
 
     mod_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'mod',
       field('name', $.identifier),
@@ -280,6 +280,7 @@ module.exports = grammar({
     ),
 
     foreign_mod_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       $.extern_modifier,
       choice(
@@ -295,6 +296,7 @@ module.exports = grammar({
     ),
 
     struct_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'struct',
       field('name', $._type_identifier),
@@ -314,6 +316,7 @@ module.exports = grammar({
     ),
 
     union_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'union',
       field('name', $._type_identifier),
@@ -323,6 +326,7 @@ module.exports = grammar({
     ),
 
     enum_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'enum',
       field('name', $._type_identifier),
@@ -377,6 +381,7 @@ module.exports = grammar({
     ),
 
     extern_crate_declaration: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'extern',
       $.crate,
@@ -389,6 +394,7 @@ module.exports = grammar({
     ),
 
     const_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'const',
       field('name', $.identifier),
@@ -404,6 +410,7 @@ module.exports = grammar({
     ),
 
     static_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'static',
 
@@ -422,6 +429,7 @@ module.exports = grammar({
     ),
 
     type_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'type',
       field('name', $._type_identifier),
@@ -433,6 +441,7 @@ module.exports = grammar({
     ),
 
     function_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       optional($.function_modifiers),
       'fn',
@@ -445,6 +454,7 @@ module.exports = grammar({
     ),
 
     function_signature_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       optional($.function_modifiers),
       'fn',
@@ -487,6 +497,7 @@ module.exports = grammar({
     ),
 
     impl_item: $ => seq(
+      repeat($.attribute_item),
       optional('unsafe'),
       'impl',
       field('type_parameters', optional($.type_parameters)),
@@ -505,6 +516,7 @@ module.exports = grammar({
     ),
 
     trait_item: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       optional('unsafe'),
       'trait',
@@ -516,6 +528,7 @@ module.exports = grammar({
     ),
 
     associated_type: $ => seq(
+      repeat($.attribute_item),
       'type',
       field('name', $._type_identifier),
       field('type_parameters', optional($.type_parameters)),
@@ -583,6 +596,7 @@ module.exports = grammar({
     ),
 
     let_declaration: $ => seq(
+      repeat($.attribute_item),
       'let',
       optional($.mutable_specifier),
       field('pattern', $._pattern),
@@ -602,6 +616,7 @@ module.exports = grammar({
     ),
 
     use_declaration: $ => seq(
+      repeat($.attribute_item),
       optional($.visibility_modifier),
       'use',
       field('argument', $._use_clause),

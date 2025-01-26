@@ -1110,41 +1110,41 @@ mod macos_only {}
 
 #![allow(clippy::useless_transmute)]
 
-#[clippy::cyclomatic_complexity = "100"]
+#![clippy::cyclomatic_complexity = "100"]
 
 --------------------------------------------------------------------------------
 
 (source_file
-  (attribute_item
-    (attribute
-      (identifier)))
   (function_item
+    (attribute_item
+      (attribute
+        (identifier)))
     name: (identifier)
     parameters: (parameters)
     body: (block))
-  (attribute_item
-    (attribute
-      (identifier)
-      arguments: (token_tree
-        (identifier))))
   (struct_item
-    name: (type_identifier))
-  (attribute_item
-    (attribute
-      (identifier)
-      arguments: (token_tree
+    (attribute_item
+      (attribute
         (identifier)
-        (identifier))))
+        arguments: (token_tree
+          (identifier))))
+    name: (type_identifier))
   (struct_item
-    name: (type_identifier))
-  (attribute_item
-    (attribute
-      (identifier)
-      arguments: (token_tree
+    (attribute_item
+      (attribute
         (identifier)
-        (string_literal
-          (string_content)))))
+        arguments: (token_tree
+          (identifier)
+          (identifier))))
+    name: (type_identifier))
   (mod_item
+    (attribute_item
+      (attribute
+        (identifier)
+        arguments: (token_tree
+          (identifier)
+          (string_literal
+            (string_content)))))
     name: (identifier)
     body: (declaration_list))
   (inner_attribute_item
@@ -1153,7 +1153,7 @@ mod macos_only {}
       arguments: (token_tree
         (identifier)
         (identifier))))
-  (attribute_item
+  (inner_attribute_item
     (attribute
       (scoped_identifier
         path: (identifier)
@@ -1234,25 +1234,25 @@ fn baz() {}
 --------------------------------------------------------------------------------
 
 (source_file
-  (attribute_item
-    (attribute
-      (identifier)
-      (macro_invocation
-        (identifier)
-        (token_tree
-          (string_literal
-            (string_content))))))
   (function_item
+    (attribute_item
+      (attribute
+        (identifier)
+        (macro_invocation
+          (identifier)
+          (token_tree
+            (string_literal
+              (string_content))))))
     (identifier)
     (parameters)
     (block))
-  (attribute_item
-    (attribute
-      (identifier)
-      (scoped_identifier
-        (identifier)
-        (identifier))))
   (function_item
+    (attribute_item
+      (attribute
+        (identifier)
+        (scoped_identifier
+          (identifier)
+          (identifier))))
     (identifier)
     (parameters)
     (block)))
@@ -1323,13 +1323,13 @@ pub enum Error {
     (scoped_identifier
       (identifier)
       (identifier)))
-  (attribute_item
-    (attribute
-      (identifier)
-      (token_tree
-        (identifier)
-        (identifier))))
   (enum_item
+    (attribute_item
+      (attribute
+        (identifier)
+        (token_tree
+          (identifier)
+          (identifier))))
     (visibility_modifier)
     (type_identifier)
     (enum_variant_list

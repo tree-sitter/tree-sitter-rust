@@ -8,10 +8,6 @@
         "named": true
       },
       {
-        "type": "attribute_item",
-        "named": true
-      },
-      {
         "type": "const_item",
         "named": true
       },
@@ -650,9 +646,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "where_clause",
           "named": true
@@ -1381,9 +1381,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "visibility_modifier",
           "named": true
@@ -1573,6 +1577,10 @@
       "required": false,
       "types": [
         {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
           "type": "visibility_modifier",
           "named": true
         },
@@ -1696,6 +1704,10 @@
       "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "crate",
           "named": true
@@ -1991,6 +2003,10 @@
       "required": true,
       "types": [
         {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
           "type": "extern_modifier",
           "named": true
         },
@@ -2069,6 +2085,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "function_modifiers",
           "named": true
@@ -2152,6 +2172,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "function_modifiers",
           "named": true
@@ -2462,9 +2486,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "where_clause",
           "named": true
@@ -2613,9 +2641,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "mutable_specifier",
           "named": true
@@ -2923,9 +2955,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "visibility_modifier",
           "named": true
@@ -3606,7 +3642,6 @@
   {
     "type": "source_file",
     "named": true,
-    "root": true,
     "fields": {},
     "children": {
       "multiple": true,
@@ -3666,6 +3701,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "mutable_specifier",
           "named": true
@@ -3773,6 +3812,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "visibility_modifier",
           "named": true
@@ -4129,6 +4172,10 @@
       "required": false,
       "types": [
         {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
           "type": "visibility_modifier",
           "named": true
         },
@@ -4393,6 +4440,10 @@
       "required": false,
       "types": [
         {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
           "type": "visibility_modifier",
           "named": true
         },
@@ -4496,6 +4547,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "visibility_modifier",
           "named": true
@@ -4630,9 +4685,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attribute_item",
+          "named": true
+        },
         {
           "type": "visibility_modifier",
           "named": true
