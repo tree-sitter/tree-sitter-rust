@@ -267,6 +267,64 @@ fn triples(a: impl B) -> impl Iterator<Item=(usize)> {
     (block)))
 
 ================================================================================
+Functions with precise capture syntax
+================================================================================
+
+fn capture<T>(&self) -> impl Iterator<Item = usize> + use<'_, T> {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_item
+    (identifier)
+    (type_parameters
+      (type_parameter
+      (type_identifier)))
+    (parameters
+      (self_parameter
+        (self)))
+    (bounded_type
+      (abstract_type
+        (generic_type
+          (type_identifier)
+          (type_arguments
+            (type_binding
+              (type_identifier)
+              (primitive_type)))))
+        (use_bounds
+          (lifetime
+            (identifier))
+          (type_identifier)))
+    (block)))
+
+================================================================================
+Functions with empty precise capture syntax
+================================================================================
+
+fn capture(&self) -> impl Iterator<Item = usize> + use<> {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_item
+    (identifier)
+    (parameters
+      (self_parameter
+        (self)))
+    (bounded_type
+      (abstract_type
+        (generic_type
+          (type_identifier)
+          (type_arguments
+            (type_binding
+              (type_identifier)
+              (primitive_type)))))
+        (use_bounds))
+    (block)))
+
+================================================================================
 Diverging functions
 ================================================================================
 
