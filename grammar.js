@@ -1341,6 +1341,7 @@ module.exports = grammar({
       alias(choice(...primitiveTypes), $.identifier),
       $.identifier,
       $.scoped_identifier,
+      $.generic_pattern,
       $.tuple_pattern,
       $.tuple_struct_pattern,
       $.struct_pattern,
@@ -1356,6 +1357,15 @@ module.exports = grammar({
       $.const_block,
       $.macro_invocation,
       '_',
+    ),
+
+    generic_pattern: $ => seq(
+      choice(
+        $.identifier,
+        $.scoped_identifier,
+      ),
+      '::',
+      field('type_arguments', $.type_arguments),
     ),
 
     tuple_pattern: $ => seq(

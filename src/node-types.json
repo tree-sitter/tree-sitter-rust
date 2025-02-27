@@ -340,6 +340,10 @@
         "named": true
       },
       {
+        "type": "generic_pattern",
+        "named": true
+      },
+      {
         "type": "identifier",
         "named": true
       },
@@ -2268,6 +2272,36 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "generic_pattern",
+    "named": true,
+    "fields": {
+      "type_arguments": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type_arguments",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "scoped_identifier",
+          "named": true
+        }
+      ]
     }
   },
   {
