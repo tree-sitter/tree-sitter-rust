@@ -107,7 +107,6 @@ module.exports = grammar({
     [$.scoped_identifier, $.scoped_type_identifier],
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
-    [$.type_parameters, $.for_lifetimes],
     [$.array_expression],
     [$.visibility_modifier],
     [$.visibility_modifier, $.scoped_identifier, $.scoped_type_identifier],
@@ -549,11 +548,8 @@ module.exports = grammar({
       sepBy1(',', seq(
         repeat($.attribute_item),
         choice(
-          $.lifetime,
           $.metavariable,
-          $._type_identifier,
-          $.constrained_type_parameter,
-          $.optional_type_parameter,
+          $.type_parameter,
           $.const_parameter,
         ),
       )),
@@ -581,19 +577,16 @@ module.exports = grammar({
       ),
     ),
 
-    constrained_type_parameter: $ => seq(
-      field('left', choice($.lifetime, $._type_identifier)),
-      field('bounds', $.trait_bounds),
-    ),
-
-    optional_type_parameter: $ => seq(
-      field('name', choice(
-        $._type_identifier,
-        $.constrained_type_parameter,
-      )),
-      '=',
-      field('default_type', $._type),
-    ),
+    type_parameter: $ => prec(1, seq(
+      field('name', choice($.lifetime, $._type_identifier)),
+      optional(field('bounds', $.trait_bounds)),
+      optional(
+        seq(
+          '=',
+          field('default_type', $._type),
+        ),
+      ),
+    )),
 
     let_declaration: $ => seq(
       'let',
