@@ -2413,3 +2413,29 @@ where
             (type_arguments
               (type_identifier))))))
     (block)))
+
+================================================================================
+Const generics with default
+================================================================================
+
+pub struct Loaf<T: Sized, const N: usize = 1>([T; N]);
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (struct_item
+    (visibility_modifier)
+    (type_identifier)
+    (type_parameters
+      (constrained_type_parameter
+        (type_identifier)
+        (trait_bounds
+          (type_identifier)))
+      (const_parameter
+        (identifier)
+        (primitive_type)
+        (integer_literal)))
+    (ordered_field_declaration_list
+      (array_type
+        (type_identifier)
+        (identifier)))))

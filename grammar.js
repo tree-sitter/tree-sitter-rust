@@ -566,6 +566,19 @@ module.exports = grammar({
       field('name', $.identifier),
       ':',
       field('type', $._type),
+      optional(
+        seq(
+          '=',
+          field('value',
+            choice(
+              $.block,
+              $.identifier,
+              $._literal,
+              $.negative_literal,
+            ),
+          ),
+        ),
+      ),
     ),
 
     constrained_type_parameter: $ => seq(
