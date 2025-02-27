@@ -3125,23 +3125,15 @@
                     "members": [
                       {
                         "type": "SYMBOL",
-                        "name": "lifetime"
-                      },
-                      {
-                        "type": "SYMBOL",
                         "name": "metavariable"
                       },
                       {
                         "type": "SYMBOL",
-                        "name": "_type_identifier"
+                        "name": "type_parameter"
                       },
                       {
                         "type": "SYMBOL",
-                        "name": "constrained_type_parameter"
-                      },
-                      {
-                        "type": "SYMBOL",
-                        "name": "optional_type_parameter"
+                        "name": "lifetime_parameter"
                       },
                       {
                         "type": "SYMBOL",
@@ -3175,23 +3167,15 @@
                           "members": [
                             {
                               "type": "SYMBOL",
-                              "name": "lifetime"
-                            },
-                            {
-                              "type": "SYMBOL",
                               "name": "metavariable"
                             },
                             {
                               "type": "SYMBOL",
-                              "name": "_type_identifier"
+                              "name": "type_parameter"
                             },
                             {
                               "type": "SYMBOL",
-                              "name": "constrained_type_parameter"
-                            },
-                            {
-                              "type": "SYMBOL",
-                              "name": "optional_type_parameter"
+                              "name": "lifetime_parameter"
                             },
                             {
                               "type": "SYMBOL",
@@ -3251,72 +3235,141 @@
             "type": "SYMBOL",
             "name": "_type"
           }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "="
+                },
+                {
+                  "type": "FIELD",
+                  "name": "value",
+                  "content": {
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "block"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "identifier"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "_literal"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "negative_literal"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         }
       ]
     },
-    "constrained_type_parameter": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "left",
-          "content": {
+    "type_parameter": {
+      "type": "PREC",
+      "value": 1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "name",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_type_identifier"
+            }
+          },
+          {
             "type": "CHOICE",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "lifetime"
+                "type": "FIELD",
+                "name": "bounds",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "trait_bounds"
+                }
               },
               {
-                "type": "SYMBOL",
-                "name": "_type_identifier"
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "="
+                  },
+                  {
+                    "type": "FIELD",
+                    "name": "default_type",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_type"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "BLANK"
               }
             ]
           }
-        },
-        {
-          "type": "FIELD",
-          "name": "bounds",
-          "content": {
-            "type": "SYMBOL",
-            "name": "trait_bounds"
-          }
-        }
-      ]
+        ]
+      }
     },
-    "optional_type_parameter": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "name",
-          "content": {
+    "lifetime_parameter": {
+      "type": "PREC",
+      "value": 1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "name",
+            "content": {
+              "type": "SYMBOL",
+              "name": "lifetime"
+            }
+          },
+          {
             "type": "CHOICE",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "_type_identifier"
+                "type": "FIELD",
+                "name": "bounds",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "trait_bounds"
+                }
               },
               {
-                "type": "SYMBOL",
-                "name": "constrained_type_parameter"
+                "type": "BLANK"
               }
             ]
           }
-        },
-        {
-          "type": "STRING",
-          "value": "="
-        },
-        {
-          "type": "FIELD",
-          "name": "default_type",
-          "content": {
-            "type": "SYMBOL",
-            "name": "_type"
-          }
-        }
-      ]
+        ]
+      }
     },
     "let_declaration": {
       "type": "SEQ",
@@ -9422,10 +9475,6 @@
     [
       "parameters",
       "tuple_struct_pattern"
-    ],
-    [
-      "type_parameters",
-      "for_lifetimes"
     ],
     [
       "array_expression"
