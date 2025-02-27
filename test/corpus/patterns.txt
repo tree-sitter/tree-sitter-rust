@@ -520,3 +520,30 @@ fn foo(x: i32) {
             (match_arm
               pattern: (match_pattern)
               value: (block))))))))
+
+================================================================================
+Pattern with turbofish
+================================================================================
+
+match y {
+    None::<T> => 17,
+    _ => 42,
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (match_expression
+      (identifier)
+      (match_block
+        (match_arm
+          (match_pattern
+            (generic_pattern
+              (identifier)
+              (type_arguments
+                (type_identifier))))
+          (integer_literal))
+        (match_arm
+          (match_pattern)
+          (integer_literal))))))
