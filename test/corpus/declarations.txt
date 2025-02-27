@@ -211,7 +211,7 @@ fn foo(bar: impl for<'a> Baz<Quux<'a>>) {}
         pattern: (identifier)
         type: (abstract_type
           (type_parameters
-            (type_parameter
+            (lifetime_parameter
               name: (lifetime
                 (identifier))))
           trait: (generic_type
@@ -722,17 +722,17 @@ struct E<#[attr] T> {}
   (struct_item
     name: (type_identifier)
     type_parameters: (type_parameters
-      (type_parameter
+      (lifetime_parameter
         name: (lifetime
           (identifier)))
-      (type_parameter
+      (lifetime_parameter
         name: (lifetime
           (identifier))))
     body: (field_declaration_list))
   (struct_item
     name: (type_identifier)
     type_parameters: (type_parameters
-      (type_parameter
+      (lifetime_parameter
         name: (lifetime
           (identifier))))
     body: (field_declaration_list))
@@ -1504,7 +1504,7 @@ impl ConvertTo<i64> for i32 {
 (source_file
   (impl_item
     type_parameters: (type_parameters
-      (type_parameter
+      (lifetime_parameter
         name: (lifetime
           (identifier))))
     trait: (scoped_type_identifier
@@ -1874,7 +1874,7 @@ where
       (associated_type
         (type_identifier)
         (type_parameters
-          (type_parameter
+          (lifetime_parameter
             (lifetime
               (identifier)))
           (type_parameter
@@ -1895,7 +1895,7 @@ where
       (type_item
         (type_identifier)
         (type_parameters
-          (type_parameter
+          (lifetime_parameter
             (lifetime
               (identifier)))
           (type_parameter
@@ -1963,7 +1963,7 @@ type FnObject<'b> = dyn for<'a> FnLike<&'a isize, &'a isize> + 'b;
     (trait_bounds
       (higher_ranked_trait_bound
         (type_parameters
-          (type_parameter
+          (lifetime_parameter
             (lifetime
               (identifier))))
         (generic_type
@@ -1977,14 +1977,14 @@ type FnObject<'b> = dyn for<'a> FnLike<&'a isize, &'a isize> + 'b;
   (type_item
     (type_identifier)
     (type_parameters
-      (type_parameter
+      (lifetime_parameter
         (lifetime
           (identifier))))
     (bounded_type
       (dynamic_type
         (higher_ranked_trait_bound
           (type_parameters
-            (type_parameter
+            (lifetime_parameter
               (lifetime
                 (identifier))))
           (generic_type
@@ -2144,7 +2144,7 @@ impl<A> Default for B<A> where *mut A: C + D {}
         (boolean_literal))))
   (impl_item
     type_parameters: (type_parameters
-      (type_parameter
+      (lifetime_parameter
         name: (lifetime
           (identifier)))
       (type_parameter
@@ -2198,7 +2198,7 @@ impl<A> Default for B<A> where *mut A: C + D {}
     body: (declaration_list))
   (impl_item
     type_parameters: (type_parameters
-      (type_parameter
+      (lifetime_parameter
         name: (lifetime
           (identifier)))
       (type_parameter
@@ -2244,7 +2244,7 @@ impl<A> Default for B<A> where *mut A: C + D {}
       (where_predicate
         left: (higher_ranked_trait_bound
           type_parameters: (type_parameters
-            (type_parameter
+            (lifetime_parameter
               name: (lifetime
                 (identifier))))
           type: (generic_type

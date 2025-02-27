@@ -550,6 +550,7 @@ module.exports = grammar({
         choice(
           $.metavariable,
           $.type_parameter,
+          $.lifetime_parameter,
           $.const_parameter,
         ),
       )),
@@ -578,7 +579,7 @@ module.exports = grammar({
     ),
 
     type_parameter: $ => prec(1, seq(
-      field('name', choice($.lifetime, $._type_identifier)),
+      field('name', $._type_identifier),
       optional(field('bounds', $.trait_bounds)),
       optional(
         seq(
@@ -586,6 +587,11 @@ module.exports = grammar({
           field('default_type', $._type),
         ),
       ),
+    )),
+
+    lifetime_parameter: $ => prec(1, seq(
+      field('name', $.lifetime),
+      optional(field('bounds', $.trait_bounds)),
     )),
 
     let_declaration: $ => seq(
