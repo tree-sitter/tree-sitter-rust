@@ -1418,33 +1418,25 @@
             "named": true
           }
         ]
-      }
-    }
-  },
-  {
-    "type": "constrained_type_parameter",
-    "named": true,
-    "fields": {
-      "bounds": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "trait_bounds",
-            "named": true
-          }
-        ]
       },
-      "left": {
+      "value": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
-            "type": "lifetime",
+            "type": "_literal",
             "named": true
           },
           {
-            "type": "type_identifier",
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "negative_literal",
             "named": true
           }
         ]
@@ -2673,6 +2665,32 @@
     }
   },
   {
+    "type": "lifetime_parameter",
+    "named": true,
+    "fields": {
+      "bounds": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "trait_bounds",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "lifetime",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "line_comment",
     "named": true,
     "fields": {
@@ -3009,36 +3027,6 @@
     "type": "never_type",
     "named": true,
     "fields": {}
-  },
-  {
-    "type": "optional_type_parameter",
-    "named": true,
-    "fields": {
-      "default_type": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "_type",
-            "named": true
-          }
-        ]
-      },
-      "name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "constrained_type_parameter",
-            "named": true
-          },
-          {
-            "type": "type_identifier",
-            "named": true
-          }
-        ]
-      }
-    }
   },
   {
     "type": "or_pattern",
@@ -4438,6 +4426,42 @@
     }
   },
   {
+    "type": "type_parameter",
+    "named": true,
+    "fields": {
+      "bounds": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "trait_bounds",
+            "named": true
+          }
+        ]
+      },
+      "default_type": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "_type",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type_identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "type_parameters",
     "named": true,
     "fields": {},
@@ -4454,11 +4478,7 @@
           "named": true
         },
         {
-          "type": "constrained_type_parameter",
-          "named": true
-        },
-        {
-          "type": "lifetime",
+          "type": "lifetime_parameter",
           "named": true
         },
         {
@@ -4466,11 +4486,7 @@
           "named": true
         },
         {
-          "type": "optional_type_parameter",
-          "named": true
-        },
-        {
-          "type": "type_identifier",
+          "type": "type_parameter",
           "named": true
         }
       ]
