@@ -911,6 +911,7 @@ module.exports = grammar({
         $.scoped_type_identifier,
         $.generic_type,
         $.function_type,
+        $.tuple_type,
       )),
     ),
 
