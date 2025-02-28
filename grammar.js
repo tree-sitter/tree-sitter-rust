@@ -896,14 +896,15 @@ module.exports = grammar({
     abstract_type: $ => seq(
       'impl',
       optional(seq('for', $.type_parameters)),
-      field('trait', choice(
+      field('trait', prec(1, choice(
         $._type_identifier,
         $.scoped_type_identifier,
         $.removed_trait_bound,
         $.generic_type,
         $.function_type,
         $.tuple_type,
-      )),
+        $.bounded_type,
+      ))),
     ),
 
     dynamic_type: $ => seq(
