@@ -1682,6 +1682,35 @@ impl !Send for Foo {}
     (declaration_list)))
 
 ================================================================================
+Impl dyn with parentheses
+================================================================================
+
+pub unsafe trait Trait {}
+
+unsafe impl Trait for dyn (::std::any::Any) + Send { }
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (trait_item
+    (visibility_modifier)
+    (type_identifier)
+    (declaration_list))
+  (impl_item
+    (type_identifier)
+    (bounded_type
+      (dynamic_type
+        (tuple_type
+          (scoped_type_identifier
+            (scoped_identifier
+              (scoped_identifier
+                (identifier))
+              (identifier))
+          (type_identifier))))
+      (type_identifier))
+    (declaration_list)))
+
+================================================================================
 Trait impl signature
 ================================================================================
 
