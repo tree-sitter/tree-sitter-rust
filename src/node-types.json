@@ -967,6 +967,10 @@
         {
           "type": "lifetime",
           "named": true
+        },
+        {
+          "type": "use_bounds",
+          "named": true
         }
       ]
     }
@@ -4626,6 +4630,25 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "use_bounds",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "lifetime",
+          "named": true
+        },
+        {
+          "type": "type_identifier",
+          "named": true
+        }
+      ]
     }
   },
   {
