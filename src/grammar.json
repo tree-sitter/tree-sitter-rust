@@ -9478,7 +9478,7 @@
     },
     "shebang": {
       "type": "PATTERN",
-      "value": "#![\\s]*[^\\[].+"
+      "value": "#![\\r\\f\\t\\v ]*([^\\[\\n].*)?\\n"
     },
     "_reserved_identifier": {
       "type": "ALIAS",
