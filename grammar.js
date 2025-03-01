@@ -650,7 +650,7 @@ module.exports = grammar({
     ),
 
     use_wildcard: $ => seq(
-      optional(seq($._path, '::')),
+      optional(seq(optional($._path), '::')),
       '*',
     ),
 
