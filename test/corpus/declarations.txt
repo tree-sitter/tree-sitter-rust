@@ -1146,6 +1146,7 @@ Type alias where clauses
 ================================================================================
 
 type Foo<T> where T: Copy = Box<T>;
+type Assoc3 where = () where;
 
 --------------------------------------------------------------------------------
 
@@ -1163,7 +1164,12 @@ type Foo<T> where T: Copy = Box<T>;
     (generic_type
       (type_identifier)
       (type_arguments
-        (type_identifier)))))
+        (type_identifier))))
+  (type_item
+    (type_identifier)
+    (where_clause)
+    (unit_type)
+    (where_clause)))
 
 ================================================================================
 Empty statements
