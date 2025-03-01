@@ -466,8 +466,10 @@ module.exports = grammar({
 
     where_clause: $ => prec.right(seq(
       'where',
-      sepBy1(',', $.where_predicate),
-      optional(','),
+      optional(seq(
+        sepBy1(',', $.where_predicate),
+        optional(','),
+      )),
     )),
 
     where_predicate: $ => seq(
