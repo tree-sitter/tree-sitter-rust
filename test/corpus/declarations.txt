@@ -421,6 +421,7 @@ use sayings::english::{self, greetings as en_greetings, farewells as en_farewell
 use three::{ dot::{one, four} };
 use my::{ some::* };
 use my::{*};
+use ::*;
 
 --------------------------------------------------------------------------------
 
@@ -499,7 +500,9 @@ use my::{*};
     argument: (scoped_use_list
       path: (identifier)
       list: (use_list
-        (use_wildcard)))))
+        (use_wildcard))))
+  (use_declaration
+    argument: (use_wildcard)))
 
 ================================================================================
 Variable bindings
