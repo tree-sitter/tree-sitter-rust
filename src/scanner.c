@@ -13,12 +13,15 @@ enum TokenType {
     BLOCK_INNER_DOC_MARKER,
     BLOCK_COMMENT_CONTENT,
     LINE_DOC_CONTENT,
-    FRONTMATTER,
+    FRONTMATTER_START,
+    FRONTMATTER_CONTENT,
+    FRONTMATTER_END,
     ERROR_SENTINEL
 };
 
 typedef struct {
     uint8_t opening_hash_count;
+    uint8_t frontmatter_dashes;
 } Scanner;
 
 void *tree_sitter_rust_external_scanner_create() { return ts_calloc(1, sizeof(Scanner)); }
@@ -28,15 +31,16 @@ void tree_sitter_rust_external_scanner_destroy(void *payload) { ts_free((Scanner
 unsigned tree_sitter_rust_external_scanner_serialize(void *payload, char *buffer) {
     Scanner *scanner = (Scanner *)payload;
     buffer[0] = (char)scanner->opening_hash_count;
-    return 1;
+    buffer[1] = (char)scanner->frontmatter_dashes;
+    return 2;
 }
 
 void tree_sitter_rust_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {
     Scanner *scanner = (Scanner *)payload;
     scanner->opening_hash_count = 0;
-    if (length == 1) {
-        Scanner *scanner = (Scanner *)payload;
+    if (length == 2) {
         scanner->opening_hash_count = buffer[0];
+        scanner->frontmatter_dashes = buffer[1];
     }
 }
 
@@ -332,15 +336,42 @@ static inline bool process_block_comment(TSLexer *lexer, const bool *valid_symbo
     return false;
 }
 
-static inline bool process_frontmatter(TSLexer *lexer) {
-    uint8_t opening = 0;
+static inline bool process_frontmatter_start(TSLexer *lexer, Scanner *scanner) {
+    uint8_t amount = 0;
     while (lexer->lookahead == '-') {
-        opening++;
+        amount++;
         advance(lexer);
     }
 
-    if (opening < 3) {
+    if (amount < 3) {
         return false;
+    } else {
+        scanner->frontmatter_dashes = amount;
+        lexer->result_symbol = FRONTMATTER_START;
+
+        // parse optional info string after the initial fence
+        while (lexer->lookahead != '\n' && !lexer->eof(lexer)) {
+            advance(lexer);
+        }
+        advance(lexer);
+
+        return true;
+    }
+}
+
+static inline bool process_frontmatter(TSLexer *lexer, Scanner *scanner) {
+    // seperately parse empty frontmatter, as tree-sitter strips all whitespace,
+    // including newlines, so i can't rely on parsing only after a newline in this case.
+    lexer->mark_end(lexer);
+    uint8_t amount = 0;
+    while (lexer->lookahead == '-' && amount < scanner->frontmatter_dashes) {
+        amount++;
+        advance(lexer);
+    }
+
+    if (amount == scanner->frontmatter_dashes) {
+        lexer->result_symbol = FRONTMATTER_CONTENT;
+        return true;
     }
 
     for (;;) {
@@ -349,22 +380,33 @@ static inline bool process_frontmatter(TSLexer *lexer) {
         }
 
         if (lexer->lookahead == '\n') {
+            lexer->mark_end(lexer);
             advance(lexer);
 
             uint8_t amount = 0;
-            while (lexer->lookahead == '-' && amount < opening) {
+            while (lexer->lookahead == '-' && amount < scanner->frontmatter_dashes) {
                 amount++;
                 advance(lexer);
             }
 
-            if (amount == opening) {
-                lexer->result_symbol = FRONTMATTER;
+            if (amount == scanner->frontmatter_dashes) {
+                lexer->result_symbol = FRONTMATTER_CONTENT;
                 return true;
             }
         } else {
             advance(lexer);
         }
     }
+}
+
+static inline bool process_frontmatter_end(TSLexer *lexer, Scanner *scanner) {
+    advance(lexer);
+    for (unsigned int amount = 0; amount < scanner->frontmatter_dashes; amount++) {
+        advance(lexer);
+    }
+
+    lexer->result_symbol = FRONTMATTER_END;
+    return true;
 }
 
 bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
@@ -425,8 +467,16 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const
         return process_float_literal(lexer);
     }
 
-    if (valid_symbols[FRONTMATTER]) {
-        return process_frontmatter(lexer);
+    if (valid_symbols[FRONTMATTER_START]) {
+        return process_frontmatter_start(lexer, scanner);
+    }
+
+    if (valid_symbols[FRONTMATTER_CONTENT]) {
+        return process_frontmatter(lexer, scanner);
+    }
+
+    if (valid_symbols[FRONTMATTER_END]) {
+        return process_frontmatter_end(lexer, scanner);
     }
 
     return false;
