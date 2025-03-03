@@ -124,6 +124,7 @@
 "raw" @keyword
 "ref" @keyword
 "return" @keyword
+"safe" @keyword
 "static" @keyword
 "struct" @keyword
 "trait" @keyword
