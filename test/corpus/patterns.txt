@@ -192,6 +192,8 @@ match x {
   a @ b...c => a,
   a @ b..=c => a,
   d.. => a,
+  ..d => d,
+  a @ ..=5 => a
 }
 
 match name {
@@ -226,37 +228,49 @@ match name {
             (captured_pattern
               (identifier)
               (range_pattern
-                (integer_literal)
-                (integer_literal))))
+                left: (integer_literal)
+                right: (integer_literal))))
           value: (identifier))
         (match_arm
           pattern: (match_pattern
             (tuple_struct_pattern
               type: (identifier)
               (range_pattern
-                (integer_literal)
-                (integer_literal))))
+                left: (integer_literal)
+                right: (integer_literal))))
           value: (identifier))
         (match_arm
           pattern: (match_pattern
             (captured_pattern
               (identifier)
               (range_pattern
-                (identifier)
-                (identifier))))
+                left: (identifier)
+                right: (identifier))))
           value: (identifier))
         (match_arm
           pattern: (match_pattern
             (captured_pattern
               (identifier)
               (range_pattern
-                (identifier)
-                (identifier))))
+                left: (identifier)
+                right: (identifier))))
           value: (identifier))
         (match_arm
           pattern: (match_pattern
             (range_pattern
-              (identifier)))
+              left: (identifier)))
+          value: (identifier))
+        (match_arm
+          pattern: (match_pattern
+            (range_pattern
+              right: (identifier)))
+          value: (identifier))
+        (match_arm
+          pattern: (match_pattern
+            (captured_pattern
+              (identifier)
+              (range_pattern
+                right: (integer_literal))))
           value: (identifier)))))
   (expression_statement
     (match_expression

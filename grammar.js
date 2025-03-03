@@ -1454,20 +1454,29 @@ module.exports = grammar({
       $._pattern,
     )),
 
-    range_pattern: $ => seq(
-      choice(
-        $._literal_pattern,
-        $._path,
-      ),
-      choice(
-        seq(
-          choice('...', '..=', '..'),
-          choice(
-            $._literal_pattern,
-            $._path,
+    range_pattern: $ => choice(
+      seq(
+        field('left', choice(
+          $._literal_pattern,
+          $._path,
+        )),
+        choice(
+          seq(
+            choice('...', '..=', '..'),
+            field('right', choice(
+              $._literal_pattern,
+              $._path,
+            )),
           ),
+          '..',
         ),
-        '..',
+      ),
+      seq(
+        choice('..=', '..'),
+        field('right', choice(
+          $._literal_pattern,
+          $._path,
+        )),
       ),
     ),
 
