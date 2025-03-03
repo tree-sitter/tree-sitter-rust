@@ -1642,7 +1642,7 @@ module.exports = grammar({
 
     identifier: _ => /(r#)?[_\p{XID_Start}][_\p{XID_Continue}]*/,
 
-    shebang: _ => /#![\s]*[^\[].+/,
+    shebang: _ => /#![\r\f\t\v ]*([^\[\n].*)?\n/,
 
     _reserved_identifier: $ => alias(choice(
       'default',
