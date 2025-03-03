@@ -76,6 +76,7 @@ module.exports = grammar({
     $._inner_block_doc_comment_marker,
     $._block_comment_content,
     $._line_doc_content,
+    $.frontmatter,
     $._error_sentinel,
   ],
 
@@ -117,6 +118,7 @@ module.exports = grammar({
   rules: {
     source_file: $ => seq(
       optional($.shebang),
+      optional($.frontmatter),
       repeat($._statement),
     ),
 

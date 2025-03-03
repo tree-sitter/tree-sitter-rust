@@ -13,6 +13,7 @@ enum TokenType {
     BLOCK_INNER_DOC_MARKER,
     BLOCK_COMMENT_CONTENT,
     LINE_DOC_CONTENT,
+    FRONTMATTER,
     ERROR_SENTINEL
 };
 
@@ -331,6 +332,41 @@ static inline bool process_block_comment(TSLexer *lexer, const bool *valid_symbo
     return false;
 }
 
+static inline bool process_frontmatter(TSLexer *lexer) {
+    uint8_t opening = 0;
+    while (lexer->lookahead == '-') {
+        opening++;
+        advance(lexer);
+    }
+
+    if (opening < 3) {
+        return false;
+    }
+
+    for (;;) {
+        if (lexer->eof(lexer)) {
+            return false;
+        }
+
+        if (lexer->lookahead == '\n') {
+            advance(lexer);
+
+            uint8_t amount = 0;
+            while (lexer->lookahead == '-' && amount < opening) {
+                amount++;
+                advance(lexer);
+            }
+
+            if (amount == opening) {
+                lexer->result_symbol = FRONTMATTER;
+                return true;
+            }
+        } else {
+            advance(lexer);
+        }
+    }
+}
+
 bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
     // The documentation states that if the lexical analysis fails for some reason
     // they will mark every state as valid and pass it to the external scanner
@@ -387,6 +423,10 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const
 
     if (valid_symbols[FLOAT_LITERAL] && iswdigit(lexer->lookahead)) {
         return process_float_literal(lexer);
+    }
+
+    if (valid_symbols[FRONTMATTER]) {
+        return process_frontmatter(lexer);
     }
 
     return false;
