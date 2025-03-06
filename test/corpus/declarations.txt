@@ -1142,6 +1142,36 @@ type LazyResolve = impl (FnOnce() -> Capture) + Send + Sync + UnwindSafe;
       (type_identifier))))
 
 ================================================================================
+Type alias where clauses
+================================================================================
+
+type Foo<T> where T: Copy = Box<T>;
+type Assoc3 where = () where;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (type_item
+    (type_identifier)
+    (type_parameters
+      (type_parameter
+        (type_identifier)))
+    (where_clause
+      (where_predicate
+        (type_identifier)
+        (trait_bounds
+          (type_identifier))))
+    (generic_type
+      (type_identifier)
+      (type_arguments
+        (type_identifier))))
+  (type_item
+    (type_identifier)
+    (where_clause)
+    (unit_type)
+    (where_clause)))
+
+================================================================================
 Empty statements
 ================================================================================
 
