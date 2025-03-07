@@ -1291,6 +1291,18 @@
           "type": "CHOICE",
           "members": [
             {
+              "type": "STRING",
+              "value": "unsafe"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
               "type": "SYMBOL",
               "name": "visibility_modifier"
             },
@@ -2118,6 +2130,27 @@
           ]
         },
         {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "unsafe"
+                },
+                {
+                  "type": "STRING",
+                  "value": "safe"
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
           "type": "STRING",
           "value": "static"
         },
@@ -2535,6 +2568,10 @@
           {
             "type": "STRING",
             "value": "unsafe"
+          },
+          {
+            "type": "STRING",
+            "value": "safe"
           },
           {
             "type": "SYMBOL",
@@ -9644,6 +9681,10 @@
     ],
     [
       "visibility_modifier"
+    ],
+    [
+      "foreign_mod_item",
+      "function_modifiers"
     ],
     [
       "visibility_modifier",
