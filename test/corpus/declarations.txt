@@ -267,6 +267,31 @@ fn triples(a: impl B) -> impl Iterator<Item=(usize)> {
     (block)))
 
 ================================================================================
+Impl with lifetimes first
+================================================================================
+
+fn foo<'a>(x: impl 'a + Clone) {}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_item
+    (identifier)
+    (type_parameters
+      (lifetime_parameter
+        (lifetime
+          (identifier))))
+    (parameters
+      (parameter
+        (identifier)
+        (abstract_type
+          (bounded_type
+            (lifetime
+              (identifier))
+            (type_identifier)))))
+      (block)))
+
+================================================================================
 Functions with precise capture syntax
 ================================================================================
 

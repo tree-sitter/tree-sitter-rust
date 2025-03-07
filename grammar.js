@@ -832,13 +832,10 @@ module.exports = grammar({
       field('type_arguments', $.type_arguments),
     ),
 
-    bounded_type: $ => prec.left(-1, choice(
-      seq($.lifetime, '+', $._type),
-      seq($._type, '+', $._type),
-      seq($._type, '+', choice(
-        $.lifetime,
-        $.use_bounds,
-      )),
+    bounded_type: $ => prec.left(-1, seq(
+      choice($.lifetime, $._type, $.use_bounds),
+      '+',
+      choice($.lifetime, $._type, $.use_bounds),
     )),
 
     use_bounds: $ => seq(
@@ -896,14 +893,15 @@ module.exports = grammar({
     abstract_type: $ => seq(
       'impl',
       optional(seq('for', $.type_parameters)),
-      field('trait', choice(
+      field('trait', prec(1, choice(
         $._type_identifier,
         $.scoped_type_identifier,
         $.removed_trait_bound,
         $.generic_type,
         $.function_type,
         $.tuple_type,
-      )),
+        $.bounded_type,
+      ))),
     ),
 
     dynamic_type: $ => seq(
