@@ -5167,6 +5167,10 @@
               {
                 "type": "SYMBOL",
                 "name": "function_type"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "tuple_type"
               }
             ]
           }
