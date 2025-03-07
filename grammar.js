@@ -308,7 +308,10 @@ module.exports = grammar({
           optional($.where_clause),
           ';',
         ),
-        ';',
+        seq(
+          optional($.where_clause),
+          ';',
+        ),
       ),
     ),
 

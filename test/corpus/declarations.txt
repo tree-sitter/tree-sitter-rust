@@ -2257,6 +2257,8 @@ fn foo<A>() where A: B + As<f64>, f64: As<A> {}
 
 impl<A> Default for B<A> where *mut A: C + D {}
 
+struct A where i32: Copy;
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -2455,7 +2457,14 @@ impl<A> Default for B<A> where *mut A: C + D {}
         bounds: (trait_bounds
           (type_identifier)
           (type_identifier))))
-    body: (declaration_list)))
+    body: (declaration_list))
+  (struct_item
+    name: (type_identifier)
+    (where_clause
+      (where_predicate
+        left: (primitive_type)
+        bounds: (trait_bounds
+          (type_identifier))))))
 
 ================================================================================
 External Modules
