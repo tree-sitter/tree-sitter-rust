@@ -5304,6 +5304,10 @@
     "named": false
   },
   {
+    "type": "expr_2021",
+    "named": false
+  },
+  {
     "type": "extern",
     "named": false
   },
@@ -5405,6 +5409,10 @@
   },
   {
     "type": "pat",
+    "named": false
+  },
+  {
+    "type": "pat_param",
     "named": false
   },
   {
