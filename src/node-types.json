@@ -8,11 +8,11 @@
         "named": true
       },
       {
-        "type": "attribute_item",
+        "type": "const_item",
         "named": true
       },
       {
-        "type": "const_item",
+        "type": "declaration_with_attribute",
         "named": true
       },
       {
@@ -143,6 +143,10 @@
       },
       {
         "type": "continue_expression",
+        "named": true
+      },
+      {
+        "type": "expression_with_attribute",
         "named": true
       },
       {
@@ -532,10 +536,6 @@
         {
           "type": "_expression",
           "named": true
-        },
-        {
-          "type": "attribute_item",
-          "named": true
         }
       ]
     }
@@ -564,7 +564,7 @@
           "named": true
         },
         {
-          "type": "attribute_item",
+          "type": "attributes",
           "named": true
         }
       ]
@@ -749,6 +749,21 @@
       "types": [
         {
           "type": "attribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "attributes",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "attribute_item",
           "named": true
         }
       ]
@@ -945,6 +960,72 @@
         "types": [
           {
             "type": "outer_doc_comment_marker",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "block_expression_with_attribute",
+    "named": true,
+    "fields": {
+      "attributes": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "attributes",
+            "named": true
+          }
+        ]
+      },
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "async_block",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "const_block",
+            "named": true
+          },
+          {
+            "type": "for_expression",
+            "named": true
+          },
+          {
+            "type": "gen_block",
+            "named": true
+          },
+          {
+            "type": "if_expression",
+            "named": true
+          },
+          {
+            "type": "loop_expression",
+            "named": true
+          },
+          {
+            "type": "match_expression",
+            "named": true
+          },
+          {
+            "type": "try_block",
+            "named": true
+          },
+          {
+            "type": "unsafe_block",
+            "named": true
+          },
+          {
+            "type": "while_expression",
             "named": true
           }
         ]
@@ -1482,6 +1563,32 @@
     }
   },
   {
+    "type": "declaration_with_attribute",
+    "named": true,
+    "fields": {
+      "attributes": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "attributes",
+            "named": true
+          }
+        ]
+      },
+      "declaration": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "_declaration_statement",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "dynamic_type",
     "named": true,
     "fields": {
@@ -1631,9 +1738,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "attributes",
+          "named": true
+        },
         {
           "type": "visibility_modifier",
           "named": true
@@ -1649,10 +1760,6 @@
       "multiple": true,
       "required": false,
       "types": [
-        {
-          "type": "attribute_item",
-          "named": true
-        },
         {
           "type": "enum_variant",
           "named": true
@@ -1671,8 +1778,194 @@
         {
           "type": "_expression",
           "named": true
+        },
+        {
+          "type": "block_expression_with_attribute",
+          "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "expression_with_attribute",
+    "named": true,
+    "fields": {
+      "attributes": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "attributes",
+            "named": true
+          }
+        ]
+      },
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "_literal",
+            "named": true
+          },
+          {
+            "type": "array_expression",
+            "named": true
+          },
+          {
+            "type": "assignment_expression",
+            "named": true
+          },
+          {
+            "type": "async_block",
+            "named": true
+          },
+          {
+            "type": "await_expression",
+            "named": true
+          },
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "break_expression",
+            "named": true
+          },
+          {
+            "type": "call_expression",
+            "named": true
+          },
+          {
+            "type": "closure_expression",
+            "named": true
+          },
+          {
+            "type": "compound_assignment_expr",
+            "named": true
+          },
+          {
+            "type": "const_block",
+            "named": true
+          },
+          {
+            "type": "continue_expression",
+            "named": true
+          },
+          {
+            "type": "field_expression",
+            "named": true
+          },
+          {
+            "type": "for_expression",
+            "named": true
+          },
+          {
+            "type": "gen_block",
+            "named": true
+          },
+          {
+            "type": "generic_function",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if_expression",
+            "named": true
+          },
+          {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "loop_expression",
+            "named": true
+          },
+          {
+            "type": "macro_invocation",
+            "named": true
+          },
+          {
+            "type": "match_expression",
+            "named": true
+          },
+          {
+            "type": "metavariable",
+            "named": true
+          },
+          {
+            "type": "parenthesized_expression",
+            "named": true
+          },
+          {
+            "type": "range_expression",
+            "named": true
+          },
+          {
+            "type": "reference_expression",
+            "named": true
+          },
+          {
+            "type": "return_expression",
+            "named": true
+          },
+          {
+            "type": "scoped_identifier",
+            "named": true
+          },
+          {
+            "type": "self",
+            "named": true
+          },
+          {
+            "type": "struct_expression",
+            "named": true
+          },
+          {
+            "type": "try_block",
+            "named": true
+          },
+          {
+            "type": "try_expression",
+            "named": true
+          },
+          {
+            "type": "tuple_expression",
+            "named": true
+          },
+          {
+            "type": "type_cast_expression",
+            "named": true
+          },
+          {
+            "type": "unary_expression",
+            "named": true
+          },
+          {
+            "type": "unit_expression",
+            "named": true
+          },
+          {
+            "type": "unsafe_block",
+            "named": true
+          },
+          {
+            "type": "while_expression",
+            "named": true
+          },
+          {
+            "type": "yield_expression",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1775,7 +2068,7 @@
       "required": false,
       "types": [
         {
-          "type": "attribute_item",
+          "type": "attributes",
           "named": true
         },
         {
@@ -1845,11 +2138,11 @@
       }
     },
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": false,
       "types": [
         {
-          "type": "attribute_item",
+          "type": "attributes",
           "named": true
         }
       ]
@@ -2867,20 +3160,20 @@
           {
             "type": "_expression",
             "named": true
+          },
+          {
+            "type": "block_expression_with_attribute",
+            "named": true
           }
         ]
       }
     },
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": false,
       "types": [
         {
-          "type": "attribute_item",
-          "named": true
-        },
-        {
-          "type": "inner_attribute_item",
+          "type": "attributes",
           "named": true
         }
       ]
@@ -2894,6 +3187,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "inner_attribute_item",
+          "named": true
+        },
         {
           "type": "match_arm",
           "named": true
@@ -3075,7 +3372,7 @@
       "required": false,
       "types": [
         {
-          "type": "attribute_item",
+          "type": "attributes",
           "named": true
         },
         {
@@ -3143,7 +3440,7 @@
           "named": true
         },
         {
-          "type": "attribute_item",
+          "type": "attributes",
           "named": true
         },
         {
@@ -3647,7 +3944,7 @@
       "required": true,
       "types": [
         {
-          "type": "attribute_item",
+          "type": "attributes",
           "named": true
         },
         {
@@ -4251,7 +4548,7 @@
           "named": true
         },
         {
-          "type": "attribute_item",
+          "type": "attributes",
           "named": true
         }
       ]
@@ -4517,7 +4814,7 @@
       "required": true,
       "types": [
         {
-          "type": "attribute_item",
+          "type": "attributes",
           "named": true
         },
         {
