@@ -2613,3 +2613,65 @@ pub struct Loaf<T: Sized, const N: usize = 1>([T; N]);
       (array_type
         (type_identifier)
         (identifier)))))
+
+================================================================================
+Unsafe extern blocks
+================================================================================
+
+unsafe extern "C" {
+    pub safe fn sqrt(x: f64) -> f64;
+    pub unsafe fn strlen(p: *const std::ffi::c_char) -> usize;
+    pub fn free(p: *mut core::ffi::c_void);
+    pub safe static IMPORTANT_BYTES: [u8; 256];
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (foreign_mod_item
+    (extern_modifier
+      (string_literal
+        (string_content)))
+    (declaration_list
+      (function_signature_item
+        (visibility_modifier)
+        (function_modifiers)
+        (identifier)
+        (parameters
+          (parameter
+            (identifier)
+            (primitive_type)))
+        (primitive_type))
+      (function_signature_item
+        (visibility_modifier)
+        (function_modifiers)
+        (identifier)
+        (parameters
+          (parameter
+            (identifier)
+            (pointer_type
+              (scoped_type_identifier
+                (scoped_identifier
+                  (identifier)
+                  (identifier))
+                (type_identifier)))))
+        (primitive_type))
+      (function_signature_item
+        (visibility_modifier)
+        (identifier)
+        (parameters
+          (parameter
+            (identifier)
+            (pointer_type
+              (mutable_specifier)
+              (scoped_type_identifier
+                (scoped_identifier
+                  (identifier)
+                  (identifier))
+                (type_identifier))))))
+      (static_item
+        (visibility_modifier)
+        (identifier)
+        (array_type
+          (primitive_type)
+          (integer_literal))))))

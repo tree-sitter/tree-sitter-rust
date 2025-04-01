@@ -2097,7 +2097,7 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": false,
       "types": [
         {
@@ -5441,6 +5441,10 @@
   },
   {
     "type": "return",
+    "named": false
+  },
+  {
+    "type": "safe",
     "named": false
   },
   {
