@@ -21,7 +21,7 @@
     }
   ],
   "metadata": {
-    "version": "0.23.3",
+    "version": "0.24.0",
     "license": "MIT",
     "description": "Rust grammar for tree-sitter",
     "authors": [
