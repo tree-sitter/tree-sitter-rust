@@ -400,20 +400,24 @@ Array expressions
       length: (integer_literal)))
   (expression_statement
     (array_expression
-      (attribute_item
-        (attribute
-          (identifier)
-          arguments: (token_tree
-            (identifier))))
-      (string_literal
-        (string_content))
-      (attribute_item
-        (attribute
-          (identifier)
-          arguments: (token_tree
-            (identifier))))
-      (string_literal
-        (string_content)))))
+      (expression_with_attribute
+        attributes: (attributes
+          (attribute_item
+            (attribute
+              (identifier)
+              arguments: (token_tree
+                (identifier)))))
+        expression: (string_literal
+          (string_content)))
+      (expression_with_attribute
+        attributes: (attributes
+          (attribute_item
+            (attribute
+              (identifier)
+              arguments: (token_tree
+                (identifier)))))
+        expression: (string_literal
+          (string_content))))))
 
 ================================================================================
 Tuple expressions
@@ -772,9 +776,10 @@ let msg = match x {
               (float_literal)))
           value: (integer_literal))
         (match_arm
-          (attribute_item
-            (attribute
-              (identifier)))
+          (attributes
+            (attribute_item
+              (attribute
+                (identifier))))
           pattern: (match_pattern
             (integer_literal))
           value: (string_literal
