@@ -178,15 +178,17 @@ fn foo(bar: impl for<'a> Baz<Quux<'a>>) {}
   (function_item
     name: (identifier)
     parameters: (parameters
-      (attribute_item
-        (attribute
-          (identifier)))
+      (attributes
+        (attribute_item
+          (attribute
+            (identifier))))
       (parameter
         pattern: (identifier)
         type: (primitive_type))
-      (attribute_item
-        (attribute
-          (identifier)))
+      (attributes
+        (attribute_item
+          (attribute
+            (identifier))))
       (parameter
         pattern: (identifier)
         type: (primitive_type)))
@@ -289,7 +291,7 @@ fn foo<'a>(x: impl 'a + Clone) {}
             (lifetime
               (identifier))
             (type_identifier)))))
-      (block)))
+    (block)))
 
 ================================================================================
 Functions with precise capture syntax
@@ -305,7 +307,7 @@ fn capture<T>(&self) -> impl Iterator<Item = usize> + use<'_, T> {
     (identifier)
     (type_parameters
       (type_parameter
-      (type_identifier)))
+        (type_identifier)))
     (parameters
       (self_parameter
         (self)))
@@ -317,10 +319,10 @@ fn capture<T>(&self) -> impl Iterator<Item = usize> + use<'_, T> {
             (type_binding
               (type_identifier)
               (primitive_type)))))
-        (use_bounds
-          (lifetime
-            (identifier))
-          (type_identifier)))
+      (use_bounds
+        (lifetime
+          (identifier))
+        (type_identifier)))
     (block)))
 
 ================================================================================
@@ -346,7 +348,7 @@ fn capture(&self) -> impl Iterator<Item = usize> + use<> {
             (type_binding
               (type_identifier)
               (primitive_type)))))
-        (use_bounds))
+      (use_bounds))
     (block)))
 
 ================================================================================
@@ -721,9 +723,10 @@ struct Empty(pub ());
       (field_declaration
         (field_identifier)
         (primitive_type))
-      (attribute_item
-        (attribute
-          (identifier)))
+      (attributes
+        (attribute_item
+          (attribute
+            (identifier))))
       (field_declaration
         (field_identifier)
         (primitive_type))))
@@ -832,9 +835,10 @@ struct E<#[attr] T> {}
   (struct_item
     name: (type_identifier)
     type_parameters: (type_parameters
-      (attribute_item
-        (attribute
-          (identifier)))
+      (attributes
+        (attribute_item
+          (attribute
+            (identifier))))
       (type_parameter
         name: (type_identifier)))
     body: (field_declaration_list)))
@@ -900,13 +904,14 @@ pub enum Node<T: Item> {
           (field_declaration
             (field_identifier)
             (primitive_type))))
-      (attribute_item
-        (attribute
-          (identifier)))
-      (attribute_item
-        (attribute
-          (identifier)))
       (enum_variant
+        (attributes
+          (attribute_item
+            (attribute
+              (identifier)))
+          (attribute_item
+            (attribute
+              (identifier))))
         (identifier)
         (field_declaration_list
           (field_declaration
@@ -1232,58 +1237,141 @@ struct Foo;
 #[cfg(target_os = "macos")]
 mod macos_only {}
 
+enum Foo {
+  #[cfg(foo)]
+  Variant
+}
+
 #![allow(clippy::useless_transmute)]
 
-#[clippy::cyclomatic_complexity = "100"]
+fn expressions_with_attributes() {
+  #[cfg(test)]
+  {
+    foo();
+  }
+
+  #[bar]
+  hello(#[world] 1);
+
+  #[decl]
+  let x = [ #[first] 1, #[second] #[last] 2 ];
+}
 
 --------------------------------------------------------------------------------
 
 (source_file
-  (attribute_item
-    (attribute
-      (identifier)))
-  (function_item
-    name: (identifier)
-    parameters: (parameters)
-    body: (block))
-  (attribute_item
-    (attribute
-      (identifier)
-      arguments: (token_tree
-        (identifier))))
-  (struct_item
-    name: (type_identifier))
-  (attribute_item
-    (attribute
-      (identifier)
-      arguments: (token_tree
-        (identifier)
-        (identifier))))
-  (struct_item
-    name: (type_identifier))
-  (attribute_item
-    (attribute
-      (identifier)
-      arguments: (token_tree
-        (identifier)
-        (string_literal
-          (string_content)))))
-  (mod_item
-    name: (identifier)
-    body: (declaration_list))
+  (declaration_with_attribute
+    attributes: (attributes
+      (attribute_item
+        (attribute
+          (identifier))))
+    declaration: (function_item
+      name: (identifier)
+      parameters: (parameters)
+      body: (block)))
+  (declaration_with_attribute
+    attributes: (attributes
+      (attribute_item
+        (attribute
+          (identifier)
+          arguments: (token_tree
+            (identifier)))))
+    declaration: (struct_item
+      name: (type_identifier)))
+  (declaration_with_attribute
+    attributes: (attributes
+      (attribute_item
+        (attribute
+          (identifier)
+          arguments: (token_tree
+            (identifier)
+            (identifier)))))
+    declaration: (struct_item
+      name: (type_identifier)))
+  (declaration_with_attribute
+    attributes: (attributes
+      (attribute_item
+        (attribute
+          (identifier)
+          arguments: (token_tree
+            (identifier)
+            (string_literal
+              (string_content))))))
+    declaration: (mod_item
+      name: (identifier)
+      body: (declaration_list)))
+  (enum_item
+    name: (type_identifier)
+    body: (enum_variant_list
+      (enum_variant
+        (attributes
+          (attribute_item
+            (attribute
+              (identifier)
+              arguments: (token_tree
+                (identifier)))))
+        name: (identifier))))
   (inner_attribute_item
     (attribute
       (identifier)
       arguments: (token_tree
         (identifier)
         (identifier))))
-  (attribute_item
-    (attribute
-      (scoped_identifier
-        path: (identifier)
-        name: (identifier))
-      value: (string_literal
-        (string_content)))))
+  (function_item
+    name: (identifier)
+    parameters: (parameters)
+    body: (block
+      (expression_statement
+        (block_expression_with_attribute
+          attributes: (attributes
+            (attribute_item
+              (attribute
+                (identifier)
+                arguments: (token_tree
+                  (identifier)))))
+          expression: (block
+            (expression_statement
+              (call_expression
+                function: (identifier)
+                arguments: (arguments))))))
+      (expression_statement
+        (expression_with_attribute
+          attributes: (attributes
+            (attribute_item
+              (attribute
+                (identifier))))
+          expression: (call_expression
+            function: (identifier)
+            arguments: (arguments
+              (expression_with_attribute
+                attributes: (attributes
+                  (attribute_item
+                    (attribute
+                      (identifier))))
+                expression: (integer_literal))))))
+      (declaration_with_attribute
+        attributes: (attributes
+          (attribute_item
+            (attribute
+              (identifier))))
+        declaration: (let_declaration
+          pattern: (identifier)
+          value: (array_expression
+            (expression_with_attribute
+              attributes: (attributes
+                (attribute_item
+                  (attribute
+                    (identifier))))
+              expression: (integer_literal))
+            (expression_with_attribute
+              attributes: (attributes
+                (attribute_item
+                  (attribute
+                    (identifier)))
+                (attribute_item
+                  (attribute
+                    (identifier))))
+              expression: (integer_literal))))))))
 
 ================================================================================
 Inner attributes
@@ -1315,18 +1403,18 @@ match ty {
     (match_expression
       value: (identifier)
       body: (match_block
-        (match_arm
-          (inner_attribute_item
-            (attribute
+        (inner_attribute_item
+          (attribute
+            (identifier)
+            arguments: (token_tree
               (identifier)
-              arguments: (token_tree
+              (token_tree
                 (identifier)
-                (token_tree
-                  (identifier)
-                  (identifier))
-                (identifier)
-                (token_tree
-                  (identifier)))))
+                (identifier))
+              (identifier)
+              (token_tree
+                (identifier)))))
+        (match_arm
           pattern: (match_pattern
             (tuple_struct_pattern
               type: (scoped_identifier
@@ -1358,28 +1446,32 @@ fn baz() {}
 --------------------------------------------------------------------------------
 
 (source_file
-  (attribute_item
-    (attribute
+  (declaration_with_attribute
+    (attributes
+      (attribute_item
+        (attribute
+          (identifier)
+          (macro_invocation
+            (identifier)
+            (token_tree
+              (string_literal
+                (string_content)))))))
+    (function_item
       (identifier)
-      (macro_invocation
-        (identifier)
-        (token_tree
-          (string_literal
-            (string_content))))))
-  (function_item
-    (identifier)
-    (parameters)
-    (block))
-  (attribute_item
-    (attribute
+      (parameters)
+      (block)))
+  (declaration_with_attribute
+    (attributes
+      (attribute_item
+        (attribute
+          (identifier)
+          (scoped_identifier
+            (identifier)
+            (identifier)))))
+    (function_item
       (identifier)
-      (scoped_identifier
-        (identifier)
-        (identifier))))
-  (function_item
-    (identifier)
-    (parameters)
-    (block)))
+      (parameters)
+      (block))))
 
 ================================================================================
 Attribute macros
@@ -1396,32 +1488,36 @@ foo(#[bar(some tokens are special in other contexts: $/';()*()+.)] x);
     (call_expression
       function: (identifier)
       arguments: (arguments
-        (attribute_item
-          (attribute
-            (identifier)
-            arguments: (token_tree
-              (identifier)
-              (identifier))))
-        (identifier)
+        (expression_with_attribute
+          attributes: (attributes
+            (attribute_item
+              (attribute
+                (identifier)
+                arguments: (token_tree
+                  (identifier)
+                  (identifier)))))
+          expression: (identifier))
         (identifier))))
   (expression_statement
     (call_expression
       function: (identifier)
       arguments: (arguments
-        (attribute_item
-          (attribute
-            (identifier)
-            arguments: (token_tree
-              (identifier)
-              (identifier)
-              (identifier)
-              (identifier)
-              (identifier)
-              (identifier)
-              (identifier)
-              (token_tree)
-              (token_tree))))
-        (identifier)))))
+        (expression_with_attribute
+          attributes: (attributes
+            (attribute_item
+              (attribute
+                (identifier)
+                arguments: (token_tree
+                  (identifier)
+                  (identifier)
+                  (identifier)
+                  (identifier)
+                  (identifier)
+                  (identifier)
+                  (identifier)
+                  (token_tree)
+                  (token_tree)))))
+          expression: (identifier))))))
 
 ================================================================================
 Derive macro helper attributes
@@ -1447,48 +1543,52 @@ pub enum Error {
     (scoped_identifier
       (identifier)
       (identifier)))
-  (attribute_item
-    (attribute
-      (identifier)
-      (token_tree
-        (identifier)
-        (identifier))))
-  (enum_item
-    (visibility_modifier)
-    (type_identifier)
-    (enum_variant_list
+  (declaration_with_attribute
+    (attributes
       (attribute_item
         (attribute
           (identifier)
           (token_tree
-            (string_literal
-              (string_content))
             (identifier)
-            (token_tree
-              (integer_literal)))))
-      (enum_variant
-        (identifier)
-        (ordered_field_declaration_list
-          (type_identifier)))
-      (attribute_item
-        (attribute
+            (identifier)))))
+    (enum_item
+      (visibility_modifier)
+      (type_identifier)
+      (enum_variant_list
+        (enum_variant
+          (attributes
+            (attribute_item
+              (attribute
+                (identifier)
+                (token_tree
+                  (string_literal
+                    (string_content))
+                  (identifier)
+                  (token_tree
+                    (integer_literal))))))
           (identifier)
-          (token_tree
-            (string_literal
-              (string_content))
-            (identifier)
-            (identifier)
-            (identifier)
-            (identifier))))
-      (enum_variant
-        (identifier)
-        (field_declaration_list
-          (field_declaration
-            (field_identifier)
-            (primitive_type))
-          (field_declaration
-            (field_identifier)
-            (type_identifier)))))))
+          (ordered_field_declaration_list
+            (type_identifier)))
+        (enum_variant
+          (attributes
+            (attribute_item
+              (attribute
+                (identifier)
+                (token_tree
+                  (string_literal
+                    (string_content))
+                  (identifier)
+                  (identifier)
+                  (identifier)
+                  (identifier)))))
+          (identifier)
+          (field_declaration_list
+            (field_declaration
+              (field_identifier)
+              (primitive_type))
+            (field_declaration
+              (field_identifier)
+              (type_identifier))))))))
 
 ================================================================================
 Attributes and Expressions
@@ -1514,30 +1614,36 @@ fn foo() {
           function: (identifier)
           arguments: (arguments
             (identifier)
-            (attribute_item
-              (attribute
-                (identifier)
-                arguments: (token_tree
-                  (identifier)
-                  (string_literal
-                    (string_content)))))
-            (identifier))))
+            (expression_with_attribute
+              attributes: (attributes
+                (attribute_item
+                  (attribute
+                    (identifier)
+                    arguments: (token_tree
+                      (identifier)
+                      (string_literal
+                        (string_content))))))
+              expression: (identifier)))))
       (let_declaration
         pattern: (identifier)
         value: (array_expression
-          (attribute_item
-            (attribute
-              (identifier)))
-          (integer_literal)
+          (expression_with_attribute
+            attributes: (attributes
+              (attribute_item
+                (attribute
+                  (identifier))))
+            expression: (integer_literal))
           (integer_literal)
           (integer_literal)))
       (let_declaration
         pattern: (identifier)
         value: (tuple_expression
-          (attribute_item
-            (attribute
-              (identifier)))
-          (integer_literal)
+          (expression_with_attribute
+            attributes: (attributes
+              (attribute_item
+                (attribute
+                  (identifier))))
+            expression: (integer_literal))
           (integer_literal)
           (integer_literal))))))
 
