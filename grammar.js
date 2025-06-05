@@ -238,7 +238,7 @@ module.exports = grammar({
       alias(choice(...primitiveTypes), $.primitive_type),
       prec.right(repeat1(choice(...TOKEN_TREE_NON_SPECIAL_PUNCTUATION))),
       '\'',
-      'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'gen',
+      'as', 'async', 'auto', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'gen',
       'if', 'impl', 'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait',
       'type', 'union', 'unsafe', 'use', 'where', 'while',
     ),
@@ -509,6 +509,7 @@ module.exports = grammar({
     trait_item: $ => seq(
       optional($.visibility_modifier),
       optional('unsafe'),
+      optional('auto'),
       'trait',
       field('name', $._type_identifier),
       field('type_parameters', optional($.type_parameters)),

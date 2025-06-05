@@ -1706,7 +1706,7 @@ unsafe impl Trait for dyn (::std::any::Any) + Send { }
               (scoped_identifier
                 (identifier))
               (identifier))
-          (type_identifier))))
+            (type_identifier))))
       (type_identifier))
     (declaration_list)))
 
@@ -1786,6 +1786,8 @@ pub trait Item: Clone + Eq + fmt::Debug {
 
 unsafe trait Foo { }
 
+unsafe auto trait Bar { }
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -1807,6 +1809,9 @@ unsafe trait Foo { }
         (scoped_type_identifier
           (identifier)
           (type_identifier)))))
+  (trait_item
+    (type_identifier)
+    (declaration_list))
   (trait_item
     (type_identifier)
     (declaration_list)))
