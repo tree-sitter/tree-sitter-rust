@@ -488,11 +488,12 @@ module.exports = grammar({
       field('bounds', $.trait_bounds),
     ),
 
-    impl_item: $ => seq(
+    impl_item: $ => prec(1, seq(
       optional('unsafe'),
       'impl',
       field('type_parameters', optional($.type_parameters)),
       optional(seq(
+        optional('const'),
         optional('!'),
         field('trait', choice(
           $._type_identifier,
@@ -504,7 +505,7 @@ module.exports = grammar({
       field('type', $._type),
       optional($.where_clause),
       choice(field('body', $.declaration_list), ';'),
-    ),
+    )),
 
     trait_item: $ => seq(
       optional($.visibility_modifier),
