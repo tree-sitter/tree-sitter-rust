@@ -518,6 +518,7 @@ module.exports = grammar({
     ),
 
     associated_type: $ => seq(
+      optional($.visibility_modifier),
       'type',
       field('name', $._type_identifier),
       field('type_parameters', optional($.type_parameters)),
