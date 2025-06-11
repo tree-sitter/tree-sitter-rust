@@ -78,6 +78,7 @@ module.exports = grammar({
     $._block_comment_content,
     $._line_doc_content,
     $._frontmatter_start,
+    $.frontmatter_info_string,
     $.frontmatter_content,
     $._frontmatter_end,
     $._error_sentinel,
@@ -1655,6 +1656,7 @@ module.exports = grammar({
 
     frontmatter: $ => seq(
       $._frontmatter_start,
+      optional($.frontmatter_info_string),
       $.frontmatter_content,
       $._frontmatter_end,
     ),

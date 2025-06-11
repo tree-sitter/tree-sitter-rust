@@ -287,6 +287,7 @@ fn main() {}
 
 (source_file
   (frontmatter
+    (frontmatter_info_string)
     (frontmatter_content))
   (function_item
     (identifier)
