@@ -2015,6 +2015,21 @@
     "fields": {}
   },
   {
+    "type": "frontmatter",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "frontmatter_content",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "function_item",
     "named": true,
     "fields": {
@@ -3690,6 +3705,10 @@
           "named": true
         },
         {
+          "type": "frontmatter",
+          "named": true
+        },
+        {
           "type": "shebang",
           "named": true
         }
@@ -5334,6 +5353,10 @@
   {
     "type": "for",
     "named": false
+  },
+  {
+    "type": "frontmatter_content",
+    "named": true
   },
   {
     "type": "gen",
