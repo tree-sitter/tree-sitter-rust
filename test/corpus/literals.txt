@@ -81,6 +81,7 @@ b"foo\nbar";
 "/* foo bar */ foo bar";
 "foo\x42\x43bar";
 "foo \x42  \x43 bar";
+"\u{10__FFFF}";
 
 --------------------------------------------------------------------------------
 
@@ -123,7 +124,10 @@ b"foo\nbar";
       (escape_sequence)
       (string_content)
       (escape_sequence)
-      (string_content))))
+      (string_content)))
+  (expression_statement
+    (string_literal
+      (escape_sequence))))
 
 ================================================================================
 Raw string literals
@@ -198,10 +202,13 @@ b'x';
 '\t';
 '\xff';
 '\\';
+'\u{10__FFFF}';
 
 --------------------------------------------------------------------------------
 
 (source_file
+  (expression_statement
+    (char_literal))
   (expression_statement
     (char_literal))
   (expression_statement
