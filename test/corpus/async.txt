@@ -161,3 +161,27 @@ gen move {}
   (expression_statement
     (gen_block
       (block))))
+
+================================================================================
+gen fn
+================================================================================
+
+gen fn f() -> u8 {
+    yield 42;
+    yield;
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_item
+    (function_modifiers)
+    (identifier)
+    (parameters)
+    (primitive_type)
+    (block
+      (expression_statement
+        (yield_expression
+          (integer_literal)))
+      (expression_statement
+        (yield_expression)))))
