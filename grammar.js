@@ -1310,6 +1310,7 @@ module.exports = grammar({
         $._pattern,
         $.parameter,
       )),
+      optional(','),
       '|',
     ),
 
