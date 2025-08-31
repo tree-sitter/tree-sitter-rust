@@ -529,7 +529,12 @@ module.exports = grammar({
     trait_bounds: $ => seq(
       ':',
       sepBy1('+', choice(
-        $._type,
+        prec(1, seq(
+          optional("~const"),
+          optional("async"),
+          optional("!"),
+          $._type
+        )),
         $.lifetime,
         $.higher_ranked_trait_bound,
       )),
