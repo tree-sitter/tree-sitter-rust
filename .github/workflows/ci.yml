@@ -42,7 +42,7 @@ jobs:
           git clone https://github.com/serde-rs/serde examples/serde --single-branch --depth=1 --filter=blob:none
           git clone https://github.com/tokio-rs/tokio examples/tokio --single-branch --depth=1 --filter=blob:none
       - name: Run tests
-        uses: tree-sitter/parser-test-action@v2
+        uses: tree-sitter/parser-test-action@v3
         with:
           test-rust: true
           test-node: true
