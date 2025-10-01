@@ -1299,8 +1299,8 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "visibility_modifier"
+              "type": "STRING",
+              "value": "unsafe"
             },
             {
               "type": "BLANK"
@@ -9677,6 +9677,10 @@
       "visibility_modifier",
       "scoped_identifier",
       "scoped_type_identifier"
+    ],
+    [
+      "foreign_mod_item",
+      "function_modifiers"
     ]
   ],
   "precedences": [],

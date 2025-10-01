@@ -289,7 +289,7 @@ fn foo<'a>(x: impl 'a + Clone) {}
             (lifetime
               (identifier))
             (type_identifier)))))
-      (block)))
+    (block)))
 
 ================================================================================
 Functions with precise capture syntax
@@ -305,7 +305,7 @@ fn capture<T>(&self) -> impl Iterator<Item = usize> + use<'_, T> {
     (identifier)
     (type_parameters
       (type_parameter
-      (type_identifier)))
+        (type_identifier)))
     (parameters
       (self_parameter
         (self)))
@@ -317,10 +317,10 @@ fn capture<T>(&self) -> impl Iterator<Item = usize> + use<'_, T> {
             (type_binding
               (type_identifier)
               (primitive_type)))))
-        (use_bounds
-          (lifetime
-            (identifier))
-          (type_identifier)))
+      (use_bounds
+        (lifetime
+          (identifier))
+        (type_identifier)))
     (block)))
 
 ================================================================================
@@ -346,7 +346,7 @@ fn capture(&self) -> impl Iterator<Item = usize> + use<> {
             (type_binding
               (type_identifier)
               (primitive_type)))))
-        (use_bounds))
+      (use_bounds))
     (block)))
 
 ================================================================================
@@ -1706,7 +1706,7 @@ unsafe impl Trait for dyn (::std::any::Any) + Send { }
               (scoped_identifier
                 (identifier))
               (identifier))
-          (type_identifier))))
+            (type_identifier))))
       (type_identifier))
     (declaration_list)))
 
@@ -2461,17 +2461,18 @@ impl<A> Default for B<A> where *mut A: C + D {}
 External Modules
 ================================================================================
 
-pub extern {
+extern {
   pub fn napi_module_register(mod_: *mut napi_module);
 }
 
 extern "C" {}
 
+unsafe extern "C" {}
+
 --------------------------------------------------------------------------------
 
 (source_file
   (foreign_mod_item
-    (visibility_modifier)
     (extern_modifier)
     (declaration_list
       (function_signature_item
@@ -2483,6 +2484,11 @@ extern "C" {}
             (pointer_type
               (mutable_specifier)
               (type_identifier)))))))
+  (foreign_mod_item
+    (extern_modifier
+      (string_literal
+        (string_content)))
+    (declaration_list))
   (foreign_mod_item
     (extern_modifier
       (string_literal

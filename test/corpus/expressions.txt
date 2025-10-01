@@ -1396,6 +1396,7 @@ Raw reference expression conflicts
 some_call(&raw);
 let a = &raw const b;
 --------------------------------------------------------------------------------
+
 (source_file
   (expression_statement
     (call_expression

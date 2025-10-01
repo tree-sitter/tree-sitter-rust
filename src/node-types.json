@@ -1996,15 +1996,11 @@
       }
     },
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": true,
       "types": [
         {
           "type": "extern_modifier",
-          "named": true
-        },
-        {
-          "type": "visibility_modifier",
           "named": true
         }
       ]

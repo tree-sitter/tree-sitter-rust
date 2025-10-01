@@ -52,4 +52,7 @@ jobs:
       - name: Parse examples
         uses: tree-sitter/parse-action@v4
         with:
-          files: examples/**/*.rs
+          files: |
+            examples/**/*.rs
+            !examples/libc/ctest/templates/test.rs
+            !examples/libc/ctest/tests/input/invalid_syntax.rs
