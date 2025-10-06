@@ -11,3 +11,7 @@
 ((frontmatter
   (frontmatter_content) @injection.content)
   (#set! injection.languge "toml"))
+
+((frontmatter
+  (frontmatter_info_string) @injection.language
+  (frontmatter_content) @injection.content))
