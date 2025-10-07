@@ -658,9 +658,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "visibility_modifier",
+          "named": true
+        },
         {
           "type": "where_clause",
           "named": true
