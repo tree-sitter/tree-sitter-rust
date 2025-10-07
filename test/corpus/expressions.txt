@@ -1258,7 +1258,7 @@ h(|| -> i { j });
             (identifier)))))))
 
 ================================================================================
-Closures with typed parameteres
+Closures with typed parameters
 ================================================================================
 
 a.map(|b: usize| b.push(c));
@@ -1283,6 +1283,35 @@ a.map(|b: usize| b.push(c));
               (field_identifier))
             (arguments
               (identifier))))))))
+
+
+================================================================================
+Closure parameters can have a trailing comma
+================================================================================
+
+a.map(|b: usize,| b.push(c));
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (call_expression
+      (field_expression
+        (identifier)
+        (field_identifier))
+      (arguments
+        (closure_expression
+          (closure_parameters
+            (parameter
+              (identifier)
+              (primitive_type)))
+          (call_expression
+            (field_expression
+              (identifier)
+              (field_identifier))
+            (arguments
+              (identifier))))))))
+
 
 ================================================================================
 Generators
