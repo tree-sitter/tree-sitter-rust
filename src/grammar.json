@@ -9154,7 +9154,7 @@
                           },
                           {
                             "type": "PATTERN",
-                            "value": "u\\{[0-9a-fA-F]+\\}"
+                            "value": "u\\{[0-9a-fA-F_]+\\}"
                           },
                           {
                             "type": "PATTERN",
@@ -9204,7 +9204,7 @@
               },
               {
                 "type": "PATTERN",
-                "value": "u\\{[0-9a-fA-F]+\\}"
+                "value": "u\\{[0-9a-fA-F_]+\\}"
               },
               {
                 "type": "PATTERN",
