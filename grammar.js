@@ -94,7 +94,6 @@ module.exports = grammar({
     $._tokens,
     $._field_identifier,
     $._non_special_token,
-    $._declaration_statement,
     $._reserved_identifier,
     $._expression_ending_with_block,
   ],
