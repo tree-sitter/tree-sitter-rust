@@ -194,6 +194,10 @@ macro_rules! empty [
     () => {};
 ];
 
+macro_rules ! macro_with_whitespace {
+    ($ x : expr, $ y : expr) => { $ x + $ y }
+}
+
 --------------------------------------------------------------------------------
 
 (source_file
@@ -272,4 +276,17 @@ macro_rules! empty [
     name: (identifier)
     (macro_rule
       left: (token_tree_pattern)
-      right: (token_tree))))
+      right: (token_tree)))
+  (macro_definition
+    name: (identifier)
+    (macro_rule
+      left: (token_tree_pattern
+        (token_binding_pattern
+          name: (metavariable)
+          type: (fragment_specifier))
+        (token_binding_pattern
+          name: (metavariable)
+          type: (fragment_specifier)))
+      right: (token_tree
+        (metavariable)
+        (metavariable)))))

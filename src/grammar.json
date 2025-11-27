@@ -164,7 +164,11 @@
       "members": [
         {
           "type": "STRING",
-          "value": "macro_rules!"
+          "value": "macro_rules"
+        },
+        {
+          "type": "STRING",
+          "value": "!"
         },
         {
           "type": "FIELD",
@@ -9628,8 +9632,17 @@
       "value": "crate"
     },
     "metavariable": {
-      "type": "PATTERN",
-      "value": "\\$[a-zA-Z_]\\w*"
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "$"
+        },
+        {
+          "type": "PATTERN",
+          "value": "[a-zA-Z_]\\w*"
+        }
+      ]
     }
   },
   "extras": [

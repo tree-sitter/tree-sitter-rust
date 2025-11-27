@@ -116,7 +116,7 @@
 "in" @keyword
 "let" @keyword
 "loop" @keyword
-"macro_rules!" @keyword
+"macro_rules" @keyword
 "match" @keyword
 "mod" @keyword
 "move" @keyword
