@@ -2960,6 +2960,11 @@
     }
   },
   {
+    "type": "metavariable",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "mod_item",
     "named": true,
     "fields": {
@@ -5382,7 +5387,7 @@
     "named": false
   },
   {
-    "type": "macro_rules!",
+    "type": "macro_rules",
     "named": false
   },
   {
@@ -5392,10 +5397,6 @@
   {
     "type": "meta",
     "named": false
-  },
-  {
-    "type": "metavariable",
-    "named": true
   },
   {
     "type": "mod",

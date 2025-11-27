@@ -166,7 +166,8 @@ module.exports = grammar({
       );
 
       return seq(
-        'macro_rules!',
+        'macro_rules',
+        '!',
         field('name', choice(
           $.identifier,
           $._reserved_identifier,
@@ -1662,7 +1663,10 @@ module.exports = grammar({
     super: _ => 'super',
     crate: _ => 'crate',
 
-    metavariable: _ => /\$[a-zA-Z_]\w*/,
+    metavariable: _ => seq(
+      '$',
+      /[a-zA-Z_]\w*/
+    ),
   },
 });
 
