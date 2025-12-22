@@ -114,6 +114,10 @@
         "named": true
       },
       {
+        "type": "become_expression",
+        "named": true
+      },
+      {
         "type": "binary_expression",
         "named": true
       },
@@ -785,6 +789,21 @@
     }
   },
   {
+    "type": "become_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "binary_expression",
     "named": true,
     "fields": {
@@ -918,7 +937,6 @@
   {
     "type": "block_comment",
     "named": true,
-    "extra": true,
     "fields": {
       "doc": {
         "multiple": false,
@@ -1054,6 +1072,10 @@
           },
           {
             "type": "await_expression",
+            "named": true
+          },
+          {
+            "type": "become_expression",
             "named": true
           },
           {
@@ -2702,7 +2724,6 @@
   {
     "type": "line_comment",
     "named": true,
-    "extra": true,
     "fields": {
       "doc": {
         "multiple": false,
@@ -5251,6 +5272,10 @@
   },
   {
     "type": "await",
+    "named": false
+  },
+  {
+    "type": "become",
     "named": false
   },
   {
