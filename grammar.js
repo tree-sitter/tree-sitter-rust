@@ -239,9 +239,9 @@ module.exports = grammar({
       alias(choice(...primitiveTypes), $.primitive_type),
       prec.right(repeat1(choice(...TOKEN_TREE_NON_SPECIAL_PUNCTUATION))),
       '\'',
-      'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'gen',
-      'if', 'impl', 'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait',
-      'type', 'union', 'unsafe', 'use', 'where', 'while',
+      'as', 'async', 'await', 'become', 'break', 'const', 'continue', 'default', 'enum', 'fn',
+      'for', 'gen','if', 'impl', 'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct',
+      'trait', 'type', 'union', 'unsafe', 'use', 'where', 'while',
     ),
 
     // Section - Declarations
@@ -931,6 +931,7 @@ module.exports = grammar({
       $.type_cast_expression,
       $.call_expression,
       $.return_expression,
+      $.become_expression,
       $.yield_expression,
       $._literal,
       prec.left($.identifier),
@@ -1101,6 +1102,8 @@ module.exports = grammar({
       prec.left(seq('return', $._expression)),
       prec(-1, 'return'),
     ),
+
+    become_expression: $ => prec.left(seq('become', $._expression)),
 
     yield_expression: $ => choice(
       prec.left(seq('yield', $._expression)),
