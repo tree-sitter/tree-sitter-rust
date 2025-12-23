@@ -1408,3 +1408,69 @@ let a = &raw const b;
     (identifier)
     (reference_expression
       (identifier))))
+
+================================================================================
+Become expressions
+================================================================================
+
+fn forever() {
+  become forever()
+}
+
+become TABLE[*inst as usize](rest, state);
+
+match slice {
+    [first, rest @ ..] => become fold(rest, f(init, *first), f),
+    [] => init,
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_item
+    (identifier)
+    (parameters)
+    (block
+      (become_expression
+        (call_expression
+          (identifier)
+          (arguments)))))
+      (expression_statement
+        (become_expression
+          (call_expression
+            (index_expression
+              (identifier)
+              (type_cast_expression
+                (unary_expression
+                  (identifier))
+                (primitive_type)))
+            (arguments
+              (identifier)
+              (identifier)))))
+      (expression_statement
+        (match_expression
+          (identifier)
+          (match_block
+            (match_arm
+              (match_pattern
+                (slice_pattern
+                  (identifier)
+                  (captured_pattern
+                    (identifier)
+                    (remaining_field_pattern))))
+              (become_expression
+                (call_expression
+                  (identifier)
+                  (arguments
+                    (identifier)
+                    (call_expression
+                      (identifier)
+                      (arguments
+                        (identifier)
+                        (unary_expression
+                          (identifier))))
+                    (identifier)))))
+            (match_arm
+              (match_pattern
+                (slice_pattern))
+              (identifier))))))
