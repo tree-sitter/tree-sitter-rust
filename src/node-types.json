@@ -3855,10 +3855,28 @@
     "type": "struct_pattern",
     "named": true,
     "fields": {
+      "pattern": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "field_pattern",
+            "named": true
+          },
+          {
+            "type": "remaining_field_pattern",
+            "named": true
+          }
+        ]
+      },
       "type": {
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "generic_type",
+            "named": true
+          },
           {
             "type": "scoped_type_identifier",
             "named": true
@@ -3875,11 +3893,7 @@
       "required": false,
       "types": [
         {
-          "type": "field_pattern",
-          "named": true
-        },
-        {
-          "type": "remaining_field_pattern",
+          "type": "attribute_item",
           "named": true
         }
       ]
@@ -4326,33 +4340,40 @@
   {
     "type": "type_arguments",
     "named": true,
-    "fields": {},
+    "fields": {
+      "argument": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "_literal",
+            "named": true
+          },
+          {
+            "type": "_type",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "lifetime",
+            "named": true
+          },
+          {
+            "type": "type_binding",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
-          "type": "_literal",
-          "named": true
-        },
-        {
-          "type": "_type",
-          "named": true
-        },
-        {
-          "type": "block",
-          "named": true
-        },
-        {
-          "type": "lifetime",
-          "named": true
-        },
-        {
           "type": "trait_bounds",
-          "named": true
-        },
-        {
-          "type": "type_binding",
           "named": true
         }
       ]

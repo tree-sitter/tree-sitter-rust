@@ -1185,14 +1185,14 @@ foo::<8>();
           path: (identifier)
           name: (identifier))
         type_arguments: (type_arguments
-          (primitive_type)))
+          argument: (primitive_type)))
       arguments: (arguments)))
   (expression_statement
     (call_expression
       function: (generic_function
         function: (identifier)
         type_arguments: (type_arguments
-          (integer_literal)))
+          argument: (integer_literal)))
       arguments: (arguments))))
 
 ================================================================================

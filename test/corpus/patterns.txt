@@ -561,3 +561,63 @@ match y {
         (match_arm
           (match_pattern)
           (integer_literal))))))
+
+================================================================================
+Struct patterns with attributes
+================================================================================
+
+match x {
+  C::Type {
+    #[cfg(linux)]
+    #[allow(unused)]
+    a,
+  } => {}
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (match_expression
+      (identifier)
+      (match_block
+        (match_arm
+          (match_pattern
+            (struct_pattern
+              (scoped_type_identifier
+                (identifier)
+                (type_identifier))
+              (attribute_item
+                (attribute
+                  (identifier)
+                  (token_tree
+                    (identifier))))
+              (attribute_item
+                (attribute
+                  (identifier)
+                  (token_tree
+                    (identifier))))
+              (field_pattern
+                (shorthand_field_identifier))))
+          (block))))))
+
+================================================================================
+Struct patterns with turbofish
+================================================================================
+
+let Message::<T> { key, value } = msg;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (let_declaration
+    pattern: (struct_pattern
+      type: (generic_type
+        type: (type_identifier)
+        type_arguments: (type_arguments
+          argument: (type_identifier)))
+      pattern: (field_pattern
+        name: (shorthand_field_identifier))
+      pattern: (field_pattern
+        name: (shorthand_field_identifier)))
+    value: (identifier)))

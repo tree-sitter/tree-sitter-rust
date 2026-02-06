@@ -172,8 +172,8 @@ fn foo(bar: impl for<'a> Baz<Quux<'a>>) {}
                 path: (identifier)
                 name: (type_identifier))
               type_arguments: (type_arguments
-                (type_identifier)
-                (type_identifier)))))))
+                argument: (type_identifier)
+                argument: (type_identifier)))))))
     body: (block))
   (function_item
     name: (identifier)
@@ -199,7 +199,7 @@ fn foo(bar: impl for<'a> Baz<Quux<'a>>) {}
     return_type: (generic_type
       type: (type_identifier)
       type_arguments: (type_arguments
-        (block
+        argument: (block
           (scoped_identifier
             path: (identifier)
             name: (identifier)))))
@@ -217,10 +217,10 @@ fn foo(bar: impl for<'a> Baz<Quux<'a>>) {}
           trait: (generic_type
             type: (type_identifier)
             type_arguments: (type_arguments
-              (generic_type
+              argument: (generic_type
                 type: (type_identifier)
                 type_arguments: (type_arguments
-                  (lifetime
+                  argument: (lifetime
                     (identifier)))))))))
     body: (block)))
 
@@ -601,9 +601,9 @@ let Some(x) = y else {
       type: (scoped_type_identifier
         path: (identifier)
         name: (type_identifier))
-      (field_pattern
+      pattern: (field_pattern
         name: (shorthand_field_identifier))
-      (field_pattern
+      pattern: (field_pattern
         name: (shorthand_field_identifier)))
     value: (try_expression
       (await_expression
@@ -957,7 +957,7 @@ pub fn uninit_array<const LEN: usize>() -> [Self; LEN] {}
           (generic_type
             type: (type_identifier)
             type_arguments: (type_arguments
-              (type_identifier))))))
+              argument: (type_identifier))))))
     parameters: (parameters
       (self_parameter
         (mutable_specifier)
@@ -967,7 +967,7 @@ pub fn uninit_array<const LEN: usize>() -> [Self; LEN] {}
         type: (generic_type
           type: (type_identifier)
           type_arguments: (type_arguments
-            (primitive_type))))
+            argument: (primitive_type))))
       (parameter
         pattern: (identifier)
         type: (type_identifier)))
@@ -1598,7 +1598,7 @@ impl Machine<{State::Init}> {}
     type: (generic_type
       type: (type_identifier)
       type_arguments: (type_arguments
-        (block
+        argument: (block
           (scoped_identifier
             path: (identifier)
             name: (identifier)))))
@@ -1631,14 +1631,14 @@ impl ConvertTo<i64> for i32 {
         path: (identifier)
         name: (type_identifier))
       type_arguments: (type_arguments
-        (lifetime
+        argument: (lifetime
           (identifier))))
     body: (declaration_list))
   (impl_item
     trait: (generic_type
       type: (type_identifier)
       type_arguments: (type_arguments
-        (primitive_type)))
+        argument: (primitive_type)))
     type: (primitive_type)
     body: (declaration_list
       (function_item
@@ -2302,9 +2302,9 @@ impl<A> Default for B<A> where *mut A: C + D {}
     type: (generic_type
       type: (type_identifier)
       type_arguments: (type_arguments
-        (lifetime
+        argument: (lifetime
           (identifier))
-        (type_identifier)))
+        argument: (type_identifier)))
     (where_clause
       (where_predicate
         left: (type_identifier)
@@ -2320,13 +2320,13 @@ impl<A> Default for B<A> where *mut A: C + D {}
     type: (generic_type
       type: (type_identifier)
       type_arguments: (type_arguments
-        (type_identifier)))
+        argument: (type_identifier)))
     (where_clause
       (where_predicate
         left: (generic_type
           type: (type_identifier)
           type_arguments: (type_arguments
-            (type_identifier)))
+            argument: (type_identifier)))
         bounds: (trait_bounds
           (type_identifier)))
       (where_predicate
@@ -2366,7 +2366,7 @@ impl<A> Default for B<A> where *mut A: C + D {}
     type: (generic_type
       type: (type_identifier)
       type_arguments: (type_arguments
-        (type_identifier)))
+        argument: (type_identifier)))
     (where_clause
       (where_predicate
         left: (tuple_type
@@ -2384,7 +2384,7 @@ impl<A> Default for B<A> where *mut A: C + D {}
     type: (generic_type
       type: (type_identifier)
       type_arguments: (type_arguments
-        (type_identifier)))
+        argument: (type_identifier)))
     (where_clause
       (where_predicate
         left: (higher_ranked_trait_bound
@@ -2395,12 +2395,12 @@ impl<A> Default for B<A> where *mut A: C + D {}
           type: (generic_type
             type: (type_identifier)
             type_arguments: (type_arguments
-              (type_identifier))))
+              argument: (type_identifier))))
         bounds: (trait_bounds
           (generic_type
             type: (type_identifier)
             type_arguments: (type_arguments
-              (lifetime
+              argument: (lifetime
                 (identifier)))))))
     body: (declaration_list))
   (trait_item
@@ -2429,14 +2429,14 @@ impl<A> Default for B<A> where *mut A: C + D {}
           (generic_type
             type: (type_identifier)
             type_arguments: (type_arguments
-              (primitive_type)))))
+              argument: (primitive_type)))))
       (where_predicate
         left: (primitive_type)
         bounds: (trait_bounds
           (generic_type
             type: (type_identifier)
             type_arguments: (type_arguments
-              (type_identifier))))))
+              argument: (type_identifier))))))
     body: (block))
   (impl_item
     type_parameters: (type_parameters
@@ -2446,7 +2446,7 @@ impl<A> Default for B<A> where *mut A: C + D {}
     type: (generic_type
       type: (type_identifier)
       type_arguments: (type_arguments
-        (type_identifier)))
+        argument: (type_identifier)))
     (where_clause
       (where_predicate
         left: (pointer_type

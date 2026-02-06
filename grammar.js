@@ -856,13 +856,13 @@ module.exports = grammar({
     type_arguments: $ => seq(
       token(prec(1, '<')),
       sepBy1(',', seq(
-        choice(
+        field('argument', choice(
           $._type,
           $.type_binding,
           $.lifetime,
           $._literal,
           $.block,
-        ),
+        )),
         optional($.trait_bounds),
       )),
       optional(','),
@@ -1431,9 +1431,10 @@ module.exports = grammar({
       field('type', choice(
         $._type_identifier,
         $.scoped_type_identifier,
+        alias($.generic_type_with_turbofish, $.generic_type),
       )),
       '{',
-      sepBy(',', choice($.field_pattern, $.remaining_field_pattern)),
+      sepBy(',', seq(repeat($.attribute_item), field('pattern', choice($.field_pattern, $.remaining_field_pattern)))),
       optional(','),
       '}',
     ),
