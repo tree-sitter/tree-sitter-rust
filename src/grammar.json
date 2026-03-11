@@ -9055,7 +9055,7 @@
           "type": "ALIAS",
           "content": {
             "type": "PATTERN",
-            "value": "[bc]?\""
+            "value": "[bc!#$%&*+,-.\/:;<=>?@^_|~]*\""
           },
           "named": false,
           "value": "\""
@@ -9647,41 +9647,15 @@
     }
   ],
   "conflicts": [
-    [
-      "_type",
-      "_pattern"
-    ],
-    [
-      "unit_type",
-      "tuple_pattern"
-    ],
-    [
-      "scoped_identifier",
-      "scoped_type_identifier"
-    ],
-    [
-      "parameters",
-      "_pattern"
-    ],
-    [
-      "parameters",
-      "tuple_struct_pattern"
-    ],
-    [
-      "array_expression"
-    ],
-    [
-      "visibility_modifier"
-    ],
-    [
-      "visibility_modifier",
-      "scoped_identifier",
-      "scoped_type_identifier"
-    ],
-    [
-      "foreign_mod_item",
-      "function_modifiers"
-    ]
+    ["_type", "_pattern"],
+    ["unit_type", "tuple_pattern"],
+    ["scoped_identifier", "scoped_type_identifier"],
+    ["parameters", "_pattern"],
+    ["parameters", "tuple_struct_pattern"],
+    ["array_expression"],
+    ["visibility_modifier"],
+    ["visibility_modifier", "scoped_identifier", "scoped_type_identifier"],
+    ["foreign_mod_item", "function_modifiers"]
   ],
   "precedences": [],
   "externals": [
