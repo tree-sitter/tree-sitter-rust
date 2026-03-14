@@ -263,6 +263,44 @@ for i in 1.. {
       (block))))
 
 ================================================================================
+Range expressions with leading unary operators
+================================================================================
+
+foo(..*a);
+foo(..!b);
+foo(..-c);
+let _ = ..*ptr;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (call_expression
+      (identifier)
+      (arguments
+        (range_expression
+          (unary_expression
+            (identifier))))))
+  (expression_statement
+    (call_expression
+      (identifier)
+      (arguments
+        (range_expression
+          (unary_expression
+            (identifier))))))
+  (expression_statement
+    (call_expression
+      (identifier)
+      (arguments
+        (range_expression
+          (unary_expression
+            (identifier))))))
+  (let_declaration
+    (range_expression
+      (unary_expression
+        (identifier)))))
+
+================================================================================
 Assignment expressions
 ================================================================================
 

@@ -1031,12 +1031,12 @@ module.exports = grammar({
       field('name', $._type_identifier),
     ),
 
-    range_expression: $ => prec.left(PREC.range, choice(
-      seq($._expression, choice('..', '...', '..='), $._expression),
-      seq($._expression, '..'),
-      seq('..', $._expression),
-      '..',
-    )),
+    range_expression: $ => choice(
+      prec.left(PREC.range, seq($._expression, choice('..', '...', '..='), $._expression)),
+      prec.left(PREC.range, seq($._expression, '..')),
+      prec.right(PREC.range + 1, seq('..', $._expression)),
+      prec.left(PREC.range, '..'),
+    ),
 
     unary_expression: $ => prec(PREC.unary, seq(
       choice('-', '*', '!'),
