@@ -1540,12 +1540,15 @@ module.exports = grammar({
     )),
 
     string_literal: $ => seq(
-      alias(/[bc]?"/, '"'),
+      choice(
+        '"',
+        alias(/[bc]"/, '"'),
+      ),
       repeat(choice(
         $.escape_sequence,
         $.string_content,
       )),
-      token.immediate('"'),
+      '"',
     ),
 
     raw_string_literal: $ => seq(
