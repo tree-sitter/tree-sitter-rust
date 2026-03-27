@@ -1910,6 +1910,35 @@ impl<T: AstDeref<Target: HasNodeId>> HasNodeId for T {}
     (declaration_list)))
 
 ================================================================================
+Trait bounds with modifiers
+================================================================================
+
+impl <T: !Y> Foo for Bar {}
+impl <T: ~const async Y> Foo for Bar {}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (impl_item
+    (type_parameters
+      (type_parameter
+        (type_identifier)
+        (trait_bounds
+          (type_identifier))))
+    (type_identifier)
+    (type_identifier)
+    (declaration_list))
+  (impl_item
+    (type_parameters
+      (type_parameter
+        (type_identifier)
+        (trait_bounds
+          (type_identifier))))
+    (type_identifier)
+    (type_identifier)
+    (declaration_list)))
+
+================================================================================
 Macro invocations inside trait declarations
 ================================================================================
 
