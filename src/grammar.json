@@ -9052,22 +9052,13 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "STRING",
-              "value": "\""
-            },
-            {
-              "type": "ALIAS",
-              "content": {
-                "type": "PATTERN",
-                "value": "[bc]\""
-              },
-              "named": false,
-              "value": "\""
-            }
-          ]
+          "type": "ALIAS",
+          "content": {
+            "type": "PATTERN",
+            "value": "[bc]?\""
+          },
+          "named": false,
+          "value": "\""
         },
         {
           "type": "REPEAT",
@@ -9086,7 +9077,12 @@
           }
         },
         {
-          "type": "STRING",
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "string_close"
+          },
+          "named": false,
           "value": "\""
         }
       ]
@@ -9694,6 +9690,10 @@
     {
       "type": "SYMBOL",
       "name": "string_content"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "string_close"
     },
     {
       "type": "SYMBOL",

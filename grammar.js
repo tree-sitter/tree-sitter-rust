@@ -68,6 +68,7 @@ module.exports = grammar({
 
   externals: $ => [
     $.string_content,
+    $.string_close,
     $._raw_string_literal_start,
     $.raw_string_literal_content,
     $._raw_string_literal_end,
@@ -1540,15 +1541,12 @@ module.exports = grammar({
     )),
 
     string_literal: $ => seq(
-      choice(
-        '"',
-        alias(/[bc]"/, '"'),
-      ),
+      alias(/[bc]?"/, '"'),
       repeat(choice(
         $.escape_sequence,
         $.string_content,
       )),
-      '"',
+      alias($.string_close, '"'),
     ),
 
     raw_string_literal: $ => seq(
