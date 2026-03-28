@@ -48,9 +48,18 @@ Nested block comments
 
 // ---
 
+/*
+  nested with extra slash between two nested block comments
+  /**///**/
+*/
+
+// ---
+
 ----
 
 (source_file
+  (block_comment)
+  (line_comment)
   (block_comment)
   (line_comment)
   (block_comment)
