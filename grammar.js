@@ -77,6 +77,10 @@ module.exports = grammar({
     $._inner_block_doc_comment_marker,
     $._block_comment_content,
     $._line_doc_content,
+    $._frontmatter_start,
+    $.frontmatter_info_string,
+    $.frontmatter_content,
+    $._frontmatter_end,
     $._error_sentinel,
   ],
 
@@ -119,6 +123,7 @@ module.exports = grammar({
   rules: {
     source_file: $ => seq(
       optional($.shebang),
+      optional($.frontmatter),
       repeat($._statement),
     ),
 
@@ -1648,6 +1653,13 @@ module.exports = grammar({
     identifier: _ => /(r#)?[_\p{XID_Start}][_\p{XID_Continue}]*/,
 
     shebang: _ => /#![\r\f\t\v ]*([^\[\n].*)?\n/,
+
+    frontmatter: $ => seq(
+      $._frontmatter_start,
+      optional($.frontmatter_info_string),
+      $.frontmatter_content,
+      $._frontmatter_end,
+    ),
 
     _reserved_identifier: $ => alias(choice(
       'default',

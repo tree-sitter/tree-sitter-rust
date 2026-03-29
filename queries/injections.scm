@@ -7,3 +7,11 @@
   (token_tree) @injection.content)
  (#set! injection.language "rust")
  (#set! injection.include-children))
+
+((frontmatter
+  (frontmatter_content) @injection.content)
+  (#set! injection.languge "toml"))
+
+((frontmatter
+  (frontmatter_info_string) @injection.language
+  (frontmatter_content) @injection.content))

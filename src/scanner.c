@@ -14,11 +14,17 @@ enum TokenType {
     BLOCK_INNER_DOC_MARKER,
     BLOCK_COMMENT_CONTENT,
     LINE_DOC_CONTENT,
+    FRONTMATTER_START,
+    FRONTMATTER_INFO_STRING,
+    FRONTMATTER_CONTENT,
+    FRONTMATTER_END,
     ERROR_SENTINEL
 };
 
 typedef struct {
     uint8_t opening_hash_count;
+    uint8_t frontmatter_dashes;
+    bool frontmatter_has_info_string;
 } Scanner;
 
 void *tree_sitter_rust_external_scanner_create() { return ts_calloc(1, sizeof(Scanner)); }
@@ -28,15 +34,20 @@ void tree_sitter_rust_external_scanner_destroy(void *payload) { ts_free((Scanner
 unsigned tree_sitter_rust_external_scanner_serialize(void *payload, char *buffer) {
     Scanner *scanner = (Scanner *)payload;
     buffer[0] = (char)scanner->opening_hash_count;
-    return 1;
+    buffer[1] = (char)scanner->frontmatter_dashes;
+    buffer[2] = (char)scanner->frontmatter_has_info_string;
+    return 3;
 }
 
 void tree_sitter_rust_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {
     Scanner *scanner = (Scanner *)payload;
     scanner->opening_hash_count = 0;
-    if (length == 1) {
-        Scanner *scanner = (Scanner *)payload;
+    scanner->frontmatter_dashes = 0;
+    scanner->frontmatter_has_info_string = false;
+    if (length == 3) {
         scanner->opening_hash_count = buffer[0];
+        scanner->frontmatter_dashes = buffer[1];
+        scanner->frontmatter_has_info_string = buffer[2];
     }
 }
 
@@ -332,6 +343,101 @@ static inline bool process_block_comment(TSLexer *lexer, const bool *valid_symbo
     return false;
 }
 
+static inline bool process_frontmatter_start(TSLexer *lexer, Scanner *scanner) {
+    uint8_t amount = 0;
+    while (lexer->lookahead == '-') {
+        amount++;
+        advance(lexer);
+    }
+
+    if (amount < 3) {
+        return false;
+    } else {
+        scanner->frontmatter_dashes = amount;
+        lexer->result_symbol = FRONTMATTER_START;
+
+        while (!lexer->eof(lexer) && iswspace(lexer->lookahead) && lexer->lookahead != '\n') {
+            advance(lexer);
+        }
+
+        // parse optional info string after the initial fence
+        if (lexer->eof(lexer) || lexer->lookahead == '\n') {
+            scanner->frontmatter_has_info_string = false;
+            advance(lexer);
+        } else {
+            scanner->frontmatter_has_info_string = true;
+        }
+
+        return true;
+    }
+}
+
+static inline bool process_frontmatter_info_string(TSLexer *lexer, Scanner *scanner) {
+    if (scanner->frontmatter_has_info_string) {
+        while (!lexer->eof(lexer) && lexer->lookahead != '\n') {
+            advance(lexer);
+        }
+
+        lexer->result_symbol = FRONTMATTER_INFO_STRING;
+        lexer->mark_end(lexer);
+
+        advance(lexer);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+static inline bool process_frontmatter(TSLexer *lexer, Scanner *scanner) {
+    // seperately parse empty frontmatter, as tree-sitter strips all whitespace,
+    // including newlines, so i can't rely on parsing only after a newline in this case.
+    lexer->mark_end(lexer);
+    uint8_t amount = 0;
+    while (lexer->lookahead == '-' && amount < scanner->frontmatter_dashes) {
+        amount++;
+        advance(lexer);
+    }
+
+    if (amount == scanner->frontmatter_dashes) {
+        lexer->result_symbol = FRONTMATTER_CONTENT;
+        return true;
+    }
+
+    for (;;) {
+        if (lexer->eof(lexer)) {
+            return false;
+        }
+
+        if (lexer->lookahead == '\n') {
+            lexer->mark_end(lexer);
+            advance(lexer);
+
+            uint8_t amount = 0;
+            while (lexer->lookahead == '-' && amount < scanner->frontmatter_dashes) {
+                amount++;
+                advance(lexer);
+            }
+
+            if (amount == scanner->frontmatter_dashes) {
+                lexer->result_symbol = FRONTMATTER_CONTENT;
+                return true;
+            }
+        } else {
+            advance(lexer);
+        }
+    }
+}
+
+static inline bool process_frontmatter_end(TSLexer *lexer, Scanner *scanner) {
+    advance(lexer);
+    for (unsigned int amount = 0; amount < scanner->frontmatter_dashes; amount++) {
+        advance(lexer);
+    }
+
+    lexer->result_symbol = FRONTMATTER_END;
+    return true;
+}
+
 bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
     // The documentation states that if the lexical analysis fails for some reason
     // they will mark every state as valid and pass it to the external scanner
@@ -397,6 +503,24 @@ bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const
 
     if (valid_symbols[FLOAT_LITERAL] && iswdigit(lexer->lookahead)) {
         return process_float_literal(lexer);
+    }
+
+    if (valid_symbols[FRONTMATTER_START]) {
+        return process_frontmatter_start(lexer, scanner);
+    }
+
+    if (valid_symbols[FRONTMATTER_INFO_STRING]) {
+        if (process_frontmatter_info_string(lexer, scanner)) {
+            return true;
+        }
+    }
+
+    if (valid_symbols[FRONTMATTER_CONTENT]) {
+        return process_frontmatter(lexer, scanner);
+    }
+
+    if (valid_symbols[FRONTMATTER_END]) {
+        return process_frontmatter_end(lexer, scanner);
     }
 
     return false;
