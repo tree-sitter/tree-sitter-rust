@@ -994,6 +994,7 @@ mystruct.myfield;
 foo().x;
 value.0.1.iter();
 1.max(2);
+1._method();
 
 --------------------------------------------------------------------------------
 
@@ -1024,7 +1025,13 @@ value.0.1.iter();
         (integer_literal)
         (field_identifier))
       (arguments
-        (integer_literal)))))
+        (integer_literal))))
+  (expression_statement
+    (call_expression
+      (field_expression
+        (integer_literal)
+        (field_identifier))
+      (arguments))))
 
 ================================================================================
 Method call expressions

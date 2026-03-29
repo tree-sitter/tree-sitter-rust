@@ -133,8 +133,8 @@ static inline bool process_float_literal(TSLexer *lexer) {
     if (lexer->lookahead == '.') {
         has_fraction = true;
         advance(lexer);
-        if (iswalpha(lexer->lookahead)) {
-            // The dot is followed by a letter: 1.max(2) => not a float but an integer
+        if (iswalpha(lexer->lookahead) || lexer->lookahead == '_') {
+            // The dot is followed by a letter or _: 1.max(2) => not a float but an integer
             return false;
         }
 
