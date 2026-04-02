@@ -13,10 +13,13 @@ Integer literals
 0o70_i16;
 0b1111_1111_1001_0000_i32;
 1u128;
+123ghijkl;
 
 --------------------------------------------------------------------------------
 
 (source_file
+  (expression_statement
+    (integer_literal))
   (expression_statement
     (integer_literal))
   (expression_statement
@@ -50,10 +53,13 @@ Floating-point literals
 0.1f64;
 0.1f32;
 12E+99_f64;
+1.0ghijkl;
 
 --------------------------------------------------------------------------------
 
 (source_file
+  (expression_statement
+    (float_literal))
   (expression_statement
     (float_literal))
   (expression_statement

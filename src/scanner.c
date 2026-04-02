@@ -169,19 +169,14 @@ static inline bool process_float_literal(TSLexer *lexer) {
         return false;
     }
 
-    if (lexer->lookahead != 'u' && lexer->lookahead != 'i' && lexer->lookahead != 'f') {
-        return true;
-    }
-    advance(lexer);
-    if (!iswdigit(lexer->lookahead)) {
-        return true;
-    }
-
-    while (iswdigit(lexer->lookahead)) {
+    // Consume any identifier-like suffix (e.g., f64, u32, or unknown suffixes like 'c')
+    if (iswalpha(lexer->lookahead) || lexer->lookahead == '_') {
         advance(lexer);
+        while (iswalnum(lexer->lookahead) || lexer->lookahead == '_') {
+            advance(lexer);
+        }
+        lexer->mark_end(lexer);
     }
-
-    lexer->mark_end(lexer);
     return true;
 }
 

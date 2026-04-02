@@ -9037,6 +9037,10 @@
                   {
                     "type": "STRING",
                     "value": "f64"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "[a-zA-Z_]\\w*"
                   }
                 ]
               },

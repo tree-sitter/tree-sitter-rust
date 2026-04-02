@@ -1537,7 +1537,7 @@ module.exports = grammar({
         /0b[01_]+/,
         /0o[0-7_]+/,
       ),
-      optional(choice(...numericTypes)),
+      optional(choice(...numericTypes, /[a-zA-Z_]\w*/)),
     )),
 
     string_literal: $ => seq(
