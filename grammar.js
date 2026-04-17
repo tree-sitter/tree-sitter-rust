@@ -43,8 +43,10 @@ const numericTypes = [
   'i128',
   'isize',
   'usize',
+  'f16',
   'f32',
   'f64',
+  'f128',
 ];
 
 // https://doc.rust-lang.org/reference/tokens.html#punctuation
