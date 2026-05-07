@@ -463,6 +463,7 @@ module.exports = grammar({
       'default',
       'const',
       'unsafe',
+      'gen',
       $.extern_modifier,
     )),
 

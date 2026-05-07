@@ -2545,6 +2545,10 @@
             "value": "unsafe"
           },
           {
+            "type": "STRING",
+            "value": "gen"
+          },
+          {
             "type": "SYMBOL",
             "name": "extern_modifier"
           }
