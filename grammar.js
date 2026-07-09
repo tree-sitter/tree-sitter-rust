@@ -1059,13 +1059,16 @@ module.exports = grammar({
     )),
 
     binary_expression: $ => {
+      // Generic type arguments give `<` lexical precedence 1 so that nested
+      // generics win over shifts. `<=` must outrank that generic opener.
+      const lessThanOrEqual = token(prec(2, '<='));
       const table = [
         [PREC.and, '&&'],
         [PREC.or, '||'],
         [PREC.bitand, '&'],
         [PREC.bitor, '|'],
         [PREC.bitxor, '^'],
-        [PREC.comparative, choice('==', '!=', '<', '<=', '>', '>=')],
+        [PREC.comparative, choice('==', '!=', '<', lessThanOrEqual, '>', '>=')],
         [PREC.shift, choice('<<', '>>')],
         [PREC.additive, choice('+', '-')],
         [PREC.multiplicative, choice('*', '/', '%')],
