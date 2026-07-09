@@ -331,6 +331,46 @@ let size: f64 = 1.0 + -len(values) as f64 + 1.0;
       right: (float_literal))))
 
 ================================================================================
+Comparisons after type cast expressions
+================================================================================
+
+i as LuaNumber <= f;
+i as lua::Number <= f;
+(i as LuaNumber) < f;
+i as f64 <= f;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (binary_expression
+      left: (type_cast_expression
+        value: (identifier)
+        type: (type_identifier))
+      right: (identifier)))
+  (expression_statement
+    (binary_expression
+      left: (type_cast_expression
+        value: (identifier)
+        type: (scoped_type_identifier
+          path: (identifier)
+          name: (type_identifier)))
+      right: (identifier)))
+  (expression_statement
+    (binary_expression
+      left: (parenthesized_expression
+        (type_cast_expression
+          value: (identifier)
+          type: (type_identifier)))
+      right: (identifier)))
+  (expression_statement
+    (binary_expression
+      left: (type_cast_expression
+        value: (identifier)
+        type: (primitive_type))
+      right: (identifier))))
+
+================================================================================
 Call expressions
 ================================================================================
 
