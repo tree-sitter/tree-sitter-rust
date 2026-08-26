@@ -57,7 +57,7 @@ const TOKEN_TREE_NON_SPECIAL_PUNCTUATION = [
 
 const primitiveTypes = numericTypes.concat(['bool', 'str', 'char']);
 
-module.exports = grammar({
+export default grammar({
   name: 'rust',
 
   extras: $ => [

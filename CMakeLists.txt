@@ -17,7 +17,17 @@ endif()
 
 find_program(TREE_SITTER_CLI tree-sitter DOC "Tree-sitter CLI")
 
+add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/grammar.json"
+                          "${CMAKE_CURRENT_SOURCE_DIR}/src/node-types.json"
+                   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/grammar.js"
+                   COMMAND "${TREE_SITTER_CLI}" generate grammar.js --no-parser
+                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                   COMMENT "Generating grammar.json")
+
 add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/parser.c"
+                   BYPRODUCTS "${CMAKE_CURRENT_SOURCE_DIR}/src/tree_sitter/parser.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/src/tree_sitter/alloc.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/src/tree_sitter/array.h"
                    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/grammar.json"
                    COMMAND "${TREE_SITTER_CLI}" generate src/grammar.json
                             --abi=${TREE_SITTER_ABI_VERSION}
@@ -28,7 +38,11 @@ add_library(tree-sitter-rust src/parser.c)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scanner.c)
   target_sources(tree-sitter-rust PRIVATE src/scanner.c)
 endif()
-target_include_directories(tree-sitter-rust PRIVATE src)
+target_include_directories(tree-sitter-rust
+                           PRIVATE src
+                           INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bindings/c>
+                                     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
 
 target_compile_definitions(tree-sitter-rust PRIVATE
                            $<$<BOOL:${TREE_SITTER_REUSE_ALLOCATOR}>:TREE_SITTER_REUSE_ALLOCATOR>
@@ -46,8 +60,9 @@ configure_file(bindings/c/tree-sitter-rust.pc.in
 
 include(GNUInstallDirs)
 
-install(FILES bindings/c/tree-sitter-rust.h
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tree_sitter")
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bindings/c/tree_sitter"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        FILES_MATCHING PATTERN "*.h")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/tree-sitter-rust.pc"
         DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig")
 install(TARGETS tree-sitter-rust
