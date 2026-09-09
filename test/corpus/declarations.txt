@@ -1200,6 +1200,112 @@ type Assoc3 where = () where;
     (where_clause)))
 
 ================================================================================
+Trait aliases
+================================================================================
+
+trait IteratorAlias = Iterator;
+trait Empty =;
+const trait ConstAlias = Iterator;
+pub trait SendSync = Send + Sync;
+pub(crate) trait LendingIterator<'a, T> = Iterator<Item = &'a T> where T: 'a;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (trait_alias
+    name: (type_identifier)
+    bounds: (trait_alias_bounds
+      (type_identifier)))
+  (trait_alias
+    name: (type_identifier))
+  (trait_alias
+    name: (type_identifier)
+    bounds: (trait_alias_bounds
+      (type_identifier)))
+  (trait_alias
+    (visibility_modifier)
+    name: (type_identifier)
+    bounds: (trait_alias_bounds
+      (type_identifier)
+      (type_identifier)))
+  (trait_alias
+    (visibility_modifier
+      (crate))
+    name: (type_identifier)
+    type_parameters: (type_parameters
+      (lifetime_parameter
+        name: (lifetime
+          (identifier)))
+      (type_parameter
+        name: (type_identifier)))
+    bounds: (trait_alias_bounds
+      (generic_type
+        type: (type_identifier)
+        type_arguments: (type_arguments
+          (type_binding
+            name: (type_identifier)
+            type: (reference_type
+              (lifetime
+                (identifier))
+              type: (type_identifier))))))
+    (where_clause
+      (where_predicate
+        left: (type_identifier)
+        bounds: (trait_bounds
+          (lifetime
+            (identifier)))))))
+
+================================================================================
+Official nightly declaration regression
+================================================================================
+
+#![feature(decl_macro, trait_alias)]
+
+pub type TyAliasPub = u32;
+pub trait TraitAliasPub = Iterator;
+
+#[macro_export]
+macro_rules! mac_rules_pub {
+    () => {};
+}
+pub macro mac_pub {
+    () => {},
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (inner_attribute_item
+    (attribute
+      (identifier)
+      arguments: (token_tree
+        (identifier)
+        (identifier))))
+  (type_item
+    (visibility_modifier)
+    name: (type_identifier)
+    type: (primitive_type))
+  (trait_alias
+    (visibility_modifier)
+    name: (type_identifier)
+    bounds: (trait_alias_bounds
+      (type_identifier)))
+  (attribute_item
+    (attribute
+      (identifier)))
+  (macro_definition
+    name: (identifier)
+    (macro_rule
+      left: (token_tree_pattern)
+      right: (token_tree)))
+  (decl_macro
+    (visibility_modifier)
+    name: (identifier)
+    body: (token_tree
+      (token_tree)
+      (token_tree))))
+
+================================================================================
 Empty statements
 ================================================================================
 

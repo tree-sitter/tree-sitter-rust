@@ -138,6 +138,7 @@ module.exports = grammar({
       $.const_item,
       $.macro_invocation,
       $.macro_definition,
+      $.decl_macro,
       $.empty_statement,
       $.attribute_item,
       $.inner_attribute_item,
@@ -151,6 +152,7 @@ module.exports = grammar({
       $.function_signature_item,
       $.impl_item,
       $.trait_item,
+      $.trait_alias,
       $.associated_type,
       $.let_declaration,
       $.use_declaration,
@@ -179,6 +181,18 @@ module.exports = grammar({
         ),
       );
     },
+
+    // https://doc.rust-lang.org/unstable-book/language-features/decl-macro.html
+    decl_macro: $ => seq(
+      optional($.visibility_modifier),
+      'macro',
+      field('name', choice(
+        $.identifier,
+        $._reserved_identifier,
+      )),
+      field('parameters', optional(alias($._parenthesized_token_tree, $.token_tree))),
+      field('body', alias($._braced_token_tree, $.token_tree)),
+    ),
 
     macro_rule: $ => seq(
       field('left', $.token_tree_pattern),
@@ -518,6 +532,25 @@ module.exports = grammar({
       optional($.where_clause),
       field('body', $.declaration_list),
     ),
+
+    // https://doc.rust-lang.org/unstable-book/language-features/trait-alias.html
+    trait_alias: $ => seq(
+      optional($.visibility_modifier),
+      optional('const'),
+      'trait',
+      field('name', $._type_identifier),
+      field('type_parameters', optional($.type_parameters)),
+      '=',
+      field('bounds', optional($.trait_alias_bounds)),
+      optional($.where_clause),
+      ';',
+    ),
+
+    trait_alias_bounds: $ => sepBy1('+', choice(
+      $._type,
+      $.lifetime,
+      $.higher_ranked_trait_bound,
+    )),
 
     associated_type: $ => seq(
       'type',
@@ -986,10 +1019,14 @@ module.exports = grammar({
     ),
 
     delim_token_tree: $ => choice(
-      seq('(', repeat($._delim_tokens), ')'),
+      $._parenthesized_token_tree,
       seq('[', repeat($._delim_tokens), ']'),
-      seq('{', repeat($._delim_tokens), '}'),
+      $._braced_token_tree,
     ),
+
+    _parenthesized_token_tree: $ => seq('(', repeat($._delim_tokens), ')'),
+
+    _braced_token_tree: $ => seq('{', repeat($._delim_tokens), '}'),
 
     _delim_tokens: $ => choice(
       $._non_delim_token,

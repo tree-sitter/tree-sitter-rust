@@ -16,6 +16,10 @@
         "named": true
       },
       {
+        "type": "decl_macro",
+        "named": true
+      },
+      {
         "type": "empty_statement",
         "named": true
       },
@@ -69,6 +73,10 @@
       },
       {
         "type": "struct_item",
+        "named": true
+      },
+      {
+        "type": "trait_alias",
         "named": true
       },
       {
@@ -1462,6 +1470,52 @@
       "types": [
         {
           "type": "label",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "decl_macro",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "token_tree",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "parameters": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "token_tree",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "visibility_modifier",
           "named": true
         }
       ]
@@ -4124,6 +4178,79 @@
     }
   },
   {
+    "type": "trait_alias",
+    "named": true,
+    "fields": {
+      "bounds": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "trait_alias_bounds",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type_identifier",
+            "named": true
+          }
+        ]
+      },
+      "type_parameters": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "type_parameters",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "visibility_modifier",
+          "named": true
+        },
+        {
+          "type": "where_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "trait_alias_bounds",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "_type",
+          "named": true
+        },
+        {
+          "type": "higher_ranked_trait_bound",
+          "named": true
+        },
+        {
+          "type": "lifetime",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "trait_bounds",
     "named": true,
     "fields": {},
@@ -5379,6 +5506,10 @@
   },
   {
     "type": "loop",
+    "named": false
+  },
+  {
+    "type": "macro",
     "named": false
   },
   {
