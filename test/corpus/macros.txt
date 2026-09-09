@@ -273,3 +273,55 @@ macro_rules! empty [
     (macro_rule
       left: (token_tree_pattern)
       right: (token_tree))))
+
+================================================================================
+Declarative macros 2.0
+================================================================================
+
+macro empty {}
+
+pub macro vec($elem:expr; $n:expr) {
+    {
+        let x = $elem;
+        [x; $n]
+    }
+}
+
+pub(crate) macro choose {
+    () => {},
+    ($value:expr) => { $value },
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (decl_macro
+    name: (identifier)
+    body: (token_tree))
+  (decl_macro
+    (visibility_modifier)
+    name: (identifier)
+    parameters: (token_tree
+      (identifier)
+      (identifier)
+      (identifier)
+      (identifier))
+    body: (token_tree
+      (token_tree
+        (identifier)
+        (identifier)
+        (token_tree
+          (identifier)
+          (identifier)))))
+  (decl_macro
+    (visibility_modifier
+      (crate))
+    name: (identifier)
+    body: (token_tree
+      (token_tree)
+      (token_tree)
+      (token_tree
+        (identifier)
+        (identifier))
+      (token_tree
+        (identifier)))))
