@@ -1256,6 +1256,56 @@ pub(crate) trait LendingIterator<'a, T> = Iterator<Item = &'a T> where T: 'a;
             (identifier)))))))
 
 ================================================================================
+Official nightly declaration regression
+================================================================================
+
+#![feature(decl_macro, trait_alias)]
+
+pub type TyAliasPub = u32;
+pub trait TraitAliasPub = Iterator;
+
+#[macro_export]
+macro_rules! mac_rules_pub {
+    () => {};
+}
+pub macro mac_pub {
+    () => {},
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (inner_attribute_item
+    (attribute
+      (identifier)
+      arguments: (token_tree
+        (identifier)
+        (identifier))))
+  (type_item
+    (visibility_modifier)
+    name: (type_identifier)
+    type: (primitive_type))
+  (trait_alias
+    (visibility_modifier)
+    name: (type_identifier)
+    bounds: (trait_alias_bounds
+      (type_identifier)))
+  (attribute_item
+    (attribute
+      (identifier)))
+  (macro_definition
+    name: (identifier)
+    (macro_rule
+      left: (token_tree_pattern)
+      right: (token_tree)))
+  (decl_macro
+    (visibility_modifier)
+    name: (identifier)
+    body: (token_tree
+      (token_tree)
+      (token_tree))))
+
+================================================================================
 Empty statements
 ================================================================================
 

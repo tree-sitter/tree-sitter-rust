@@ -182,6 +182,7 @@ module.exports = grammar({
       );
     },
 
+    // https://doc.rust-lang.org/unstable-book/language-features/decl-macro.html
     decl_macro: $ => seq(
       optional($.visibility_modifier),
       'macro',
@@ -532,6 +533,7 @@ module.exports = grammar({
       field('body', $.declaration_list),
     ),
 
+    // https://doc.rust-lang.org/unstable-book/language-features/trait-alias.html
     trait_alias: $ => seq(
       optional($.visibility_modifier),
       optional('const'),
