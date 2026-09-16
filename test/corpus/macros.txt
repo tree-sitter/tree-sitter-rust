@@ -273,3 +273,56 @@ macro_rules! empty [
     (macro_rule
       left: (token_tree_pattern)
       right: (token_tree))))
+
+================================================================================
+Macro matcher with tilde token
+================================================================================
+
+macro_rules! parser {
+    (0 (~$($fuel:tt)*) $rest:tt) => { $rest };
+}
+
+fn stable() {}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (macro_definition
+    name: (identifier)
+    (macro_rule
+      left: (token_tree_pattern
+        (integer_literal)
+        (token_tree_pattern
+          (token_repetition_pattern
+            (token_binding_pattern
+              name: (metavariable)
+              type: (fragment_specifier))))
+        (token_binding_pattern
+          name: (metavariable)
+          type: (fragment_specifier)))
+      right: (token_tree
+        (metavariable))))
+  (function_item
+    name: (identifier)
+    parameters: (parameters)
+    body: (block)))
+
+================================================================================
+Macro invocation with tilde token
+================================================================================
+
+m!(~);
+m!(~foo~);
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (macro_invocation
+      (identifier)
+      (token_tree)))
+  (expression_statement
+    (macro_invocation
+      (identifier)
+      (token_tree
+        (identifier)))))
