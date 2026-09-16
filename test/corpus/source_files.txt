@@ -265,3 +265,24 @@ fn main() {}
     (identifier)
     (parameters)
     (block)))
+
+================================================================================
+Block comment containing multibyte characters
+================================================================================
+
+fn main() {
+  /*是*/
+  return 0;
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_item
+    (identifier)
+    (parameters)
+    (block
+      (block_comment)
+      (expression_statement
+        (return_expression
+          (integer_literal))))))
