@@ -1440,6 +1440,7 @@ module.exports = grammar({
     ),
 
     field_pattern: $ => seq(
+      repeat($.attribute_item),
       optional('ref'),
       optional($.mutable_specifier),
       choice(

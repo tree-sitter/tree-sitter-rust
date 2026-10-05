@@ -1,0 +1,40 @@
+================================================================================
+Attributes on struct pattern fields
+================================================================================
+
+fn unpack(value: JSONOutput) {
+    let JSONOutput {
+        syntax_grammar,
+        #[cfg(feature = "load")]
+        node_types_json,
+        str_pool,
+    } = value;
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_item
+    (identifier)
+    (parameters
+      (parameter
+        (identifier)
+        (type_identifier)))
+    (block
+      (let_declaration
+        (struct_pattern
+          (type_identifier)
+          (field_pattern
+            (shorthand_field_identifier))
+          (field_pattern
+            (attribute_item
+              (attribute
+                (identifier)
+                (token_tree
+                  (identifier)
+                  (string_literal
+                    (string_content)))))
+            (shorthand_field_identifier))
+          (field_pattern
+            (shorthand_field_identifier)))
+        (identifier)))))
