@@ -979,6 +979,7 @@ module.exports = grammar({
       field('macro', choice(
         $.scoped_identifier,
         $.identifier,
+        alias(choice(...primitiveTypes), $.identifier),
         $._reserved_identifier,
       )),
       '!',
