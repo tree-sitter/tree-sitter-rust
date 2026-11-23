@@ -273,3 +273,37 @@ macro_rules! empty [
     (macro_rule
       left: (token_tree_pattern)
       right: (token_tree))))
+
+================================================================================
+Macro invocation - primitive type names
+================================================================================
+
+str!["x"];
+bool!(true);
+i32!(1);
+usize!(2);
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (macro_invocation
+      (identifier)
+      (token_tree
+        (string_literal
+          (string_content)))))
+  (expression_statement
+    (macro_invocation
+      (identifier)
+      (token_tree
+        (boolean_literal))))
+  (expression_statement
+    (macro_invocation
+      (identifier)
+      (token_tree
+        (integer_literal))))
+  (expression_statement
+    (macro_invocation
+      (identifier)
+      (token_tree
+        (integer_literal)))))
