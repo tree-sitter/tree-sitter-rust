@@ -3944,6 +3944,10 @@
           "named": true
         },
         {
+          "type": "repetition_separator",
+          "named": true
+        },
+        {
           "type": "self",
           "named": true
         },
@@ -3992,6 +3996,10 @@
         },
         {
           "type": "primitive_type",
+          "named": true
+        },
+        {
+          "type": "repetition_separator",
           "named": true
         },
         {
@@ -5436,6 +5444,10 @@
   {
     "type": "ref",
     "named": false
+  },
+  {
+    "type": "repetition_separator",
+    "named": true
   },
   {
     "type": "return",

@@ -506,8 +506,8 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "PATTERN",
-              "value": "[^+*?]+"
+              "type": "SYMBOL",
+              "name": "repetition_separator"
             },
             {
               "type": "BLANK"
@@ -532,6 +532,10 @@
           ]
         }
       ]
+    },
+    "repetition_separator": {
+      "type": "PATTERN",
+      "value": "[^+*?\\s]+"
     },
     "fragment_specifier": {
       "type": "CHOICE",
@@ -710,8 +714,8 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "PATTERN",
-              "value": "[^+*?]+"
+              "type": "SYMBOL",
+              "name": "repetition_separator"
             },
             {
               "type": "BLANK"
