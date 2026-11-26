@@ -251,12 +251,16 @@ macro_rules! empty [
             (token_repetition_pattern
               (token_binding_pattern
                 name: (metavariable)
-                type: (fragment_specifier))))))
+                type: (fragment_specifier))
+              (repetition_separator)))
+          (repetition_separator)))
       right: (token_tree
         (token_repetition
           (token_repetition
             (metavariable)
-            (metavariable))))))
+            (metavariable)
+            (repetition_separator))
+          (repetition_separator)))))
   (macro_definition
     name: (identifier)
     (macro_rule
@@ -264,12 +268,57 @@ macro_rules! empty [
         (token_repetition_pattern
           (token_binding_pattern
             name: (metavariable)
-            type: (fragment_specifier))))
+            type: (fragment_specifier))
+          (repetition_separator)))
       right: (token_tree
         (token_repetition
-          (metavariable)))))
+          (metavariable)
+          (repetition_separator)))))
   (macro_definition
     name: (identifier)
     (macro_rule
       left: (token_tree_pattern)
       right: (token_tree))))
+
+================================================================================
+Macro repetition separators
+================================================================================
+
+macro_rules! m {
+    ($($k:expr => $v:expr);*) => { f($($k),*) };
+    ($($x:tt)*) => { g!($($x) => +) };
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (macro_definition
+    name: (identifier)
+    (macro_rule
+      left: (token_tree_pattern
+        (token_repetition_pattern
+          (token_binding_pattern
+            name: (metavariable)
+            type: (fragment_specifier))
+          (token_binding_pattern
+            name: (metavariable)
+            type: (fragment_specifier))
+          (repetition_separator)))
+      right: (token_tree
+        (identifier)
+        (token_tree
+          (token_repetition
+            (metavariable)
+            (repetition_separator)))))
+    (macro_rule
+      left: (token_tree_pattern
+        (token_repetition_pattern
+          (token_binding_pattern
+            name: (metavariable)
+            type: (fragment_specifier))))
+      right: (token_tree
+        (identifier)
+        (token_tree
+          (token_repetition
+            (metavariable)
+            (repetition_separator)))))))
